@@ -6,6 +6,8 @@ import {
   MOCK_ROUTINES,
   MOCK_STUDENTS,
 } from '@/data/mockData';
+import { isRoutineMap } from '@/domain/routine';
+import { localStorageAdapter } from '@/data/storage/localStorageAdapter';
 import type { Achievement, Coach, Day, Exercise, ProgressEntry, RoutineMap, Student } from '@/types';
 
 const ROUTINES_STORAGE_KEY = 'ags-glutehouse-routines';
@@ -16,14 +18,8 @@ const cloneRoutines = (routines: RoutineMap): RoutineMap => Object.fromEntries(
 ) as RoutineMap;
 
 const loadRoutines = (): RoutineMap => {
-  if (typeof window === 'undefined') return cloneRoutines(MOCK_ROUTINES);
-
-  try {
-    const storedRoutines = window.localStorage.getItem(ROUTINES_STORAGE_KEY);
-    return storedRoutines ? JSON.parse(storedRoutines) as RoutineMap : cloneRoutines(MOCK_ROUTINES);
-  } catch {
-    return cloneRoutines(MOCK_ROUTINES);
-  }
+  const storedRoutines = localStorageAdapter.read<unknown>(ROUTINES_STORAGE_KEY);
+  return isRoutineMap(storedRoutines) ? cloneRoutines(storedRoutines) : cloneRoutines(MOCK_ROUTINES);
 };
 
 let routines = loadRoutines();
@@ -59,9 +55,7 @@ export const fitnessRepository = {
   },
   saveRoutines(nextRoutines: RoutineMap): void {
     routines = cloneRoutines(nextRoutines);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(ROUTINES_STORAGE_KEY, JSON.stringify(routines));
-    }
+    localStorageAdapter.write(ROUTINES_STORAGE_KEY, routines);
     routineListeners.forEach((listener) => listener());
   },
 };
