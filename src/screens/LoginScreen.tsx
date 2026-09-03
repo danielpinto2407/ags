@@ -17,9 +17,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         <span className="font-display font-extrabold tracking-[0.2em] text-[11px] text-brand-500 uppercase mb-1" style={{ textShadow: '0 0 8px rgba(255,10,120,0.6)' }}>
           AGS Glutehouse
         </span>
-        <h1 className="text-3xl font-display font-extrabold text-white text-center leading-tight">
-          Tu gimnasio<br />en la palma de tu mano
-        </h1>
         <p className="text-sm text-zinc-500 text-center mt-2 max-w-[260px]">
           Rutinas personalizadas, seguimiento de progreso y comunicación directa con tu coach.
         </p>
@@ -69,9 +66,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           Ingresar
         </button>
 
-        <p className="text-center text-[11px] text-zinc-600">
+        {/* <p className="text-center text-[11px] text-zinc-600">
           ¿No tienes cuenta? <span className="text-brand-400 font-semibold">Regístrate</span>
-        </p>
+        </p> */}
       </div>
     </div>
   );

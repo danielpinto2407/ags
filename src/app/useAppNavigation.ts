@@ -2,13 +2,10 @@ import { useState } from 'react';
 import { fitnessRepository } from '@/data/fitnessRepository';
 import type { Role, Screen, Student } from '@/types';
 
-export type ViewMode = 'phone' | 'full';
-
 export function useAppNavigation() {
   const [role, setRole] = useState<Role | null>(null);
   const [screen, setScreen] = useState<Screen>('home');
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('phone');
 
   const handleLogin = () => {
     setRole('student');
@@ -38,9 +35,7 @@ export function useAppNavigation() {
   return {
     role,
     screen,
-    viewMode,
     selectedStudent,
-    setViewMode,
     handleLogin,
     handleNavigate,
     handleStudentSelect,

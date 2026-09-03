@@ -3,11 +3,12 @@
 This is a React 18 + Vite 5 + TypeScript + Tailwind CSS application.
 
 Before changing architecture or adding a feature, read `.github/skills/ags-project-architecture/SKILL.md`.
+Read the relevant skill reference when the task touches product cases, data/state, visual design, implementation workflow, or quality review.
 
 ## Mandatory rules
 
 - Keep `App.tsx` as a high-level composer. Do not put feature logic, data access, or large screen switches there.
-- Keep navigation and shell concerns under `src/app/`.
+- Keep navigation and shell concerns under `src/app/`; demo-only viewport controls have been removed from the product shell.
 - Keep domain contracts under `src/domain/` and data access behind `src/data/fitnessRepository.ts`.
 - Screens under `src/screens/` compose UI and feature behavior; shared visual pieces belong under `src/components/`.
 - Do not import `mockData` directly from screens or components.
@@ -23,6 +24,9 @@ Before changing architecture or adding a feature, read `.github/skills/ags-proje
 - Prefer the simplest functional integration that satisfies the use case; avoid speculative abstractions, global state, and dependencies.
 - Keep one source of truth for business data, validation, constants, and derived metrics; do not duplicate logic between screens.
 - Give each module one clear responsibility and each async workflow explicit loading, empty, success, and error states.
+- Preserve the existing visual system: reuse `Sora`, `Inter`, Tailwind `brand-*` tokens, zinc/status colors, spacing, radii, borders, shadows, and responsive patterns.
+- New components must reference existing visual tokens or add named shared tokens; do not scatter arbitrary colors, fonts, shadows, or styles through screens.
+- Tenant branding from future database data must use a typed and validated theme contract mapped to controlled CSS variables; never inject arbitrary CSS or pass raw tenant records into components.
 - Preserve the existing Spanish UI and responsive phone/full preview behavior.
 - Prefer small, reversible changes. Do not refactor unrelated code.
 - After edits, run `npm run lint`, `npm run typecheck`, and `npm run build`.
