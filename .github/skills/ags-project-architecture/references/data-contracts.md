@@ -12,6 +12,8 @@ Screens and components must not import fixtures directly or call Supabase, `fetc
 
 ## Repository Rules
 
+- Keep Supabase CLI configuration at the project root and version SQL migrations under `supabase/migrations/`; do not store deployable SQL under `src/`.
+- Keep database migrations reproducible and reviewed; never apply an untested schema migration directly to production.
 - Keep repository contracts independent from Supabase.
 - Return copies from reads and use immutable writes.
 - Validate every persisted or external payload before use.
