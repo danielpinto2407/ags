@@ -8,9 +8,16 @@
   }
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background: #050505;
+    background: var(--tenant-background, #050505);
     color: #f4f4f5;
     overscroll-behavior: none;
+  }
+}
+
+@layer components {
+  .tenant-app {
+    background-color: var(--tenant-background, #050505);
+    color: #f4f4f5;
   }
 }
 

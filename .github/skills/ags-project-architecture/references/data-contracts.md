@@ -10,10 +10,13 @@
 
 Screens and components must not import fixtures directly or call Supabase, `fetch`, or browser storage directly.
 
+For CU-00, use `src/domain/tenant.ts` for typed payloads and validators, `src/data/tenantRepository.ts` for the public RPC, and `src/app/tenant/` for subdomain parsing/bootstrap state. Before login, the browser may call only `resolve_tenant_by_subdomain`; never query all tenant rows or expose private tenant fields.
+
 ## Repository Rules
 
 - Keep Supabase CLI configuration at the project root and version SQL migrations under `supabase/migrations/`; do not store deployable SQL under `src/`.
 - Keep database migrations reproducible and reviewed; never apply an untested schema migration directly to production.
+- Add pgTAP tests under `supabase/tests/` for database grants, RLS allow/deny behavior, and security-sensitive RPCs; run `npx supabase test db` against the local stack before considering SQL changes complete.
 - Keep repository contracts independent from Supabase.
 - Return copies from reads and use immutable writes.
 - Validate every persisted or external payload before use.

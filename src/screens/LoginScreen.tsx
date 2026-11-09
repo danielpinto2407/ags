@@ -3,26 +3,38 @@ import { useState } from 'react';
 
 interface LoginScreenProps {
   onLogin: () => void;
+  tenantName: string;
+  logoUrl: string | null;
 }
 
-export default function LoginScreen({ onLogin }: LoginScreenProps) {
+export default function LoginScreen({ onLogin, tenantName, logoUrl }: LoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
 
   return (
-    <div className="flex flex-col items-center justify-between h-full py-8 px-6">
-      <div className="flex flex-col items-center mt-6">
-        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center shadow-neon mb-4">
-          <Dumbbell size={36} className="text-white" />
+    <main className="flex min-h-screen w-full flex-col items-center justify-center gap-10 px-6 py-10 sm:gap-12">
+      <div className="flex w-full max-w-md flex-col items-center">
+        <div className="mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-brand-400 to-brand-700 shadow-neon">
+          {logoUrl && !logoFailed ? (
+            <img
+              src={logoUrl}
+              alt={`Logo de ${tenantName}`}
+              onError={() => setLogoFailed(true)}
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <Dumbbell size={36} className="text-white" />
+          )}
         </div>
         <span className="font-display font-extrabold tracking-[0.2em] text-[11px] text-brand-500 uppercase mb-1" style={{ textShadow: '0 0 8px rgba(255,10,120,0.6)' }}>
-          AGS Glutehouse
+          {tenantName}
         </span>
         <p className="text-sm text-zinc-500 text-center mt-2 max-w-[260px]">
           Rutinas personalizadas, seguimiento de progreso y comunicación directa con tu coach.
         </p>
       </div>
 
-      <div className="w-full space-y-3">
+      <div className="w-full max-w-md space-y-3">
         <div>
           <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
             Correo electrónico
@@ -70,6 +82,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           ¿No tienes cuenta? <span className="text-brand-400 font-semibold">Regístrate</span>
         </p> */}
       </div>
-    </div>
+    </main>
   );
 }

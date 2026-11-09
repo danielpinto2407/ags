@@ -37,6 +37,7 @@
 
 ## Verification
 
+- `npx supabase test db` passes for database migrations and RLS changes.
 - `npm run lint` passes.
 - `npm run typecheck` passes.
 - `npm run build` passes.

@@ -3,6 +3,7 @@ export type { Coach } from '@/domain/coach';
 export type { Exercise, ExerciseDifficulty } from '@/domain/exercise';
 export type { ProgressEntry } from '@/domain/progress';
 export type { Student, StudentStatus } from '@/domain/student';
+export type { Tenant, TenantFeatures, TenantStatus, TenantTheme } from '@/domain/tenant';
 
 export type Role = 'student' | 'coach';
 

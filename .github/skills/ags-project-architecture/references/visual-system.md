@@ -23,7 +23,7 @@
 
 ## Database-Driven Tenant Theme
 
-Future theme flow:
+Current local flow (production subdomain/DNS wiring remains pending):
 
 ```text
 hostname/subdomain -> tenant resolver -> validated TenantTheme -> CSS variable adapter -> AppShell/components

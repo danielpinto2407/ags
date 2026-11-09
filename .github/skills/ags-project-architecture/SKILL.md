@@ -13,17 +13,17 @@ Use this skill as the canonical project context before changing code. Keep the a
 
 - React 18, Vite 5, TypeScript strict mode, Tailwind CSS 3.
 - Lucide React and ESLint 9 with TypeScript/React Hooks rules.
-- Current data source: local fixtures and browser `localStorage`.
-- `@supabase/supabase-js` is installed but not integrated yet.
+- Business data still uses local fixtures and browser `localStorage`.
+- `@supabase/supabase-js` is integrated only for the public CU-00 tenant resolver against local Supabase; Supabase Auth and remote project linking are not implemented.
 
 ## Current Structure
 
 ```text
 src/
-├── app/        # AppShell, navigation, screen resolution
+├── app/        # AppShell, navigation, screen resolution, tenant bootstrap
 ├── components/ # Shared presentation and modals
-├── data/       # mockData, fitnessRepository, storage adapters
-├── domain/     # Entity contracts and pure validation
+├── data/       # mockData, repositories, Supabase client, storage adapters
+├── domain/     # Entity contracts and pure validation, including TenantTheme
 ├── screens/    # Login, coach workflows, student workflows
 ├── types.ts    # Application types and compatibility exports
 ├── App.tsx     # High-level composition only
@@ -48,9 +48,10 @@ Read the relevant reference before implementation:
 
 ## Layer Boundaries
 
-- `src/app/`: composition, shell, navigation, session, tenant bootstrap, demo-only controls.
-- `src/domain/`: business contracts, validation, and pure calculations. No React or browser APIs.
-- `src/data/`: fixtures, repositories, services, and storage adapters.
+- `src/app/`: composition, shell, navigation, session, tenant bootstrap, and demo-only controls.
+- `src/app/tenant/`: pre-login tenant resolution, bootstrap state, and subdomain parsing.
+- `src/domain/`: business contracts, validation, and pure calculations, including tenant/theme validation. No React or browser APIs.
+- `src/data/`: fixtures, repositories, services, storage adapters, and isolated Supabase client/RPC access.
 - `src/screens/`: role-level workflow composition.
 - `src/components/`: reusable presentation and interaction through props.
 - `src/features/`: cohesive feature behavior, hooks, selectors, components, and tests when introduced.
@@ -88,7 +89,9 @@ Dependencies flow inward. Screens may use feature hooks and repositories; domain
 
 ## Supabase Direction
 
-When Supabase is introduced, isolate the client and auth service under `src/data/` or an infrastructure feature. Use only public Vite client configuration, never service-role keys. Resolve tenant before login, load and subscribe to session changes, validate profile/tenant status, preserve silent refresh, and keep session separate from profile role and tenant state.
+When Supabase Auth is introduced, isolate the auth service under `src/data/` or an auth feature; the browser client and public CU-00 resolver already exist under `src/data/`. Use only public Vite client configuration, never service-role keys. Resolve tenant before login, load and subscribe to session changes, validate profile/tenant status, preserve silent refresh, and keep session separate from profile role and tenant state.
+
+CU-00 has a local vertical slice: subdomain parsing, public RPC resolution, typed response validation, local theme variables, and active/suspended/not-found/error states. `.env.local` is local-only; `.env.example` documents variables. A development default tenant may be used on localhost. Production root domains must use the neutral platform fallback.
 
 ## Validation
 
