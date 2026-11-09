@@ -16,6 +16,7 @@ Read the relevant skill reference when the task touches product cases, data/stat
 - Keep Supabase integrations behind `src/data/`; the only current integration is the public CU-00 tenant resolver. Do not add Supabase Auth or remote project linking without a defined profile/session contract and environment strategy.
 - Treat the product as a multi-tenant SaaS: tenant scope, actor role, profile status, and feature flags are part of every protected feature.
 - Never treat client-side role switching or hidden navigation as authorization; future access control must be enforced server-side with tenant-aware policies.
+- RLS must block tenant data for inactive profiles and suspended tenants; self-profile status may remain readable for the blocked message, and active coaches may manage inactive profiles in their own active tenant.
 - Map new work to a documented use case (CU-00 through CU-09) and preserve its actor, tenant, state, and acceptance behavior.
 - Routines must eventually be scoped to tenant, student, and date; progress must preserve target load, actual load, RPE, completion, and history as separate concepts.
 - Offline workout behavior requires an explicit sync/conflict strategy; do not silently treat localStorage as a database.

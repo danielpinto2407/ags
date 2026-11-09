@@ -6,7 +6,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(26);
+select extensions.plan(33);
 
 insert into public.tenants (id, name, subdomain, status)
 values
@@ -19,14 +19,18 @@ values
   ('d1000000-0000-4000-8000-000000000001'),
   ('d1000000-0000-4000-8000-000000000002'),
   ('d1000000-0000-4000-8000-000000000003'),
-  ('d1000000-0000-4000-8000-000000000004');
+  ('d1000000-0000-4000-8000-000000000004'),
+  ('d1000000-0000-4000-8000-000000000005'),
+  ('d1000000-0000-4000-8000-000000000006');
 
 insert into public.profiles (id, tenant_id, role, status, full_name)
 values
   ('d1000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000001', 'coach_admin', 'ACTIVE', 'Coach AGS'),
   ('d1000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000001', 'user_personalized', 'ACTIVE', 'Student AGS'),
   ('d1000000-0000-4000-8000-000000000003', 'd0000000-0000-4000-8000-000000000002', 'coach_admin', 'ACTIVE', 'Coach Power Gym'),
-  ('d1000000-0000-4000-8000-000000000004', null, 'super_admin', 'ACTIVE', 'Platform Admin');
+  ('d1000000-0000-4000-8000-000000000004', null, 'super_admin', 'ACTIVE', 'Platform Admin'),
+  ('d1000000-0000-4000-8000-000000000005', 'd0000000-0000-4000-8000-000000000001', 'user_personalized', 'INACTIVE', 'Inactive Student'),
+  ('d1000000-0000-4000-8000-000000000006', 'd0000000-0000-4000-8000-000000000003', 'coach_admin', 'ACTIVE', 'Coach Suspended Tenant');
 
 select extensions.ok(
   (select relrowsecurity from pg_class where oid = 'public.tenants'::regclass),
@@ -153,8 +157,8 @@ select extensions.is(
 select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000001', true);
 select extensions.is(
   (select count(*)::integer from public.profiles),
-  2,
-  'a coach can see profiles within their own tenant'
+  3,
+  'a coach can manage active and inactive profiles within their own tenant'
 );
 select extensions.is(
   (select count(*)::integer from public.profiles where tenant_id = 'd0000000-0000-4000-8000-000000000002'),
@@ -165,6 +169,42 @@ select extensions.is(
   (select count(*)::integer from public.tenants),
   1,
   'a coach can see only their own tenant'
+);
+
+select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000005', true);
+select extensions.is(
+  (select count(*)::integer from public.profiles),
+  1,
+  'an inactive profile can read only itself to learn its account status'
+);
+select extensions.is(
+  (select count(*)::integer from public.tenants),
+  0,
+  'an inactive profile cannot read tenant data'
+);
+select extensions.ok(
+  not (select private.current_profile_is_active()),
+  'the RLS helper identifies an inactive profile'
+);
+
+select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000006', true);
+select extensions.is(
+  (select count(*)::integer from public.profiles),
+  1,
+  'a coach in a suspended tenant can read only their own profile'
+);
+select extensions.is(
+  (select count(*)::integer from public.tenants),
+  0,
+  'a profile in a suspended tenant cannot read tenant data'
+);
+select extensions.ok(
+  (select private.current_profile_is_active()),
+  'the suspended-tenant coach profile itself remains active'
+);
+select extensions.ok(
+  not (select private.current_profile_tenant_is_active()),
+  'the RLS helper blocks a suspended tenant'
 );
 
 select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000004', true);
@@ -179,7 +219,7 @@ select extensions.is(
 );
 select extensions.is(
   (select count(*)::integer from public.profiles),
-  4,
+  6,
   'a super admin can see all profiles'
 );
 select extensions.throws_ok(

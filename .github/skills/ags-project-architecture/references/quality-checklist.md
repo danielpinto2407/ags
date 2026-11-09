@@ -31,6 +31,7 @@
 
 - Is authorization enforced server-side rather than by hidden navigation?
 - Is tenant isolation enforced through backend policies such as RLS?
+- Do RLS tests cover inactive profiles and suspended tenants, including allowed self-status and coach administration reads?
 - Are only public client configuration values exposed to Vite?
 - Are service-role keys and secrets excluded?
 - Is the integration the simplest functional approach that preserves a replacement path?
