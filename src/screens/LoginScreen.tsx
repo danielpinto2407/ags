@@ -1,53 +1,80 @@
 import { Dumbbell, Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 
 interface LoginScreenProps {
-  onLogin: () => void;
+  tenantName: string;
+  logoUrl: string | null;
+  error: string | null;
+  isSubmitting: boolean;
+  onSubmit: (email: string, password: string) => Promise<void>;
 }
 
-export default function LoginScreen({ onLogin }: LoginScreenProps) {
+export default function LoginScreen({
+  tenantName,
+  logoUrl,
+  error,
+  isSubmitting,
+  onSubmit,
+}: LoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void onSubmit(email.trim(), password);
+  };
 
   return (
-    <div className="flex flex-col items-center justify-between h-full py-8 px-6">
-      <div className="flex flex-col items-center mt-6">
-        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center shadow-neon mb-4">
-          <Dumbbell size={36} className="text-white" />
+    <main className="flex min-h-screen w-full flex-col items-center justify-center gap-10 px-6 py-10 sm:gap-12">
+      <div className="flex w-full max-w-md flex-col items-center">
+        <div className="mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-brand-400 to-brand-700 shadow-neon">
+          {logoUrl && !logoFailed ? (
+            <img
+              src={logoUrl}
+              alt={`Logo de ${tenantName}`}
+              onError={() => setLogoFailed(true)}
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <Dumbbell size={36} className="text-white" />
+          )}
         </div>
         <span className="font-display font-extrabold tracking-[0.2em] text-[11px] text-brand-500 uppercase mb-1" style={{ textShadow: '0 0 8px rgba(255,10,120,0.6)' }}>
-          AGS Glutehouse
+          {tenantName}
         </span>
-        <h1 className="text-3xl font-display font-extrabold text-white text-center leading-tight">
-          Tu gimnasio<br />en la palma de tu mano
-        </h1>
         <p className="text-sm text-zinc-500 text-center mt-2 max-w-[260px]">
           Rutinas personalizadas, seguimiento de progreso y comunicación directa con tu coach.
         </p>
       </div>
 
-      <div className="w-full space-y-3">
+      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-3">
         <div>
           <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
             Correo electrónico
           </label>
           <input
             type="email"
+            autoComplete="username"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             placeholder="correo@ejemplo.com"
             className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
           />
         </div>
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold">
-              Contraseña
-            </label>
-            <button type="button" className="text-[11px] text-brand-400 font-semibold hover:text-brand-300">
-              ¿Olvidaste tu contraseña?
-            </button>
-          </div>
+          <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
+            Contraseña
+          </label>
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
               className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 pr-11 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
             />
@@ -62,17 +89,21 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           </div>
         </div>
 
+        {error && (
+          <p role="alert" aria-live="polite" className="rounded-xl border border-red-900/60 bg-red-950/30 px-3 py-2 text-sm text-red-300">
+            {error}
+          </p>
+        )}
+
         <button
-          onClick={onLogin}
-          className="w-full py-3.5 font-bold rounded-2xl text-sm transition-all bg-brand-500 hover:bg-brand-400 text-white shadow-neon"
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full py-3.5 font-bold rounded-2xl text-sm transition-all bg-brand-500 hover:bg-brand-400 text-white shadow-neon disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Ingresar
+          {isSubmitting ? 'Ingresando…' : 'Ingresar'}
         </button>
 
-        <p className="text-center text-[11px] text-zinc-600">
-          ¿No tienes cuenta? <span className="text-brand-400 font-semibold">Regístrate</span>
-        </p>
-      </div>
-    </div>
+      </form>
+    </main>
   );
 }

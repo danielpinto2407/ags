@@ -2,12 +2,14 @@ import { Flame, TrendingUp, ChevronRight, MessageCircle, Dumbbell } from 'lucide
 import Header from '@/components/Header';
 import { fitnessRepository } from '@/data/fitnessRepository';
 import type { Screen } from '@/types';
+import type { Profile } from '@/domain/profile';
 
 interface StudentHomeProps {
   onNavigate: (screen: Screen) => void;
+  profile: Profile;
 }
 
-export default function StudentHome({ onNavigate }: StudentHomeProps) {
+export default function StudentHome({ onNavigate, profile }: StudentHomeProps) {
   const todayExercises = fitnessRepository.getRoutine('LUN').slice(0, 3);
   const completedToday = 2;
   const totalToday = todayExercises.length;
@@ -16,7 +18,7 @@ export default function StudentHome({ onNavigate }: StudentHomeProps) {
 
   return (
     <div className="space-y-5">
-      <Header title="Hola, Laura" subtitle="Coach: Andrea Gómez" />
+      <Header title={`Hola, ${profile.full_name}`} subtitle="Tu espacio personal" />
 
       {/* Streak Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 to-brand-800 p-5 shadow-neon">

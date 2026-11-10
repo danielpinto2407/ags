@@ -1,91 +1,158 @@
-import { Smartphone, Tablet } from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
 import LoginScreen from '@/screens/LoginScreen';
-import { AppContent } from '@/app/ScreenRenderer';
+import AppShell from '@/app/AppShell';
+import ScreenRenderer from '@/app/ScreenRenderer';
+import InvitationAcceptanceScreen from '@/screens/InvitationAcceptanceScreen';
+import { useTenantContext } from '@/app/tenant/tenantContext';
 import { useAppNavigation } from '@/app/useAppNavigation';
+import { useAuth } from '@/app/session/authContext';
+import { DEFAULT_TENANT_THEME } from '@/domain/tenant';
+
+const tenantThemeStyle = (theme: typeof DEFAULT_TENANT_THEME): CSSProperties => ({
+  '--tenant-primary': theme.primaryColor,
+  '--tenant-secondary': theme.secondaryColor,
+  '--tenant-background': theme.backgroundColor,
+  '--tenant-accent': theme.accentColor,
+} as CSSProperties);
+
+function TenantMessage({ title, message, action }: { title: string; message: string; action?: ReactNode }) {
+  return (
+    <main className="tenant-app min-h-screen w-full flex items-center justify-center px-6 py-12 text-center">
+      <section className="max-w-md space-y-3">
+        <p className="font-display text-xl font-bold text-white">{title}</p>
+        <p className="text-sm leading-relaxed text-zinc-400">{message}</p>
+        {action}
+      </section>
+    </main>
+  );
+}
 
 export default function App() {
-  const navigation = useAppNavigation();
-  const { role, viewMode, setViewMode, handleLogin, switchRole } = navigation;
+  const { state: authState, signIn, signOut, retryProfile } = useAuth();
+  const { state: tenantState, retry } = useTenantContext();
+  const invitationId = new URLSearchParams(window.location.search).get('invitation_id');
+  const role = authState.status === 'authenticated' ? authState.productRole : null;
+  const navigation = useAppNavigation(role);
+
+  if (tenantState.status === 'loading') {
+    return <TenantMessage title="Cargando gimnasio" message="Estamos preparando tu espacio de entrenamiento." />;
+  }
+
+  if (tenantState.status === 'error') {
+    return (
+      <TenantMessage
+        title="No se pudo cargar el gimnasio"
+        message={tenantState.message}
+        action={(
+          <button onClick={retry} className="mt-3 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-500">
+            Reintentar
+          </button>
+        )}
+      />
+    );
+  }
+
+  if (tenantState.status === 'not-found') {
+    return <TenantMessage title="Gimnasio no encontrado" message={`No encontramos un gimnasio registrado para “${tenantState.subdomain}”. Revisa la dirección e inténtalo de nuevo.`} />;
+  }
+
+  if (tenantState.status === 'tenant' && tenantState.tenant.status === 'SUSPENDED') {
+    return <TenantMessage title="Servicio pausado" message="Este gimnasio tiene el acceso suspendido. Contacta a la administración para obtener ayuda." />;
+  }
+
+  const tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
+  const theme = tenant?.theme ?? DEFAULT_TENANT_THEME;
+
+  if (authState.status === 'unconfigured') {
+    return (
+      <TenantMessage
+        title="Autenticación no configurada"
+        message="Configura Supabase local en .env.local para poder iniciar sesión. No uses claves administrativas en el navegador."
+      />
+    );
+  }
+
+  if (authState.status === 'loading' || authState.status === 'profile-loading') {
+    return <TenantMessage title="Verificando sesión" message="Estamos validando tu cuenta y el acceso a este gimnasio." />;
+  }
+
+  if (authState.status === 'error') {
+    return (
+      <TenantMessage
+        title={authState.message.includes('sesión') ? 'No se pudo validar la sesión' : 'No se pudo verificar el perfil'}
+        message={authState.message}
+        action={(
+          <button onClick={retryProfile} className="mt-3 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-500">
+            Reintentar
+          </button>
+        )}
+      />
+    );
+  }
+
+  if (authState.status === 'blocked') {
+    if (invitationId && authState.message.includes('todavía no tiene un perfil asignado')) {
+      return (
+        <div className="tenant-app min-h-screen w-full" style={tenantThemeStyle(theme)}>
+          <InvitationAcceptanceScreen
+            invitationId={invitationId}
+            gymName={tenant?.name ?? 'GluteHouse'}
+            onAccepted={retryProfile}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <TenantMessage
+        title="Acceso no disponible"
+        message={authState.message}
+        action={(
+          <button onClick={signOut} className="mt-3 rounded-xl bg-zinc-800 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700">
+            Cerrar sesión
+          </button>
+        )}
+      />
+    );
+  }
+
+  if (authState.status === 'authenticated' && authState.productRole === null) {
+    return (
+      <TenantMessage
+        title="Panel de plataforma en preparación"
+        message={`Hola ${authState.profile.full_name}. Tu cuenta de superadministración está autenticada, pero el panel global todavía no está disponible.`}
+        action={(
+          <button onClick={signOut} className="mt-3 rounded-xl bg-zinc-800 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700">
+            Cerrar sesión
+          </button>
+        )}
+      />
+    );
+  }
 
   if (!role) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
-        {/* Demo controls */}
-        <div className="fixed top-4 right-4 flex gap-1 bg-zinc-900 border border-brand-500/30 p-1 rounded-xl text-xs shadow-neon-sm">
-          <button
-            onClick={() => setViewMode('phone')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-              viewMode === 'phone' ? 'bg-brand-600 text-white' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Smartphone size={14} />
-          </button>
-          <button
-            onClick={() => setViewMode('full')}
-            className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-              viewMode === 'full' ? 'bg-brand-600 text-white' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Tablet size={14} />
-          </button>
-        </div>
-
-        {viewMode === 'phone' ? (
-          <div className="w-full max-w-[390px] h-[720px] bg-black border-4 border-brand-500/40 rounded-[40px] p-2 shadow-neon-lg overflow-hidden relative">
-            <LoginScreen onLogin={handleLogin} />
-          </div>
-        ) : (
-          <div className="w-full max-w-[390px] bg-black border border-brand-500/30 rounded-3xl shadow-neon p-6 min-h-[600px]">
-            <LoginScreen onLogin={handleLogin} />
-          </div>
-        )}
+      <div className="tenant-app min-h-screen w-full" style={tenantThemeStyle(theme)}>
+        <LoginScreen
+          tenantName={tenant?.name ?? 'GluteHouse'}
+          logoUrl={tenant?.theme.logoUrl ?? null}
+          error={authState.status === 'signed-out' ? authState.error : null}
+          isSubmitting={authState.status === 'signed-out' && authState.submitting}
+          onSubmit={signIn}
+        />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-2 sm:p-4">
-      {/* Demo control bar */}
-      <div className="mb-3 flex items-center gap-2">
-        <div className="bg-zinc-900 border border-brand-500/30 p-1 rounded-2xl flex gap-1 text-xs shadow-neon-sm">
-          <button
-            onClick={() => switchRole('student')}
-            className={`px-4 py-1.5 rounded-xl font-semibold transition-all ${
-              role === 'student' ? 'bg-brand-600 text-white' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            Vista Alumna
-          </button>
-          <button
-            onClick={() => switchRole('coach')}
-            className={`px-4 py-1.5 rounded-xl font-semibold transition-all ${
-              role === 'coach' ? 'bg-brand-600 text-white' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            Vista Coach
-          </button>
-        </div>
-        <div className="bg-zinc-900 border border-brand-500/30 p-1 rounded-2xl flex gap-1 text-xs shadow-neon-sm">
-          <button
-            onClick={() => setViewMode('phone')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition-all ${
-              viewMode === 'phone' ? 'bg-brand-600 text-white' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Smartphone size={14} />
-          </button>
-          <button
-            onClick={() => setViewMode('full')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition-all ${
-              viewMode === 'full' ? 'bg-brand-600 text-white' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Tablet size={14} />
-          </button>
-        </div>
-      </div>
-
-      <AppContent navigation={navigation} />
+    <div className="tenant-app min-h-screen w-full" style={tenantThemeStyle(theme)}>
+      {role && (
+        <AppShell navigation={navigation}>
+          {authState.status === 'authenticated' && (
+            <ScreenRenderer navigation={navigation} profile={authState.profile} onLogout={signOut} />
+          )}
+        </AppShell>
+      )}
     </div>
   );
 }
