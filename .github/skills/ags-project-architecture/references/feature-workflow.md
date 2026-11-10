@@ -2,11 +2,12 @@
 
 ## Before Editing
 
-1. Identify the use case (`CU-00` through `CU-09`) and acceptance behavior.
+1. Identify the use case (`CU-00` through `CU-10`) and acceptance behavior. Current product priority is the personalized-training path: CU-01B invitations, CU-02 tenant-owned exercise data, CU-03 per-user routine assignment/publication, then CU-04 execution/check-off. Group classes (proposed CU-10) are deferred.
 2. Identify actor, tenant scope, permissions, affected screen, entities, and state transitions.
 3. Decide whether data is local, persisted, asynchronous, offline, or server-backed.
 4. Search existing components, hooks, domain functions, repository methods, types, and styles before creating anything.
 5. State one local hypothesis about the controlling code path and one focused validation check.
+6. Read `project-status.md` to understand implemented versus planned behavior before defining scope.
 
 ## Implementation Order
 
@@ -18,6 +19,10 @@
 6. Add loading, success, empty, error, offline, and permission states.
 7. Wire navigation and feature flags after the feature works independently.
 8. Reuse existing components and visual tokens.
+
+When a feature is being migrated from mocks to Supabase, retain an explicit mock adapter and add a Supabase adapter behind the same repository contract. Select exactly one source per run, preserve typed loading/error behavior, and test the use case against local Supabase before removing its mock path. Never hide a Supabase failure by returning mock data.
+
+For CU-02 and CU-03, trace the full exercise contract through library -> published assignment -> student routine/detail. Preserve the video reference and every instructional field; keep assignment prescription overrides separate from catalog defaults and freeze the published content/version.
 
 ## Placement
 
@@ -52,3 +57,9 @@ npm run build
 ```
 
 For behavior changes, manually verify role flows, navigation return paths, reload persistence, empty/error states, permissions, and phone/full preview modes.
+
+For the personalized MVP, verify the full invite-to-workout path with distinct coach and student accounts. Include capacity-full, concurrent invitation, expired/cancelled invitation, wrong-tenant, draft visibility, and student-only-own-assignment cases. Group-class booking and class-capacity validation are out of scope until CU-10.
+
+## Required Closeout Task
+
+For every code, schema, test, configuration, or documentation change, review and update `project-status.md` in the same work item. Record only verified state and validation; update the next step when dependencies change. If the work does not change project status, explicitly confirm the snapshot remains current rather than making a noise-only edit.

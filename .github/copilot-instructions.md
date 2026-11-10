@@ -4,6 +4,7 @@ This is a React 18 + Vite 5 + TypeScript + Tailwind CSS application.
 
 Before changing architecture or adding a feature, read `.github/skills/ags-project-architecture/SKILL.md`.
 Read the relevant skill reference when the task touches product cases, data/state, visual design, implementation workflow, or quality review.
+Read `.github/skills/ags-project-architecture/references/project-status.md` before planning or implementing work; it is the current implementation snapshot, not a replacement for the detailed references.
 
 ## Mandatory rules
 
@@ -17,8 +18,12 @@ Read the relevant skill reference when the task touches product cases, data/stat
 - Treat the product as a multi-tenant SaaS: tenant scope, actor role, profile status, and feature flags are part of every protected feature.
 - Never treat client-side role switching or hidden navigation as authorization; future access control must be enforced server-side with tenant-aware policies.
 - RLS must block tenant data for inactive profiles and suspended tenants; self-profile status may remain readable for the blocked message, and active coaches may manage inactive profiles in their own active tenant.
-- Map new work to a documented use case (CU-00 through CU-09) and preserve its actor, tenant, state, and acceptance behavior.
+- Map new work to a documented use case (CU-00 through proposed CU-10) and preserve its actor, tenant, state, and acceptance behavior. Current priority is CU-01B email invitations, CU-02 tenant-owned exercises, CU-03 personalized assignment/publication, and CU-04 student execution/check-off. Defer group-class capacity, scheduling, and booking until this personalized workflow is complete.
+- CU-01B invitations must use a coach-facing email form backed by a trusted server-side flow; never expose service-role credentials or let the browser choose invite role/tenant. Treat `tenants.max_clients` as the gym-wide member limit (minimum 1), distinct from future per-class capacity. The current implementation counts personalized members only; extend it to all member tracks before group-class users are enabled. Enforce capacity atomically, including pending invitations.
+- A CU-01B invitation joins a person to the gym and grants app access; it is not a class booking. Current implementation is personalized-only. A member may ultimately have both services under one identity: prioritize published coach-assigned programming and keep group classes separate, using server-side entitlements rather than a `both` role or client role switching. Do not expose group-class discovery/booking until CU-10 exists.
 - Routines must eventually be scoped to tenant, student, and date; progress must preserve target load, actual load, RPE, completion, and history as separate concepts.
+- Preserve the full exercise contract (name, prescription defaults, duration/rest, emoji, muscles, instructions, tips, difficulty, and video reference) from library through published routine and student execution; assignment overrides must not mutate catalog defaults.
+- Keep mock and Supabase-local data modes explicit behind repository contracts during migration. Do not silently fall back to mocks on database errors; seed stable sample catalog data idempotently only after schema/RLS exists, and create local Auth users only through development scripts.
 - Offline workout behavior requires an explicit sync/conflict strategy; do not silently treat localStorage as a database.
 - Apply DRY and reuse: search existing components, hooks, domain functions, repository methods, and types before creating new modules.
 - Keep modules decoupled by responsibility: screens do not call SDKs or browser storage directly, and domain code does not depend on React.
@@ -30,6 +35,7 @@ Read the relevant skill reference when the task touches product cases, data/stat
 - Tenant branding from Supabase must use the typed and validated theme contract mapped to controlled CSS variables; never inject arbitrary CSS or pass raw tenant records into components.
 - Preserve the existing Spanish UI and responsive phone/full preview behavior.
 - Prefer small, reversible changes. Do not refactor unrelated code.
+- Required closeout task: after every code, SQL, test, configuration, or documentation change, review and update `references/project-status.md` in the same work item. Keep case statuses, verified validation, next dependency, and committed/uncommitted state accurate; if there is no status delta, explicitly confirm it remains current without a noise-only edit.
 - After edits, run `npm run lint`, `npm run typecheck`, and `npm run build`.
 - When changing SQL migrations, grants, RLS, or database functions, also add/update pgTAP tests and run `npx supabase test db` against the local stack.
 - When changing CU-01 auth/session/profile behavior, run `scripts/smoke-cu01-local.ps1`; it must use local Supabase only, verify signup stays disabled, and clean up its temporary user/profile.

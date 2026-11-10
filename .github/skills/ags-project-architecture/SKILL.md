@@ -34,17 +34,22 @@ Target feature areas are introduced incrementally under `src/features/` when a u
 
 ## Product Context
 
-AGS GluteHouse is a multi-tenant fitness SaaS. The product specification defines `CU-00` through `CU-09`, with tenants identified by subdomain and users in roles `super_admin`, `coach_admin`, `user_personalized`, and future `user_general`.
+AGS GluteHouse is a multi-tenant fitness SaaS. The product specification defines `CU-00` through `CU-10`, with tenants identified by subdomain and users in roles `super_admin`, `coach_admin`, `user_personalized`, and deferred `user_general`. The current MVP priority is the complete personalized-training path: coach invitation by email, secure account activation, per-user routine assignment/publication, and student execution/check-off. Group-class capacity, scheduling, and booking are deferred.
+
+A single gym member may ultimately have personalized access, group-class access, or both under one Auth identity. Model service access as server-authorized entitlements, not a `both` role. When both are active, personalized programming is the primary home and group classes remain a separate destination. Current migrations/UI still support personalized access only.
 
 Every protected feature must consider tenant scope, actor role, profile status, tenant status, and feature flags. Client-side role switching is demo tooling, never authorization. Routines, progress, templates, offline events, themes, and authentication must follow the product cases rather than the current mock UI.
 
 Read the relevant reference before implementation:
 
 - Product actors, cases, invariants: [references/product-context.md](references/product-context.md)
+- Current implementation snapshot, gaps, and next milestone: [references/project-status.md](references/project-status.md)
 - Data, state, routines, progress, offline: [references/data-contracts.md](references/data-contracts.md)
 - Fonts, colors, tokens, tenant themes: [references/visual-system.md](references/visual-system.md)
 - Implementation sequence and placement: [references/feature-workflow.md](references/feature-workflow.md)
 - Final review criteria: [references/quality-checklist.md](references/quality-checklist.md)
+
+The project-status reference is a living record: review it before planning and update it at closeout for every code, schema, test, configuration, or documentation change. Keep it evidence-based and distinguish committed state from local changes.
 
 ## Layer Boundaries
 
@@ -92,6 +97,10 @@ Dependencies flow inward. Screens may use feature hooks and repositories; domain
 Keep Auth calls in `src/data/authRepository.ts` and session lifecycle in `src/app/session/AuthProvider.tsx`. Use only public Vite client configuration, never service-role keys. Resolve tenant before login, load and subscribe to session changes, validate profile/tenant status, preserve silent refresh, and keep session separate from profile role and tenant state. Public signup stays disabled until trusted invitation/provisioning exists.
 
 CU-00 and the core CU-01 password-auth flow have local vertical slices: subdomain parsing, public RPC resolution, typed response validation, local theme variables, persistent session, verified user/profile lookup, signup denial, logout, and active/suspended/not-found/error states. `.env.local` is local-only; `.env.example` documents variables. A development default tenant may be used on localhost. Production root domains must use the neutral platform fallback. Remote linking, profile invitation provisioning, and production auth configuration remain pending.
+
+The current local database contains tenants/profiles only; business screens still use mocks and localStorage. Keep a working mock adapter while adding a selectable Supabase-local mode per vertical slice. Both modes must share repository contracts, and database failures must not silently fall back to mocks. Seed idempotent catalog fixtures only after schema/RLS exists; create test Auth users through local-only scripts, not SQL seeds. For exercises, preserve the complete `Exercise` contract, including instructional fields and `videoUrl` when supplied, through library, published assignment, and student execution.
+
+For CU-01B, invitation UI belongs to the coach workflow but account creation, email delivery, tenant/role assignment, and the `max_clients` capacity transaction must be handled by trusted server-side code. `tenants.max_clients` is the gym-wide member limit (minimum 1), not group-class capacity; current CU-01B only counts personalized members, so extend the calculation before group-only users are enabled. Migration 003 enforces the minimum; never rewrite applied migration history. Group classes and per-class capacity are deferred to proposed CU-10.
 
 ## Validation
 

@@ -17,6 +17,17 @@
 - Are drafts, published data, offline events, failures, and synchronized records distinct?
 - Are target load, actual load, RPE, completion, and history distinct?
 - Are external and persisted payloads validated?
+- Does an assigned exercise retain its complete catalog detail (including instructions, tips, difficulty, and video reference) while keeping prescription overrides separate?
+- Are mock and Supabase modes explicit, with no silent fallback or accidental mixing of data sources?
+- Are local sample seeds idempotent, tenant-scoped, stable-ID, and free of fake Auth users or real personal data?
+- Are personalized assignments scoped to tenant, student, and date, with drafts hidden from students and published work visible only to its owner?
+- Does invitation provisioning happen server-side, with role/tenant assigned by trusted code and capacity enforced atomically?
+- Is `tenants.max_clients` always at least 1, with pending membership onboarding counted consistently? Keep this gym limit separate from future per-class capacity.
+- Does invitation acceptance grant gym app access without booking a class, and does post-login navigation follow the server-authorized service track?
+- Does personalized programming take priority for personalized members, while group-only discovery/booking remains gated until CU-10 is implemented?
+- Can one member hold both service entitlements under one Auth identity, with personalized programming primary and group-class data/navigation separate?
+- Is gym member capacity counted once per unique member, regardless of the number of service entitlements?
+- Is the responsible coach relationship explicit rather than inferred permanently from who sent the invitation?
 
 ## UI and Visuals
 
@@ -32,6 +43,7 @@
 - Is authorization enforced server-side rather than by hidden navigation?
 - Is tenant isolation enforced through backend policies such as RLS?
 - Do RLS tests cover inactive profiles and suspended tenants, including allowed self-status and coach administration reads?
+- Do invitation/capacity tests cover unauthorized coaches, wrong tenant, full capacity, concurrent requests, and expired/cancelled invitations?
 - Are only public client configuration values exposed to Vite?
 - Are service-role keys and secrets excluded?
 - Is the integration the simplest functional approach that preserves a replacement path?
@@ -40,9 +52,10 @@
 
 - `npx supabase test db` passes for database migrations and RLS changes.
 - `scripts/smoke-cu01-local.ps1` passes for local Auth/session/profile changes and cleans up its temporary account.
-- `scripts/smoke-cu01-local.ps1` passes for local Auth/session/profile changes.
+- `npm test` passes for unit tests covering the changed behavior.
 - `npm run lint` passes.
 - `npm run typecheck` passes.
 - `npm run build` passes.
 - Relevant behavior was manually tested.
+- The personalized MVP is verified end to end from invitation email through a student completing a published routine; group-class flows are not represented as delivered.
 - No unrelated files or generated artifacts were changed.
