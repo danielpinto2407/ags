@@ -15,6 +15,7 @@ Read `.github/skills/ags-project-architecture/references/project-status.md` befo
 - Do not import `mockData` directly from screens or components.
 - Do not introduce a global state library unless a concrete cross-feature requirement justifies it.
 - Keep Supabase integrations behind `src/data/`; local CU-00 resolution and CU-01 password Auth/session/profile validation are implemented. Keep public signup disabled until secured provisioning exists; do not link a remote project without environment/RLS review.
+- Put privileged Supabase operations (Auth Admin, server-only keys, invitation provisioning) in `supabase/functions/`; browser code calls them through a repository and never receives service-role credentials.
 - Treat the product as a multi-tenant SaaS: tenant scope, actor role, profile status, and feature flags are part of every protected feature.
 - Never treat client-side role switching or hidden navigation as authorization; future access control must be enforced server-side with tenant-aware policies.
 - RLS must block tenant data for inactive profiles and suspended tenants; self-profile status may remain readable for the blocked message, and active coaches may manage inactive profiles in their own active tenant.

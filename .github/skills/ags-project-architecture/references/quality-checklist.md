@@ -24,6 +24,8 @@
 - Does invitation provisioning happen server-side, with role/tenant assigned by trusted code and capacity enforced atomically?
 - Is `tenants.max_clients` always at least 1, with pending membership onboarding counted consistently? Keep this gym limit separate from future per-class capacity.
 - Does invitation acceptance grant gym app access without booking a class, and does post-login navigation follow the server-authorized service track?
+- Does invitation acceptance require the member to set a reusable password, verify the invitation email/session, and allow a subsequent password login?
+- Are demo workout routines/metrics clearly separated from actual member assignments after onboarding?
 - Does personalized programming take priority for personalized members, while group-only discovery/booking remains gated until CU-10 is implemented?
 - Can one member hold both service entitlements under one Auth identity, with personalized programming primary and group-class data/navigation separate?
 - Is gym member capacity counted once per unique member, regardless of the number of service entitlements?

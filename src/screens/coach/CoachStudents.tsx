@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, ChevronRight, Plus } from 'lucide-react';
 import Header from '@/components/Header';
+import InviteMemberModal from '@/components/InviteMemberModal';
 import { fitnessRepository } from '@/data/fitnessRepository';
 import type { Student } from '@/types';
 
@@ -12,6 +13,7 @@ export default function CoachStudents({ onStudentSelect }: CoachStudentsProps) {
   const students = fitnessRepository.getStudents();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'resting' | 'inactive'>('all');
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const filtered = students.filter((s) => {
     const matchesQuery = s.name.toLowerCase().includes(query.toLowerCase());
@@ -102,10 +104,15 @@ export default function CoachStudents({ onStudentSelect }: CoachStudentsProps) {
       </div>
 
       {/* Add Student */}
-      <button className="w-full flex items-center justify-center gap-2 p-3.5 border-2 border-dashed border-zinc-800 rounded-2xl text-zinc-500 hover:text-brand-400 hover:border-brand-800 transition-colors text-sm font-semibold">
+      <button
+        className="w-full flex items-center justify-center gap-2 p-3.5 border-2 border-dashed border-zinc-800 rounded-2xl text-zinc-500 hover:text-brand-400 hover:border-brand-800 transition-colors text-sm font-semibold"
+        onClick={() => setShowInviteModal(true)}
+      >
         <Plus size={16} />
-        Añadir nueva alumna
+        Invitar alumna
       </button>
+
+      {showInviteModal && <InviteMemberModal onClose={() => setShowInviteModal(false)} />}
     </div>
   );
 }

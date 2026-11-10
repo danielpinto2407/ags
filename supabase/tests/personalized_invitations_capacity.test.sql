@@ -5,7 +5,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(21);
+select extensions.plan(25);
 
 insert into public.tenants (id, name, subdomain, status, max_clients)
 values
@@ -118,6 +118,10 @@ select extensions.throws_ok(
   'active members plus pending invitations cannot exceed tenant capacity'
 );
 
+update public.tenants
+set max_clients = 3
+where id = 'e0000000-0000-4000-8000-000000000001';
+
 update public.tenant_invitations
 set created_at = pg_catalog.now() - interval '8 days',
     expires_at = pg_catalog.now() - interval '1 minute'
@@ -132,6 +136,40 @@ select extensions.is(
   ) is not null,
   true,
   'an expired, unlinked onboarding attempt releases its temporary membership allocation'
+);
+
+select extensions.is(
+  public.prepare_personalized_invitation(
+    'e0000000-0000-4000-8000-000000000001',
+    'e1000000-0000-4000-8000-000000000001',
+    'failed@example.test'
+  ) is not null,
+  true,
+  'a new onboarding attempt reserves capacity before Auth invite delivery'
+);
+
+select extensions.is(
+  public.fail_personalized_invitation(
+    (select id from public.tenant_invitations where email = 'failed@example.test' and status = 'PENDING')
+  ),
+  true,
+  'trusted server can mark an unlinked failed Auth invite'
+);
+
+select extensions.is(
+  (select status from public.tenant_invitations where email = 'failed@example.test'),
+  'FAILED',
+  'failed Auth invitation is no longer pending'
+);
+
+select extensions.is(
+  public.prepare_personalized_invitation(
+    'e0000000-0000-4000-8000-000000000001',
+    'e1000000-0000-4000-8000-000000000001',
+    'after-failure@example.test'
+  ) is not null,
+  true,
+  'a failed unlinked invitation releases its temporary member place'
 );
 
 select extensions.throws_ok(
@@ -163,8 +201,8 @@ select extensions.is(
       and status = 'PENDING'
       and expires_at > pg_catalog.now()
   ),
-  1,
-  'only the later active pending onboarding record remains after expiration'
+  2,
+  'only active pending onboarding records remain after expiry and failed delivery'
 );
 
 select extensions.is(

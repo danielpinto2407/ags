@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import LoginScreen from '@/screens/LoginScreen';
 import AppShell from '@/app/AppShell';
 import ScreenRenderer from '@/app/ScreenRenderer';
+import InvitationAcceptanceScreen from '@/screens/InvitationAcceptanceScreen';
 import { useTenantContext } from '@/app/tenant/tenantContext';
 import { useAppNavigation } from '@/app/useAppNavigation';
 import { useAuth } from '@/app/session/authContext';
@@ -29,6 +30,7 @@ function TenantMessage({ title, message, action }: { title: string; message: str
 export default function App() {
   const { state: authState, signIn, signOut, retryProfile } = useAuth();
   const { state: tenantState, retry } = useTenantContext();
+  const invitationId = new URLSearchParams(window.location.search).get('invitation_id');
   const role = authState.status === 'authenticated' ? authState.productRole : null;
   const navigation = useAppNavigation(role);
 
@@ -89,6 +91,18 @@ export default function App() {
   }
 
   if (authState.status === 'blocked') {
+    if (invitationId && authState.message.includes('todavía no tiene un perfil asignado')) {
+      return (
+        <div className="tenant-app min-h-screen w-full" style={tenantThemeStyle(theme)}>
+          <InvitationAcceptanceScreen
+            invitationId={invitationId}
+            gymName={tenant?.name ?? 'GluteHouse'}
+            onAccepted={retryProfile}
+          />
+        </div>
+      );
+    }
+
     return (
       <TenantMessage
         title="Acceso no disponible"
