@@ -9,9 +9,15 @@ interface TenantProviderProps {
 
 const rootDomain = import.meta.env.VITE_ROOT_DOMAIN ?? '';
 const localDefaultSubdomain = import.meta.env.VITE_DEFAULT_TENANT_SUBDOMAIN ?? '';
+const previewTenantHostname = import.meta.env.VITE_PREVIEW_TENANT_HOSTNAME ?? '';
 
 export function TenantProvider({ children }: TenantProviderProps) {
-  const subdomain = getTenantSubdomain(window.location.hostname, rootDomain, localDefaultSubdomain);
+  const subdomain = getTenantSubdomain(
+    window.location.hostname,
+    rootDomain,
+    localDefaultSubdomain,
+    previewTenantHostname
+  );
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<TenantBootstrapState>(() => (
     subdomain ? { status: 'loading' } : { status: 'platform' }

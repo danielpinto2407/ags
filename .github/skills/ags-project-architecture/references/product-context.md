@@ -43,14 +43,16 @@ The current acceptance path is personalized invite email -> account activation -
 
 ### Invited Member Experience
 
-- An invitation means “join this gym and get application access”; it is not a class booking or a request to reserve a workout slot. The invitee activates the account once, then remains a gym member until the coach-admin inactivates the profile.
-- CU-01B and the current MVP still support personalized invitations only. Once CU-10 is ready, the coach can grant personalized access, group-class access, or both in one invitation; do not send duplicate invitations or create duplicate Auth accounts for a member with both services.
-- A personalized member lands on the coach-assigned programming for today or the next scheduled date, with published exercises, completion state, and exercise details/video. Drafts are hidden. If no routine is published, show a clear “awaiting coach programming” state. The member does not reserve a personalized class; the coach schedules and assigns the work.
-- The current post-acceptance student home still contains demo routines and metrics. Do not treat those values as the newly invited member's actual programming; CU-03/CU-04 must replace them with tenant/student-scoped data and an empty “awaiting coach programming” state.
-- A group-only member lands on group-class discovery, schedules, availability, and booking once CU-10 exists. A member with both accesses sees personalized programming as the primary home and a separate “Clases grupales” destination; each schedule and its progress/booking state stays independent.
-- Keep `Profile.role` as the application actor, not a `both` variant. Use server-owned service access/entitlement records to determine which routes and data the member may access. The current code blocks `user_general`, and `groupClasses` is disabled, so neither group-only nor dual experience is available yet.
-- Record the responsible coach explicitly for personalized membership/assignments. `invited_by` is an audit field, not necessarily the permanent coach if responsibility can be reassigned; the current profile model has no assigned-coach relationship yet.
 
+## Recommended Global Sender Decision for Production
+
+Use one platform-controlled transactional sender for all gyms, for example `AGS GluteHouse <invitaciones@auth.tugimnasioapp.com>` once ownership of that domain is confirmed and SPF, DKIM, and DMARC are configured. Invitation subject/body should clearly show the gym name and coach who invited the member. Use a gym/coach `Reply-To` only after a trusted contact email is part of the server-side profile contract. Coaches must not supply arbitrary From addresses. This keeps domain verification, reputation, credentials, bounce handling, and templates under platform control while preserving each gym's identity in the message.
+
+Per-gym From addresses are deferred. They require each gym to prove domain ownership and configure sender authentication; do not offer them as a simple coach setting. If later required, implement a verified tenant sender-domain onboarding flow with server-side credentials and delivery monitoring.
+
+## Local Gmail SMTP for Testing
+
+The Gmail SMTP helper is a local delivery test only. It sends from the developer's Gmail account to a recipient entered in the invitation form; it does not imply per-gym senders or define the production From identity. Use a Google App Password (never the normal Gmail password) and remove/revoke it after testing if no longer needed. Production Auth email must use the platform-controlled transactional sender above.
 ## Exercise And Mock-Data Preservation
 
 The current `Exercise` contract includes `id`, `name`, `series`, `reps`, `weight`, optional `workDuration`, `rest`, `emoji`, `muscles`, `instructions`, `tips`, `difficulty`, and optional `videoUrl`. Preserve every field when moving an exercise from the coach library into an assignment and then into the student's routine/detail view. Assignment-specific prescription values may override defaults, but must not mutate the catalog exercise or discard its instructional/media fields. A published assignment must retain the exact exercise details and video reference used when it was published, through an immutable version or an equivalent snapshot. `videoUrl` is currently optional; retain that contract and define a clear no-video UI state unless a later product decision makes video mandatory.
@@ -69,6 +71,8 @@ Seed safe, stable-ID sample exercises idempotently after the exercise schema exi
 ## Local Authentication Note
 
 With the current local configuration, `localhost` resolves to the default tenant (`VITE_DEFAULT_TENANT_SUBDOMAIN=ags`). A tenant-less `super_admin` session therefore cannot be exercised there; validate its platform placeholder only in a platform-host context that resolves no tenant. Production domain/DNS and auth configuration remain pending.
+
+For temporary Vercel Preview testing before a custom domain exists, `VITE_PREVIEW_TENANT_HOSTNAME` may map one exact preview hostname (currently `ags-roan-iota.vercel.app`) to the configured default tenant. Set it only in Vercel's Preview environment. Production tenant routing remains subdomain-based (`ags.tugimnasioapp.com`) and must not use a broad `vercel.app` wildcard.
 
 ## Product Invariants
 

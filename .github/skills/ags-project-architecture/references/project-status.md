@@ -8,16 +8,18 @@ This is the living implementation snapshot. Product invariants and detailed arch
 
 - Branch: `develop`.
 - Last committed implementation baseline: `48cb974` (`feat(auth): add CU-01 session, profile access and login flow`).
-- Last committed checkpoint: `e96314e` (`feat(cu01b): add member invitation capacity foundation`) on `origin/develop`. New Edge Function work after that checkpoint is local and uncommitted.
+- Last committed checkpoint: `bc775cf` (`feat(cu01b): complete local personalized invitation onboarding`) on `origin/develop`. SMTP preparation, Vercel preview-host mapping, and Supabase/Vercel setup guidance are currently local and uncommitted.
 - Stack: React 18, Vite 5, TypeScript, Tailwind 3, Supabase JS/CLI.
 - Local Supabase persists tenant/profile foundation plus CU-01B onboarding. Applied migrations are `001_create_tenants_and_profiles.sql` through `005_fail_unlinked_personalized_invitation.sql`; pgTAP covers tenant/profile RLS, capacity, acceptance, and failed onboarding cleanup.
-- `.env.local` is local-only and ignored. Public signup is disabled. No remote Supabase project has been linked.
+- `.env.local` is local-only and ignored. Public signup is disabled. Supabase project `vmrcwizgluzvsmmkkhnt` was created by the user but is not yet linked or provisioned with migrations/functions.
+- Preview hostname `ags-roan-iota.vercel.app` maps to tenant `ags` only when explicitly set as `VITE_PREVIEW_TENANT_HOSTNAME`; use the exact hostname only in Vercel Preview/temporary test environments. Production should use `ags.tugimnasioapp.com` after DNS/domain setup.
+- Local SMTP remains on Mailpit. A Gmail SMTP attempt was blocked because Google's App Password option is unavailable for the selected account; no SMTP credentials were entered or saved. Choose an eligible SMTP provider before attempting real delivery. Production decision: one platform-controlled, authenticated sender for all gyms; a personal Gmail account is not the production identity.
 
 ## Use-Case Status
 
 | Case | Current status | Remaining work / next dependency |
 |---|---|---|
-| CU-00 Tenant resolution and theme | Local slice implemented and browser-checked | Production DNS, root-domain/platform host, remote configuration |
+| CU-00 Tenant resolution and theme | Local slice implemented; exact-host Vercel preview override implemented but not deployed | Set Vercel envs, configure remote Supabase tenant, then production DNS/root-domain/platform host |
 | CU-01 Authentication and profile access | Local password sign-in/session/profile slice implemented; smoke and browser login verified | Trusted invitation provisioning, production email/auth setup |
 | CU-01B Coach invitation and personalized-user onboarding | Partial: migrations 003-005, trusted Edge Functions, coach invite UI, and invitee acceptance/password setup implemented; complete local browser flow verified | Cancellation/inactivation workflow, failure-path HTTP integration test, concurrency integration test, and replace post-login student mock programming |
 | CU-02 Exercise library | UI and fixtures only; not persisted | Tenant-owned schema/RLS/repository/local seed; complete create/edit form and validated video reference |
@@ -51,6 +53,7 @@ This is the living implementation snapshot. Product invariants and detailed arch
 - Existing samples use generic YouTube URLs; do not present them as valid instructional videos. Decide approved external HTTPS URLs versus Supabase Storage when implementing CU-02, then validate/play the chosen format.
 - Templates are optional for the first direct student/date assignment. Offline sync is deferred; the first execution flow is online and persists workout/session data.
 - Current localhost defaults to tenant `ags`, so it cannot exercise a tenant-less `super_admin` platform context without a separate host setup.
+- Vercel configuration still needs `VITE_SUPABASE_URL=https://vmrcwizgluzvsmmkkhnt.supabase.co`, the project's publishable/anon key, `VITE_ROOT_DOMAIN=tugimnasioapp.com`, `VITE_DEFAULT_TENANT_SUBDOMAIN=ags`, and `VITE_PREVIEW_TENANT_HOSTNAME=ags-roan-iota.vercel.app`. Do not place service-role or secret keys in Vercel frontend variables. The hosted database also needs migrations 001-005, the AGS tenant, a securely provisioned coach profile, deployed invitation functions/secrets, Auth redirect allowlist, and hosted SMTP before a real invitation can complete.
 
 ## Immediate Next Work
 
@@ -58,15 +61,20 @@ This is the living implementation snapshot. Product invariants and detailed arch
 2. Implement coach-managed member inactivation and invitation cancellation/status viewing; add HTTP integration coverage for delivery failure and concurrency at the final member place.
 3. Implement CU-02 exercise persistence, then CU-03 per-member assignments/publication and CU-04 execution. Until that data path exists, show a truthful no-programming state for new members instead of mock routines/metrics.
 4. Continue to CU-04B history from persisted workout logs. Preserve all exercise/video fields and keep CU-10 deferred.
+5. Link/configure hosted Supabase: apply migrations 001-005, provision the AGS tenant and coach securely, deploy both invitation functions with production redirect/CORS settings, and configure hosted SMTP before testing real invitations.
 
 Open implementation decisions before CU-10: lifecycle for disabling one service versus the whole member account, and the exact `member_service_access` schema/RLS. The product decision is that dual access is allowed and each unique member consumes one `max_clients` place.
 
 ## Validation And Local Workflow
 
 - Latest validation: `npx supabase test db` passed 58/58; `npm test` passed 30/30; lint, typecheck, and build passed. Local Edge Functions compiled. Browser E2E: coach sent invitation, invitee signed in, completed profile and set password, reached student app, signed out and signed in again with that password. Temporary users/invitation were deleted. Existing warnings: TypeScript version is beyond the current typescript-eslint support range; Vite/esbuild deprecation and Browserslist database warnings remain.
+- Latest preview-host validation: Vercel exact-host mapping tests pass; full frontend suite has 32 tests passing, typecheck/lint/build pass. Remote Vercel/Supabase variables and schema are not yet configured.
 - Database/RLS changes: `npx supabase test db` against the local stack; test both permitted and denied tenant/role/status paths.
 - CU-01 auth/session changes: `scripts/smoke-cu01-local.ps1`; browser login accounts use `scripts/dev-test-user.ps1` and must be deleted after checks.
 - Local SQL caveat: `supabase db query` runs one statement at a time; use local `psql` for controlled multi-statement scripts. Run Supabase commands from the project directory.
+- For an external delivery test, configure an SMTP provider with a verified sender, keep credentials out of Git/Vite, restart local Supabase without deleting volumes, and restart `npx supabase functions serve` afterward.
+- Before production email delivery, provision a platform-owned sending domain and configure SPF, DKIM, and DMARC. Per-gym From addresses are deferred until domain ownership verification and secure credential management exist.
+- Vercel preview can use an exact-host tenant mapping; production still requires the intended custom tenant domain and Supabase Auth redirect allowlist.
 - Do not commit `.env.local`, secrets, `node_modules`, or `dist`.
 
 ## Required Status-Update Task

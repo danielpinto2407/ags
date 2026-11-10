@@ -3,11 +3,17 @@ import { isTenantSubdomain } from '@/domain/tenant';
 export function getTenantSubdomain(
   hostname: string,
   rootDomain: string,
-  localDefaultSubdomain: string
+  localDefaultSubdomain: string,
+  previewTenantHostname = ''
 ): string | null {
   const normalizedHost = hostname.trim().toLowerCase().replace(/\.$/, '');
   const normalizedRoot = rootDomain.trim().toLowerCase().replace(/^\*\./, '').replace(/\.$/, '');
   const defaultSubdomain = localDefaultSubdomain.trim().toLowerCase();
+  const normalizedPreviewHost = previewTenantHostname.trim().toLowerCase().replace(/\.$/, '');
+
+  if (normalizedPreviewHost && normalizedHost === normalizedPreviewHost) {
+    return isTenantSubdomain(defaultSubdomain) ? defaultSubdomain : null;
+  }
 
   if (normalizedHost === 'localhost' || normalizedHost === '127.0.0.1' || normalizedHost === '::1') {
     return isTenantSubdomain(defaultSubdomain) ? defaultSubdomain : null;
