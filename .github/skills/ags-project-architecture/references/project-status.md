@@ -8,11 +8,12 @@ This is the living implementation snapshot. Product invariants and detailed arch
 
 - Branch: `develop`.
 - Last committed implementation baseline: `48cb974` (`feat(auth): add CU-01 session, profile access and login flow`).
-- Last committed checkpoint: `bc775cf` (`feat(cu01b): complete local personalized invitation onboarding`) on `origin/develop`. SMTP preparation, Vercel preview-host mapping, and Supabase/Vercel setup guidance are currently local and uncommitted.
+- Last committed checkpoint: `231f52a` (`feat(tenant): map exact Vercel preview host`) on `origin/develop`. The exact-host mapping is published. Gmail SMTP attempt remains unconfigured; current documentation/status changes after this checkpoint must be committed separately.
 - Stack: React 18, Vite 5, TypeScript, Tailwind 3, Supabase JS/CLI.
 - Local Supabase persists tenant/profile foundation plus CU-01B onboarding. Applied migrations are `001_create_tenants_and_profiles.sql` through `005_fail_unlinked_personalized_invitation.sql`; pgTAP covers tenant/profile RLS, capacity, acceptance, and failed onboarding cleanup.
 - `.env.local` is local-only and ignored. Public signup is disabled. Supabase project `vmrcwizgluzvsmmkkhnt` was created by the user but is not yet linked or provisioned with migrations/functions.
 - Preview hostname `ags-roan-iota.vercel.app` maps to tenant `ags` only when explicitly set as `VITE_PREVIEW_TENANT_HOSTNAME`; use the exact hostname only in Vercel Preview/temporary test environments. Production should use `ags.tugimnasioapp.com` after DNS/domain setup.
+- Latest Vercel preview check loads the login UI but still displays generic `GluteHouse`, so `VITE_PREVIEW_TENANT_HOSTNAME=ags-roan-iota.vercel.app` is not active in that deployment yet or Preview needs a redeploy after adding it.
 - Local SMTP remains on Mailpit. A Gmail SMTP attempt was blocked because Google's App Password option is unavailable for the selected account; no SMTP credentials were entered or saved. Choose an eligible SMTP provider before attempting real delivery. Production decision: one platform-controlled, authenticated sender for all gyms; a personal Gmail account is not the production identity.
 
 ## Use-Case Status
