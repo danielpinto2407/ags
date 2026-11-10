@@ -48,6 +48,7 @@
 - Do invitation/capacity tests cover unauthorized coaches, wrong tenant, full capacity, concurrent requests, and expired/cancelled invitations?
 - Are only public client configuration values exposed to Vite?
 - Are service-role keys and secrets excluded?
+- Do production Auth emails use a platform-controlled, domain-authenticated sender rather than a tenant-supplied From address? Are local Gmail credentials isolated from Vite and Git?
 - Is the integration the simplest functional approach that preserves a replacement path?
 
 ## Verification

@@ -8,6 +8,24 @@ describe('getTenantSubdomain', () => {
     expect(getTenantSubdomain('localhost', rootDomain, 'ags')).toBe('ags');
   });
 
+  it('maps only the explicitly configured Vercel preview host to its tenant', () => {
+    expect(getTenantSubdomain(
+      'ags-roan-iota.vercel.app',
+      rootDomain,
+      'ags',
+      'ags-roan-iota.vercel.app'
+    )).toBe('ags');
+  });
+
+  it('does not apply the Vercel preview tenant mapping to a different host', () => {
+    expect(getTenantSubdomain(
+      'another-project.vercel.app',
+      rootDomain,
+      'ags',
+      'ags-roan-iota.vercel.app'
+    )).toBeNull();
+  });
+
   it('reads a tenant slug from a local subdomain', () => {
     expect(getTenantSubdomain('ags.localhost', rootDomain, '')).toBe('ags');
   });
