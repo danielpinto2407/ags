@@ -14,7 +14,7 @@ Use this skill as the canonical project context before changing code. Keep the a
 - React 18, Vite 5, TypeScript strict mode, Tailwind CSS 3.
 - Lucide React and ESLint 9 with TypeScript/React Hooks rules.
 - Business data still uses local fixtures and browser `localStorage`.
-- `@supabase/supabase-js` is integrated only for the public CU-00 tenant resolver against local Supabase; Supabase Auth and remote project linking are not implemented.
+- `@supabase/supabase-js` is integrated with local CU-00 tenant resolution and CU-01 password sign-in/session/profile validation; remote project linking and trusted profile provisioning are not implemented.
 
 ## Current Structure
 
@@ -89,9 +89,9 @@ Dependencies flow inward. Screens may use feature hooks and repositories; domain
 
 ## Supabase Direction
 
-When Supabase Auth is introduced, isolate the auth service under `src/data/` or an auth feature; the browser client and public CU-00 resolver already exist under `src/data/`. Use only public Vite client configuration, never service-role keys. Resolve tenant before login, load and subscribe to session changes, validate profile/tenant status, preserve silent refresh, and keep session separate from profile role and tenant state.
+Keep Auth calls in `src/data/authRepository.ts` and session lifecycle in `src/app/session/AuthProvider.tsx`. Use only public Vite client configuration, never service-role keys. Resolve tenant before login, load and subscribe to session changes, validate profile/tenant status, preserve silent refresh, and keep session separate from profile role and tenant state. Public signup stays disabled until trusted invitation/provisioning exists.
 
-CU-00 has a local vertical slice: subdomain parsing, public RPC resolution, typed response validation, local theme variables, and active/suspended/not-found/error states. `.env.local` is local-only; `.env.example` documents variables. A development default tenant may be used on localhost. Production root domains must use the neutral platform fallback.
+CU-00 and the core CU-01 password-auth flow have local vertical slices: subdomain parsing, public RPC resolution, typed response validation, local theme variables, persistent session, verified user/profile lookup, signup denial, logout, and active/suspended/not-found/error states. `.env.local` is local-only; `.env.example` documents variables. A development default tenant may be used on localhost. Production root domains must use the neutral platform fallback. Remote linking, profile invitation provisioning, and production auth configuration remain pending.
 
 ## Validation
 

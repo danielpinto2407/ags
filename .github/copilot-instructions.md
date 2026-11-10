@@ -13,7 +13,7 @@ Read the relevant skill reference when the task touches product cases, data/stat
 - Screens under `src/screens/` compose UI and feature behavior; shared visual pieces belong under `src/components/`.
 - Do not import `mockData` directly from screens or components.
 - Do not introduce a global state library unless a concrete cross-feature requirement justifies it.
-- Keep Supabase integrations behind `src/data/`; the only current integration is the public CU-00 tenant resolver. Do not add Supabase Auth or remote project linking without a defined profile/session contract and environment strategy.
+- Keep Supabase integrations behind `src/data/`; local CU-00 resolution and CU-01 password Auth/session/profile validation are implemented. Keep public signup disabled until secured provisioning exists; do not link a remote project without environment/RLS review.
 - Treat the product as a multi-tenant SaaS: tenant scope, actor role, profile status, and feature flags are part of every protected feature.
 - Never treat client-side role switching or hidden navigation as authorization; future access control must be enforced server-side with tenant-aware policies.
 - RLS must block tenant data for inactive profiles and suspended tenants; self-profile status may remain readable for the blocked message, and active coaches may manage inactive profiles in their own active tenant.
@@ -32,4 +32,6 @@ Read the relevant skill reference when the task touches product cases, data/stat
 - Prefer small, reversible changes. Do not refactor unrelated code.
 - After edits, run `npm run lint`, `npm run typecheck`, and `npm run build`.
 - When changing SQL migrations, grants, RLS, or database functions, also add/update pgTAP tests and run `npx supabase test db` against the local stack.
+- When changing CU-01 auth/session/profile behavior, run `scripts/smoke-cu01-local.ps1`; it must use local Supabase only, verify signup stays disabled, and clean up its temporary user/profile.
+- For manual browser login checks use `scripts/dev-test-user.ps1 -Action create|delete -Role student|coach` (local Supabase only, throwaway `dev-<role>@example.test` accounts); always delete them afterwards.
 - Never commit secrets, `.env` files, `node_modules`, or `dist`.

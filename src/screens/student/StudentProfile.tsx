@@ -1,7 +1,13 @@
 import { Settings, ChevronRight, Bell, Lock, HelpCircle, LogOut, Heart, Target, Calendar } from 'lucide-react';
 import Header from '@/components/Header';
+import type { Profile } from '@/domain/profile';
 
-export default function StudentProfile() {
+interface StudentProfileProps {
+  profile: Profile;
+  onLogout: () => void;
+}
+
+export default function StudentProfile({ profile, onLogout }: StudentProfileProps) {
   const menuItems = [
     { icon: Bell, label: 'Notificaciones', value: 'Activadas' },
     { icon: Target, label: 'Mi objetivo', value: 'Hipertrofia de glúteos' },
@@ -22,7 +28,7 @@ export default function StudentProfile() {
             👩
           </div>
           <div>
-            <h2 className="text-lg font-display font-bold text-white">Laura Gómez</h2>
+            <h2 className="text-lg font-display font-bold text-white">{profile.full_name}</h2>
             <p className="text-xs text-zinc-500">24 años • 58 kg</p>
             <span className="inline-block mt-1 text-[10px] bg-brand-950/50 text-brand-400 px-2 py-0.5 rounded-full font-semibold border border-brand-900/50">
               Plan Personalizado
@@ -78,7 +84,7 @@ export default function StudentProfile() {
       </div>
 
       {/* Logout */}
-      <button className="w-full flex items-center justify-center gap-2 p-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl text-brand-400 hover:bg-brand-950/30 transition-colors text-sm font-semibold">
+      <button onClick={onLogout} className="w-full flex items-center justify-center gap-2 p-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl text-brand-400 hover:bg-brand-950/30 transition-colors text-sm font-semibold">
         <LogOut size={16} />
         Cerrar Sesión
       </button>

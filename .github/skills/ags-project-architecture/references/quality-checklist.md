@@ -39,6 +39,8 @@
 ## Verification
 
 - `npx supabase test db` passes for database migrations and RLS changes.
+- `scripts/smoke-cu01-local.ps1` passes for local Auth/session/profile changes and cleans up its temporary account.
+- `scripts/smoke-cu01-local.ps1` passes for local Auth/session/profile changes.
 - `npm run lint` passes.
 - `npm run typecheck` passes.
 - `npm run build` passes.

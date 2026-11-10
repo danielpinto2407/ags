@@ -1,8 +1,14 @@
 import { Settings, ChevronRight, Bell, Users, Star, LogOut, Heart, Award, Calendar } from 'lucide-react';
 import Header from '@/components/Header';
 import { fitnessRepository } from '@/data/fitnessRepository';
+import type { Profile } from '@/domain/profile';
 
-export default function CoachProfile() {
+interface CoachProfileProps {
+  profile: Profile;
+  onLogout: () => void;
+}
+
+export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
   const students = fitnessRepository.getStudents();
   const menuItems = [
     { icon: Users, label: 'Gestionar alumnas', value: `${students.length} alumnas` },
@@ -24,7 +30,7 @@ export default function CoachProfile() {
             💪
           </div>
           <div>
-            <h2 className="text-lg font-display font-bold text-white">Andrea Gómez</h2>
+            <h2 className="text-lg font-display font-bold text-white">{profile.full_name}</h2>
             <p className="text-xs text-zinc-500">Especialista en Glúteos</p>
             <span className="inline-block mt-1 text-[10px] bg-brand-950/50 text-brand-400 px-2 py-0.5 rounded-full font-semibold border border-brand-900/50">
               Coach Certificada
@@ -67,7 +73,7 @@ export default function CoachProfile() {
       </div>
 
       {/* Logout */}
-      <button className="w-full flex items-center justify-center gap-2 p-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl text-brand-400 hover:bg-brand-950/30 transition-colors text-sm font-semibold">
+      <button onClick={onLogout} className="w-full flex items-center justify-center gap-2 p-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl text-brand-400 hover:bg-brand-950/30 transition-colors text-sm font-semibold">
         <LogOut size={16} />
         Cerrar Sesión
       </button>

@@ -1,4 +1,5 @@
 import type { AppNavigation } from './useAppNavigation';
+import type { Profile } from '@/domain/profile';
 import StudentHome from '@/screens/student/StudentHome';
 import StudentRoutines from '@/screens/student/StudentRoutines';
 import StudentProgress from '@/screens/student/StudentProgress';
@@ -12,9 +13,11 @@ import CoachProfile from '@/screens/coach/CoachProfile';
 
 interface ScreenRendererProps {
   navigation: AppNavigation;
+  profile: Profile;
+  onLogout: () => void;
 }
 
-export default function ScreenRenderer({ navigation }: ScreenRendererProps) {
+export default function ScreenRenderer({ navigation, profile, onLogout }: ScreenRendererProps) {
   const { role, screen, selectedStudent, handleNavigate, handleStudentSelect } = navigation;
 
   if (!role) return null;
@@ -22,21 +25,21 @@ export default function ScreenRenderer({ navigation }: ScreenRendererProps) {
   if (role === 'student') {
     switch (screen) {
       case 'home':
-        return <StudentHome onNavigate={handleNavigate} />;
+        return <StudentHome profile={profile} onNavigate={handleNavigate} />;
       case 'routines':
         return <StudentRoutines />;
       case 'progress':
         return <StudentProgress />;
       case 'profile':
-        return <StudentProfile />;
+        return <StudentProfile profile={profile} onLogout={onLogout} />;
       default:
-        return <StudentHome onNavigate={handleNavigate} />;
+        return <StudentHome profile={profile} onNavigate={handleNavigate} />;
     }
   }
 
   switch (screen) {
     case 'home':
-      return <CoachDashboard onNavigate={handleNavigate} onStudentSelect={handleStudentSelect} />;
+      return <CoachDashboard profile={profile} onNavigate={handleNavigate} onStudentSelect={handleStudentSelect} />;
     case 'students':
       return <CoachStudents onStudentSelect={handleStudentSelect} />;
     case 'studentDetail':
@@ -50,9 +53,9 @@ export default function ScreenRenderer({ navigation }: ScreenRendererProps) {
     case 'exerciseLibrary':
       return <CoachExerciseLibrary />;
     case 'profile':
-      return <CoachProfile />;
+      return <CoachProfile profile={profile} onLogout={onLogout} />;
     default:
-      return <CoachDashboard onNavigate={handleNavigate} onStudentSelect={handleStudentSelect} />;
+      return <CoachDashboard profile={profile} onNavigate={handleNavigate} onStudentSelect={handleStudentSelect} />;
   }
 }
 

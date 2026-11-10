@@ -62,3 +62,5 @@ Offline support requires an event/sync model, not only a localStorage write. Kee
 ## Authentication Data
 
 Session, profile, role, and tenant are different state concepts. Validate tenant ownership and profile status after authentication. Never trust client-provided tenant IDs, roles, permissions, or feature flags.
+
+CU-01 local integration uses `src/data/authRepository.ts` and `src/app/session/AuthProvider.tsx`. Public self-signup is disabled until an invitation/provisioning flow exists. Provision profiles only through trusted local administration for development or a secured server-side process; the browser must not choose a role or `tenant_id`. The local smoke test `scripts/smoke-cu01-local.ps1` verifies signup denial, password sign-in, `getUser`, and the caller's own profile read, then deletes its transient user. `super_admin` sees a platform-not-ready state and `user_general` remains blocked until their modules exist; neither is mapped to coach/student screens.

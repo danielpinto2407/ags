@@ -17,7 +17,7 @@ AGS GluteHouse is intended to become a multi-tenant fitness SaaS. The current ap
 | Case | Behavior | Status |
 |---|---|---|
 | CU-00 | Detect tenant by subdomain, load theme, handle unknown/suspended tenant | local slice implemented; production domain/DNS pending |
-| CU-01 | Authenticate, validate profile/tenant, redirect by role | simulated |
+| CU-01 | Authenticate, validate profile/tenant, redirect by role | local password sign-in/session/profile slice implemented; provisioning and remote deployment pending |
 | CU-01B | Register students and enforce active capacity | partial UI |
 | CU-02 | Create tenant-owned exercise with video and coach author | local UI |
 | CU-02B | Create reusable routine templates and reorder items | planned |

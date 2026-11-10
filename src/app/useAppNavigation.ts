@@ -2,30 +2,22 @@ import { useState } from 'react';
 import { fitnessRepository } from '@/data/fitnessRepository';
 import type { Role, Screen, Student } from '@/types';
 
-export function useAppNavigation() {
-  const [role, setRole] = useState<Role | null>(null);
-  const [screen, setScreen] = useState<Screen>('home');
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-
-  const handleLogin = () => {
-    setRole('student');
-    setScreen('home');
-  };
+export function useAppNavigation(role: Role | null) {
+  const [navigationState, setNavigationState] = useState({
+    role,
+    screen: 'home' as Screen,
+    selectedStudentId: null as string | null,
+  });
+  const stateMatchesRole = navigationState.role === role;
+  const screen = stateMatchesRole ? navigationState.screen : 'home';
+  const selectedStudentId = stateMatchesRole ? navigationState.selectedStudentId : null;
 
   const handleNavigate = (nextScreen: Screen) => {
-    setScreen(nextScreen);
-    setSelectedStudentId(null);
+    setNavigationState({ role, screen: nextScreen, selectedStudentId: null });
   };
 
   const handleStudentSelect = (studentId: string) => {
-    setSelectedStudentId(studentId);
-    setScreen('studentDetail');
-  };
-
-  const switchRole = (nextRole: Role) => {
-    setRole(nextRole);
-    setScreen('home');
-    setSelectedStudentId(null);
+    setNavigationState({ role, screen: 'studentDetail', selectedStudentId: studentId });
   };
 
   const selectedStudent = selectedStudentId
@@ -36,10 +28,8 @@ export function useAppNavigation() {
     role,
     screen,
     selectedStudent,
-    handleLogin,
     handleNavigate,
     handleStudentSelect,
-    switchRole,
   };
 }
 

@@ -2,20 +2,22 @@ import { Users, ChevronRight, Calendar, Dumbbell } from 'lucide-react';
 import Header from '@/components/Header';
 import { fitnessRepository } from '@/data/fitnessRepository';
 import type { Screen } from '@/types';
+import type { Profile } from '@/domain/profile';
 
 interface CoachDashboardProps {
+  profile: Profile;
   onNavigate: (screen: Screen) => void;
   onStudentSelect: (studentId: string) => void;
 }
 
-export default function CoachDashboard({ onNavigate, onStudentSelect }: CoachDashboardProps) {
+export default function CoachDashboard({ profile, onNavigate, onStudentSelect }: CoachDashboardProps) {
   const students = fitnessRepository.getStudents();
   const activeStudents = students.filter(s => s.status === 'active').length;
   const totalStudents = students.length;
 
   return (
     <div className="space-y-5">
-      <Header title="Dashboard" subtitle="Panel de control" />
+      <Header title="Dashboard" subtitle={`Hola, ${profile.full_name}`} />
 
       {/* Stats */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 flex items-center gap-4">
