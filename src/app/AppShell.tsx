@@ -13,8 +13,10 @@ export default function AppShell({ navigation, children }: AppShellProps) {
   if (!role) return null;
 
   return (
-    <div className="tenant-app min-h-screen w-full overflow-hidden relative flex flex-col">
-      <div className="flex-1 overflow-y-auto no-scrollbar p-5">{children}</div>
+    <div className="tenant-app relative min-h-screen w-full overflow-hidden">
+      <main className="h-[100dvh] overflow-y-auto px-5 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 no-scrollbar">
+        {children}
+      </main>
       <BottomNav role={role} activeScreen={screen} onNavigate={handleNavigate} />
     </div>
   );

@@ -26,7 +26,8 @@ export default function StudentRoutines({ profile }: StudentRoutinesProps) {
         Fecha
         <input
           aria-label="Fecha de rutina"
-          className={`${dateInputClass} mt-1.5`}
+          className={`${dateInputClass} mt-1.5 accent-brand-500`}
+          style={{ colorScheme: 'dark', accentColor: 'var(--tenant-primary)' }}
           type="date"
           value={selectedDate}
           onChange={(event) => setSelectedDate(event.target.value)}

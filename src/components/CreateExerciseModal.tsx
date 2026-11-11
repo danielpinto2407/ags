@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { X, Check, Dumbbell } from 'lucide-react';
+import SelectModalField from '@/components/SelectModalField';
 import {
   EXERCISE_DIFFICULTIES,
   EXERCISE_EQUIPMENT,
@@ -141,15 +142,25 @@ export default function CreateExerciseModal({ onClose, onSave, exercise }: Creat
         <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
             Enfoque
-            <select className={`${fieldClass} mt-1.5 normal-case`} value={form.focus} onChange={(event) => update('focus', event.target.value as ExerciseFocus)}>
-              {EXERCISE_FOCUSES.map((focus) => <option key={focus} value={focus}>{exerciseFocusLabels[focus]}</option>)}
-            </select>
+            <SelectModalField
+              ariaLabel="Enfoque del ejercicio"
+              className="mt-1.5"
+              modalTitle="Enfoque del ejercicio"
+              onChange={(value) => update('focus', value as ExerciseFocus)}
+              options={EXERCISE_FOCUSES.map((focus) => ({ value: focus, label: exerciseFocusLabels[focus] }))}
+              value={form.focus}
+            />
           </label>
           <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
             Patrón de movimiento
-            <select className={`${fieldClass} mt-1.5 normal-case`} value={form.movementPattern} onChange={(event) => update('movementPattern', event.target.value as ExerciseMovementPattern)}>
-              {EXERCISE_MOVEMENT_PATTERNS.map((pattern) => <option key={pattern} value={pattern}>{exerciseMovementLabels[pattern]}</option>)}
-            </select>
+            <SelectModalField
+              ariaLabel="Patrón de movimiento"
+              className="mt-1.5"
+              modalTitle="Patrón de movimiento"
+              onChange={(value) => update('movementPattern', value as ExerciseMovementPattern)}
+              options={EXERCISE_MOVEMENT_PATTERNS.map((pattern) => ({ value: pattern, label: exerciseMovementLabels[pattern] }))}
+              value={form.movementPattern}
+            />
           </label>
         </div>
 
@@ -175,7 +186,7 @@ export default function CreateExerciseModal({ onClose, onSave, exercise }: Creat
               <label key={equipment} className={`flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs transition-colors ${form.equipment.includes(equipment) ? 'border-brand-700 bg-brand-950/40 text-brand-200' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}>
                 <input
                   checked={form.equipment.includes(equipment)}
-                  className="accent-pink-500"
+                  className="accent-brand-500"
                   onChange={() => toggleEquipment(equipment)}
                   type="checkbox"
                 />

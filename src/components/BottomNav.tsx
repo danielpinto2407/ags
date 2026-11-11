@@ -26,8 +26,12 @@ export default function BottomNav({ role, activeScreen, onNavigate }: BottomNavP
   const tabs = role === 'student' ? studentTabs : coachTabs;
 
   return (
-    <div className="flex-shrink-0 border-t border-brand-500/20 bg-black/95 backdrop-blur-xl px-1 pt-2 pb-3 safe-bottom">
-      <div className="flex justify-around items-center">
+    <nav
+      aria-label="Navegación principal"
+      className="fixed left-1/2 z-40 w-[calc(100%-24px)] max-w-[560px] -translate-x-1/2 rounded-2xl border border-brand-500/25 bg-zinc-950/90 px-1.5 py-2 shadow-[0_12px_40px_rgba(0,0,0,0.65)] backdrop-blur-xl"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+    >
+      <div className="flex min-h-12 items-center justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeScreen === tab.screen;
@@ -35,18 +39,19 @@ export default function BottomNav({ role, activeScreen, onNavigate }: BottomNavP
             <button
               key={tab.screen}
               onClick={() => onNavigate(tab.screen)}
-              className={`flex flex-col items-center gap-1 px-2 py-1 rounded-xl transition-all ${
-                isActive ? 'text-brand-500' : 'text-zinc-600 hover:text-zinc-400'
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-1 transition-colors ${
+                isActive ? 'text-brand-400' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
               <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-              <span className={`text-[9px] font-semibold tracking-wide ${isActive ? 'text-brand-500' : ''}`}>
+              <span className={`max-w-full truncate text-[9px] font-semibold ${isActive ? 'text-brand-300' : ''}`}>
                 {tab.label}
               </span>
             </button>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }
