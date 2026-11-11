@@ -2,29 +2,30 @@ import { describe, expect, it } from 'vitest';
 import { toCoachMember } from '@/domain/coachMember';
 
 describe('coach member profiles', () => {
-  it('maps only fields persisted in the member profile', () => {
+  it('maps the coach-scoped roster RPC response', () => {
     expect(toCoachMember({
-      id: 'member-id',
+      member_id: 'member-id',
       full_name: 'Alumna Invitada',
-      status: 'ACTIVE',
+      member_status: 'ACTIVE',
       created_at: '2026-11-10T12:00:00.000Z',
-      tenant_id: 'tenant-id',
-      coach_id: 'coach-id',
+      email: 'alumna@example.test',
     })).toEqual({
       id: 'member-id',
       fullName: 'Alumna Invitada',
+      email: 'alumna@example.test',
       status: 'ACTIVE',
       createdAt: '2026-11-10T12:00:00.000Z',
     });
   });
 
-  it('rejects malformed or unsupported profile records', () => {
-    expect(() => toCoachMember({ id: 'member-id' })).toThrow('no es válido');
+  it('rejects malformed or unsupported roster records', () => {
+    expect(() => toCoachMember({ member_id: 'member-id' })).toThrow('no es válido');
     expect(() => toCoachMember({
-      id: 'member-id',
+      member_id: 'member-id',
       full_name: 'Alumna Invitada',
-      status: 'PENDING',
+      member_status: 'PENDING',
       created_at: '2026-11-10T12:00:00.000Z',
+      email: null,
     })).toThrow('no es válido');
   });
 });
