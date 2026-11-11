@@ -6,7 +6,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(37);
+select extensions.plan(52);
 
 insert into public.tenants (id, name, subdomain, status)
 values
@@ -287,6 +287,142 @@ select extensions.throws_ok(
   '42501',
   null,
   'authenticated clients cannot suspend tenants'
+);
+
+reset role;
+set local role service_role;
+update public.tenants
+set max_clients = 3
+where id = 'd0000000-0000-4000-8000-000000000001';
+select extensions.is(
+  public.set_personalized_member_status(
+    'd0000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000008',
+    'INACTIVE'
+  ),
+  'd1000000-0000-4000-8000-000000000008'::uuid,
+  'coach can deactivate their own invited member'
+);
+select extensions.is(
+  (select status::text from public.profiles where id = 'd1000000-0000-4000-8000-000000000008'),
+  'INACTIVE',
+  'deactivation marks the member inactive'
+);
+select extensions.ok(
+  exists (
+    select 1 from public.profiles p
+    where p.id = 'd1000000-0000-4000-8000-000000000008'
+      and p.coach_id = 'd1000000-0000-4000-8000-000000000001'
+      and p.full_name = 'First Coach Member'
+  ),
+  'deactivation preserves the member profile, coach association, and Auth identity'
+);
+select extensions.throws_ok(
+  $$select public.set_personalized_member_status('d0000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000009', 'INACTIVE')$$,
+  '42501',
+  'member_not_owned',
+  'coach cannot deactivate a same-tenant member invited by another coach'
+);
+
+select extensions.throws_ok(
+  $$select public.set_personalized_member_status('d0000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000007', 'd1000000-0000-4000-8000-000000000008', 'INACTIVE')$$,
+  '42501',
+  'member_not_owned',
+  'second coach cannot deactivate the first coach member'
+);
+
+select extensions.is(
+  public.set_personalized_member_status(
+    'd0000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000008',
+    'INACTIVE'
+  ),
+  'd1000000-0000-4000-8000-000000000008'::uuid,
+  'setting an invited member to their current status is idempotent'
+);
+
+select extensions.throws_ok(
+  $$select public.set_personalized_member_status('d0000000-0000-4000-8000-000000000002', 'd1000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000009', 'INACTIVE')$$,
+  '42501',
+  'not_authorized',
+  'coach cannot deactivate a member through a different tenant argument'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000008', true);
+select extensions.is(
+  (select count(*)::integer from public.profiles),
+  1,
+  'deactivated member can still read their own profile to learn account status'
+);
+select extensions.is(
+  (select count(*)::integer from public.tenants),
+  0,
+  'deactivated member can no longer read gym programming data'
+);
+
+reset role;
+set local role service_role;
+update public.tenants set max_clients = 3 where id = 'd0000000-0000-4000-8000-000000000001';
+select extensions.is(
+  public.set_personalized_member_status(
+    'd0000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000008',
+    'ACTIVE'
+  ),
+  'd1000000-0000-4000-8000-000000000008'::uuid,
+  'coach can reactivate their own invited member'
+);
+select extensions.is(
+  (select status::text from public.profiles where id = 'd1000000-0000-4000-8000-000000000008'),
+  'ACTIVE',
+  'reactivation restores active status'
+);
+select extensions.ok(
+  exists (
+    select 1 from public.profiles
+    where id = 'd1000000-0000-4000-8000-000000000008'
+      and coach_id = 'd1000000-0000-4000-8000-000000000001'
+  ),
+  'reactivation preserves the inviting coach relationship'
+);
+select extensions.throws_ok(
+  $$select public.set_personalized_member_status('d0000000-0000-4000-8000-000000000001', 'd1000000-0000-4000-8000-000000000007', 'd1000000-0000-4000-8000-000000000008', 'INACTIVE')$$,
+  '42501',
+  'member_not_owned',
+  'another coach cannot toggle this member status'
+);
+
+select extensions.is(
+  public.set_personalized_member_status(
+    'd0000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000008',
+    'ACTIVE'
+  ),
+  'd1000000-0000-4000-8000-000000000008'::uuid,
+  'setting a member to their current status is idempotent'
+);
+update public.tenants set max_clients = 2 where id = 'd0000000-0000-4000-8000-000000000001';
+select public.set_personalized_member_status(
+  'd0000000-0000-4000-8000-000000000001',
+  'd1000000-0000-4000-8000-000000000001',
+  'd1000000-0000-4000-8000-000000000008',
+  'INACTIVE'
+);
+select extensions.is(
+  public.set_personalized_member_status(
+    'd0000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000008',
+    'ACTIVE'
+  ),
+  'd1000000-0000-4000-8000-000000000008'::uuid,
+  'personalized member reactivation is not limited by max_clients'
 );
 
 select * from extensions.finish();

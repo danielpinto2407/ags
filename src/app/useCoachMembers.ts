@@ -36,5 +36,9 @@ export function useCoachMembers(coachId: string) {
   return {
     state,
     reload: () => setReloadKey((key) => key + 1),
+    setMemberStatus: async (memberId: string, status: 'ACTIVE' | 'INACTIVE') => {
+      await coachMemberRepository.setInvitedMemberStatus(memberId, status);
+      setReloadKey((key) => key + 1);
+    },
   };
 }

@@ -5,7 +5,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(33);
+select extensions.plan(35);
 
 insert into public.tenants (id, name, subdomain, status, max_clients)
 values
@@ -21,7 +21,8 @@ values
   ('e1000000-0000-4000-8000-000000000004', 'other-coach@example.test'),
   ('e1000000-0000-4000-8000-000000000005', 'paused-coach@example.test'),
   ('e1000000-0000-4000-8000-000000000006', 'available@example.test'),
-  ('e1000000-0000-4000-8000-000000000007', 'wrong-email@example.test');
+  ('e1000000-0000-4000-8000-000000000007', 'wrong-email@example.test'),
+  ('e1000000-0000-4000-8000-000000000008', 'full@example.test');
 
 insert into public.profiles (id, tenant_id, role, status, full_name)
 values
@@ -131,11 +132,13 @@ select extensions.is(
   'a repeat invite reuses its pending onboarding record instead of consuming another member place'
 );
 
-select extensions.throws_ok(
-  $$select public.prepare_personalized_invitation('e0000000-0000-4000-8000-000000000001', 'e1000000-0000-4000-8000-000000000001', 'full@example.test')$$,
-  'P0001',
-  'capacity_reached',
-  'active members plus pending invitations cannot exceed tenant capacity'
+select extensions.ok(
+  public.prepare_personalized_invitation(
+    'e0000000-0000-4000-8000-000000000001',
+    'e1000000-0000-4000-8000-000000000001',
+    'full@example.test'
+  ) is not null,
+  'personalized invitation is not blocked by max_clients'
 );
 
 update public.tenants
@@ -221,8 +224,8 @@ select extensions.is(
       and status = 'PENDING'
       and expires_at > pg_catalog.now()
   ),
-  2,
-  'only active pending onboarding records remain after expiry and failed delivery'
+  3,
+  'pending invitations remain valid without personalized seat accounting'
 );
 
 select extensions.throws_ok(
@@ -333,6 +336,25 @@ select extensions.throws_ok(
   'an accepted invitation cannot be consumed a second time'
 );
 
+select extensions.is(
+  public.link_personalized_invitation(
+    (select id from public.tenant_invitations where email = 'full@example.test' and status = 'PENDING'),
+    'e1000000-0000-4000-8000-000000000008'
+  ),
+  (select id from public.tenant_invitations where email = 'full@example.test' and status = 'PENDING'),
+  'an additional personalized invite can be linked beyond max_clients'
+);
+
+select extensions.is(
+  public.accept_personalized_invitation(
+    (select id from public.tenant_invitations where email = 'full@example.test' and status = 'PENDING'),
+    'e1000000-0000-4000-8000-000000000008',
+    'Member Beyond Limit'
+  ),
+  'e1000000-0000-4000-8000-000000000008'::uuid,
+  'a personalized member can accept beyond max_clients'
+);
+
 update public.tenant_invitations
 set created_at = pg_catalog.now() - interval '8 days',
     expires_at = pg_catalog.now() - interval '1 minute'
@@ -344,11 +366,13 @@ select extensions.is(
   'an expired email link does not expire an accepted membership'
 );
 
-select extensions.throws_ok(
-  $$select public.prepare_personalized_invitation('e0000000-0000-4000-8000-000000000001', 'e1000000-0000-4000-8000-000000000001', 'another@example.test')$$,
-  'P0001',
-  'capacity_reached',
-  'accepted members continue counting against capacity until disabled'
+select extensions.ok(
+  public.prepare_personalized_invitation(
+    'e0000000-0000-4000-8000-000000000001',
+    'e1000000-0000-4000-8000-000000000001',
+    'another@example.test'
+  ) is not null,
+  'personalized invitations remain available beyond max_clients'
 );
 
 select * from extensions.finish();

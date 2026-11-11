@@ -231,6 +231,9 @@ verify_jwt = true
 [functions.accept-personalized-invitation]
 verify_jwt = true
 
+[functions.set-personalized-member-status]
+verify_jwt = true
+
 [auth.email]
 # Allow/disallow the email provider. When false, users can't sign up or sign in with email.
 # To block new signups only, set enable_signup = false under [auth] instead.
