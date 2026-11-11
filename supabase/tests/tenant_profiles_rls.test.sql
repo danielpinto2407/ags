@@ -218,9 +218,16 @@ select extensions.is(
   'a super admin can see all test tenants across organizations'
 );
 select extensions.is(
-  (select count(*)::integer from public.profiles),
+  (select count(*)::integer from public.profiles where id in (
+    'd1000000-0000-4000-8000-000000000001',
+    'd1000000-0000-4000-8000-000000000002',
+    'd1000000-0000-4000-8000-000000000003',
+    'd1000000-0000-4000-8000-000000000004',
+    'd1000000-0000-4000-8000-000000000005',
+    'd1000000-0000-4000-8000-000000000006'
+  )),
   6,
-  'a super admin can see all profiles'
+  'a super admin can see every profile from this test fixture'
 );
 select extensions.throws_ok(
   $$insert into public.tenants (name, subdomain) values ('Client Tenant', 'client-tenant')$$,

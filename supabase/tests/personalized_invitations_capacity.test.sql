@@ -5,7 +5,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(25);
+select extensions.plan(33);
 
 insert into public.tenants (id, name, subdomain, status, max_clients)
 values
@@ -20,7 +20,8 @@ values
   ('e1000000-0000-4000-8000-000000000003', 'inactive@example.test'),
   ('e1000000-0000-4000-8000-000000000004', 'other-coach@example.test'),
   ('e1000000-0000-4000-8000-000000000005', 'paused-coach@example.test'),
-  ('e1000000-0000-4000-8000-000000000006', 'available@example.test');
+  ('e1000000-0000-4000-8000-000000000006', 'available@example.test'),
+  ('e1000000-0000-4000-8000-000000000007', 'wrong-email@example.test');
 
 insert into public.profiles (id, tenant_id, role, status, full_name)
 values
@@ -93,6 +94,25 @@ select extensions.is(
   ),
   1,
   'one normalized pending invitation is stored'
+);
+
+select extensions.ok(
+  (
+    select expires_at <= created_at + interval '1 hour'
+      and expires_at > pg_catalog.now()
+    from public.tenant_invitations
+    where tenant_id = 'e0000000-0000-4000-8000-000000000001'
+      and email = 'new.member@example.test'
+      and status = 'PENDING'
+  ),
+  'new invitation links expire within the one-hour Auth OTP lifetime'
+);
+
+select extensions.throws_ok(
+  $$select public.prepare_personalized_invitation('e0000000-0000-4000-8000-000000000001', 'e1000000-0000-4000-8000-000000000001', 'active@example.test')$$,
+  'P0001',
+  'already_member',
+  'an email already active as a personalized member cannot be invited twice'
 );
 
 select extensions.is(
@@ -205,6 +225,13 @@ select extensions.is(
   'only active pending onboarding records remain after expiry and failed delivery'
 );
 
+select extensions.throws_ok(
+  $$select public.link_personalized_invitation((select id from public.tenant_invitations where email = 'available@example.test' and status = 'PENDING'), 'e1000000-0000-4000-8000-000000000007')$$,
+  '42501',
+  'invite_email_mismatch',
+  'an Auth identity with a different email cannot be linked to the invitation'
+);
+
 select extensions.is(
   public.link_personalized_invitation(
     (select id from public.tenant_invitations where email = 'available@example.test' and status = 'PENDING'),
@@ -212,6 +239,57 @@ select extensions.is(
   ),
   (select id from public.tenant_invitations where email = 'available@example.test' and status = 'PENDING'),
   'trusted onboarding links the Auth identity only when its email matches'
+);
+
+update public.tenant_invitations
+set auth_user_id = 'e1000000-0000-4000-8000-000000000007'
+where email = 'available@example.test'
+  and status = 'PENDING';
+
+select extensions.throws_ok(
+  $$select public.accept_personalized_invitation((select id from public.tenant_invitations where email = 'available@example.test' and status = 'PENDING'), 'e1000000-0000-4000-8000-000000000007', 'Wrong Email Member')$$,
+  '42501',
+  'invite_email_mismatch',
+  'acceptance independently checks the authenticated account email'
+);
+
+update public.tenant_invitations
+set auth_user_id = 'e1000000-0000-4000-8000-000000000006'
+where email = 'available@example.test'
+  and status = 'PENDING';
+
+update public.tenant_invitations
+set created_at = pg_catalog.now() - interval '2 hours',
+    expires_at = pg_catalog.now() - interval '1 minute'
+where email = 'available@example.test'
+  and status = 'PENDING';
+
+select extensions.throws_ok(
+  $$select public.accept_personalized_invitation((select id from public.tenant_invitations where email = 'available@example.test' and status = 'PENDING'), 'e1000000-0000-4000-8000-000000000006', 'Invited Member')$$,
+  'P0001',
+  'invitation_expired',
+  'an expired invitation cannot be accepted even by its linked Auth identity'
+);
+
+select extensions.is(
+  public.prepare_personalized_invitation(
+    'e0000000-0000-4000-8000-000000000001',
+    'e1000000-0000-4000-8000-000000000001',
+    'available@example.test'
+  ),
+  (select id from public.tenant_invitations where email = 'available@example.test'),
+  'a coach resend reactivates the same unaccepted Auth identity with a fresh link'
+);
+
+select extensions.ok(
+  exists (
+    select 1 from public.tenant_invitations
+    where email = 'available@example.test'
+      and status = 'PENDING'
+      and auth_user_id = 'e1000000-0000-4000-8000-000000000006'
+      and expires_at > pg_catalog.now()
+  ),
+  'reissued invitation keeps the same Auth identity and a fresh expiry'
 );
 
 select extensions.is(
@@ -231,9 +309,10 @@ select extensions.ok(
       and tenant_id = 'e0000000-0000-4000-8000-000000000001'
       and role = 'user_personalized'
       and status = 'ACTIVE'
-      and full_name = 'Invited Member'
+        and full_name = 'Invited Member'
+        and coach_id = 'e1000000-0000-4000-8000-000000000001'
   ),
-  'accepted invitation creates an active personalized user in the invited tenant'
+      'accepted invitation creates an active member linked to the inviting coach and their tenant'
 );
 
 select extensions.ok(
@@ -245,6 +324,13 @@ select extensions.ok(
       and auth_user_id = 'e1000000-0000-4000-8000-000000000006'
   ),
   'acceptance is recorded against the invited Auth identity'
+);
+
+select extensions.throws_ok(
+  $$select public.accept_personalized_invitation((select id from public.tenant_invitations where email = 'available@example.test'), 'e1000000-0000-4000-8000-000000000006', 'Invited Member')$$,
+  'P0001',
+  'invitation_not_pending',
+  'an accepted invitation cannot be consumed a second time'
 );
 
 update public.tenant_invitations
