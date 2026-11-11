@@ -1,86 +1,125 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { X, Check, Dumbbell } from 'lucide-react';
-import type { Exercise } from '@/types';
+import {
+  EXERCISE_DIFFICULTIES,
+  EXERCISE_EQUIPMENT,
+  EXERCISE_FOCUSES,
+  EXERCISE_MOVEMENT_PATTERNS,
+  exerciseDifficultyLabels,
+  exerciseEquipmentLabels,
+  exerciseFocusLabels,
+  exerciseMovementLabels,
+  toExerciseDefinitionInput,
+} from '@/domain/exerciseDefinition';
+import type {
+  ExerciseDefinition,
+  ExerciseDefinitionDifficulty,
+  ExerciseDefinitionInput,
+  ExerciseEquipment,
+  ExerciseFocus,
+  ExerciseMovementPattern,
+} from '@/domain/exerciseDefinition';
 
 interface CreateExerciseModalProps {
   onClose: () => void;
-  onCreate: (exercise: Exercise) => void;
+  onSave: (exercise: ExerciseDefinitionInput) => Promise<void>;
+  exercise?: ExerciseDefinition;
 }
 
-const EMOJI_OPTIONS = ['🏋️‍♀️', '🦵', '💪', '🧘‍♀️', '🤸', '🏃‍♀️', '🤾‍♀️', '🧗‍♀️', '⚡', '🔥'];
+const DEFAULT_EXERCISE: ExerciseDefinitionInput = {
+  name: '',
+  focus: 'GLUTES',
+  primaryMuscles: [],
+  secondaryMuscles: [],
+  equipment: [],
+  movementPattern: 'HIP_THRUST',
+  difficulty: 'INTERMEDIATE',
+  instructions: '',
+  tips: '',
+  videoUrl: null,
+};
 
-const DIFFICULTY_OPTIONS: Exercise['difficulty'][] = ['Principiante', 'Intermedio', 'Avanzado'];
+const fieldClass = 'w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-sm text-zinc-200 placeholder-zinc-600 transition-colors focus:border-brand-500 focus:outline-none';
 
-export default function CreateExerciseModal({ onClose, onCreate }: CreateExerciseModalProps) {
-  const [name, setName] = useState('');
-  const [instructions, setInstructions] = useState('');
-  const [tips, setTips] = useState('');
-  const [muscles, setMuscles] = useState('');
-  const [emoji, setEmoji] = useState('🏋️‍♀️');
-  const [difficulty, setDifficulty] = useState<Exercise['difficulty']>('Intermedio');
+export default function CreateExerciseModal({ onClose, onSave, exercise }: CreateExerciseModalProps) {
+  const [form, setForm] = useState<ExerciseDefinitionInput>(() => (
+    exercise ? toExerciseDefinitionInput(exercise) : DEFAULT_EXERCISE
+  ));
+  const [primaryMuscles, setPrimaryMuscles] = useState(form.primaryMuscles.join(', '));
+  const [secondaryMuscles, setSecondaryMuscles] = useState(form.secondaryMuscles.join(', '));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = name.trim() !== '' && muscles.trim() !== '';
-
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    onCreate({
-      id: `ex-${Date.now()}`,
-      name: name.trim(),
-      series: 3,
-      reps: '',
-      weight: '',
-      rest: '',
-      emoji,
-      muscles: muscles.trim(),
-      instructions: instructions.trim(),
-      tips: tips.trim(),
-      difficulty,
-    });
+  const update = <K extends keyof ExerciseDefinitionInput>(key: K, value: ExerciseDefinitionInput[K]) => {
+    setForm((current) => ({ ...current, [key]: value }));
   };
 
-  const difficultyColors: Record<string, string> = {
-    Principiante: 'text-emerald-400 border-emerald-700 bg-emerald-950/40',
-    Intermedio: 'text-amber-400 border-amber-700 bg-amber-950/40',
-    Avanzado: 'text-brand-400 border-brand-700 bg-brand-950/40',
+  const toggleEquipment = (equipment: ExerciseEquipment) => {
+    setForm((current) => ({
+      ...current,
+      equipment: current.equipment.includes(equipment)
+        ? current.equipment.filter((item) => item !== equipment)
+        : [...current.equipment, equipment],
+    }));
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const muscles = primaryMuscles.split(',').map((muscle) => muscle.trim()).filter(Boolean);
+    const secondary = secondaryMuscles.split(',').map((muscle) => muscle.trim()).filter(Boolean);
+    const videoUrl = form.videoUrl?.trim() || null;
+
+    if (!form.name.trim() || muscles.length === 0 || !form.instructions.trim() || form.equipment.length === 0) {
+      setError('Completa el nombre, músculo principal, equipo e instrucciones.');
+      return;
+    }
+    if (videoUrl) {
+      try {
+        if (new URL(videoUrl).protocol !== 'https:') throw new Error('invalid protocol');
+      } catch {
+        setError('El enlace de video debe ser una URL HTTPS válida.');
+        return;
+      }
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      await onSave({
+        ...form,
+        name: form.name.trim(),
+        primaryMuscles: muscles,
+        secondaryMuscles: secondary,
+        instructions: form.instructions.trim(),
+        tips: form.tips.trim(),
+        videoUrl,
+      });
+      onClose();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudo guardar el ejercicio.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end justify-center z-50 animate-fade-in">
-      <div className="w-full max-w-[390px] bg-zinc-900 border border-zinc-800 rounded-t-[32px] p-5 animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
+      <form onSubmit={(event) => void handleSubmit(event)} className="max-h-[92vh] w-full max-w-[520px] overflow-y-auto rounded-t-[28px] border border-zinc-800 bg-zinc-900 p-5 animate-slide-up no-scrollbar sm:mb-6 sm:rounded-2xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-5">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-brand-600/20 flex items-center justify-center">
               <Dumbbell size={18} className="text-brand-400" />
             </div>
-            <h3 className="font-display font-bold text-lg text-white">Nuevo Ejercicio</h3>
+            <h3 className="font-display font-bold text-lg text-white">{exercise ? 'Editar ejercicio' : 'Nuevo ejercicio'}</h3>
           </div>
           <button
             onClick={onClose}
+            type="button"
             className="text-zinc-400 hover:text-white bg-zinc-800 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
           >
             <X size={16} />
           </button>
-        </div>
-
-        {/* Emoji Selector */}
-        <div className="mb-4">
-          <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-2 block">Ícono</label>
-          <div className="flex gap-2 overflow-x-auto no-scrollbar">
-            {EMOJI_OPTIONS.map((e) => (
-              <button
-                key={e}
-                onClick={() => setEmoji(e)}
-                className={`flex-shrink-0 w-11 h-11 rounded-xl text-xl flex items-center justify-center border transition-all ${
-                  emoji === e
-                    ? 'bg-brand-600/20 border-brand-600 scale-110'
-                    : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'
-                }`}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Name */}
@@ -90,42 +129,74 @@ export default function CreateExerciseModal({ onClose, onCreate }: CreateExercis
           </label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            maxLength={120}
+            required
+            value={form.name}
+            onChange={(event) => update('name', event.target.value)}
             placeholder="Ej: Hip Thrust con Barra"
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
+            className={fieldClass}
           />
         </div>
 
-        {/* Muscles */}
-        <div className="mb-4">
-          <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
-            Músculos trabajados <span className="text-brand-500">*</span>
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+            Enfoque
+            <select className={`${fieldClass} mt-1.5 normal-case`} value={form.focus} onChange={(event) => update('focus', event.target.value as ExerciseFocus)}>
+              {EXERCISE_FOCUSES.map((focus) => <option key={focus} value={focus}>{exerciseFocusLabels[focus]}</option>)}
+            </select>
           </label>
-          <input
-            type="text"
-            value={muscles}
-            onChange={(e) => setMuscles(e.target.value)}
-            placeholder="Ej: Glúteo Mayor, Isquiotibiales"
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
-          />
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+            Patrón de movimiento
+            <select className={`${fieldClass} mt-1.5 normal-case`} value={form.movementPattern} onChange={(event) => update('movementPattern', event.target.value as ExerciseMovementPattern)}>
+              {EXERCISE_MOVEMENT_PATTERNS.map((pattern) => <option key={pattern} value={pattern}>{exerciseMovementLabels[pattern]}</option>)}
+            </select>
+          </label>
         </div>
 
-        {/* Difficulty */}
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+            Músculos principales <span className="text-brand-400">*</span>
+            <input className={`${fieldClass} mt-1.5 normal-case`} value={primaryMuscles} onChange={(event) => setPrimaryMuscles(event.target.value)} placeholder="Glúteo mayor, isquiotibiales" />
+            <span className="mt-1 block text-[10px] normal-case text-zinc-600">Separa cada músculo con coma.</span>
+          </label>
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+            Músculos secundarios
+            <input className={`${fieldClass} mt-1.5 normal-case`} value={secondaryMuscles} onChange={(event) => setSecondaryMuscles(event.target.value)} placeholder="Core, cuádriceps" />
+            <span className="mt-1 block text-[10px] normal-case text-zinc-600">Separa cada músculo con coma.</span>
+          </label>
+        </div>
+
+        <fieldset className="mb-4">
+          <legend className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+            Equipo <span className="text-brand-400">*</span>
+          </legend>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {EXERCISE_EQUIPMENT.map((equipment) => (
+              <label key={equipment} className={`flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs transition-colors ${form.equipment.includes(equipment) ? 'border-brand-700 bg-brand-950/40 text-brand-200' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}>
+                <input
+                  checked={form.equipment.includes(equipment)}
+                  className="accent-pink-500"
+                  onChange={() => toggleEquipment(equipment)}
+                  type="checkbox"
+                />
+                {exerciseEquipmentLabels[equipment]}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
         <div className="mb-4">
-          <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-2 block">Dificultad</label>
-          <div className="flex gap-2">
-            {DIFFICULTY_OPTIONS.map((d) => (
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Dificultad</p>
+          <div className="grid grid-cols-3 gap-2">
+            {EXERCISE_DIFFICULTIES.map((difficulty: ExerciseDefinitionDifficulty) => (
               <button
-                key={d}
-                onClick={() => setDifficulty(d)}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-semibold border transition-all ${
-                  difficulty === d
-                    ? difficultyColors[d]
-                    : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700'
-                }`}
+                key={difficulty}
+                aria-pressed={form.difficulty === difficulty}
+                className={`rounded-xl border py-2.5 text-xs font-semibold transition-colors ${form.difficulty === difficulty ? 'border-brand-700 bg-brand-950/40 text-brand-200' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700'}`}
+                onClick={() => update('difficulty', difficulty)}
+                type="button"
               >
-                {d}
+                {exerciseDifficultyLabels[difficulty]}
               </button>
             ))}
           </div>
@@ -137,11 +208,12 @@ export default function CreateExerciseModal({ onClose, onCreate }: CreateExercis
             Descripción / Instrucciones
           </label>
           <textarea
-            value={instructions}
-            onChange={(e) => setInstructions(e.target.value)}
+            required
+            value={form.instructions}
+            onChange={(event) => update('instructions', event.target.value)}
             placeholder="Describe cómo se ejecuta el ejercicio paso a paso..."
             rows={3}
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors resize-none"
+            className={`${fieldClass} resize-none`}
           />
         </div>
 
@@ -151,36 +223,43 @@ export default function CreateExerciseModal({ onClose, onCreate }: CreateExercis
             Sugerencias / Puntos a cuidar
           </label>
           <textarea
-            value={tips}
-            onChange={(e) => setTips(e.target.value)}
+            value={form.tips}
+            onChange={(event) => update('tips', event.target.value)}
             placeholder="Ej: No arques la espalda baja. Mantén el core activado..."
             rows={3}
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors resize-none"
+            className={`${fieldClass} resize-none`}
           />
         </div>
+
+        <div className="mb-5">
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+            Video HTTPS <span className="font-normal normal-case text-zinc-600">(opcional)</span>
+            <input className={`${fieldClass} mt-1.5 normal-case`} type="url" value={form.videoUrl ?? ''} onChange={(event) => update('videoUrl', event.target.value || null)} placeholder="https://..." />
+          </label>
+        </div>
+
+        {error && <p className="mb-4 rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{error}</p>}
 
         {/* Actions */}
         <div className="flex gap-3">
           <button
             onClick={onClose}
+            disabled={saving}
+            type="button"
             className="flex-1 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-2xl text-sm transition-colors"
           >
             Cancelar
           </button>
           <button
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            className={`flex-1 flex items-center justify-center gap-2 py-3.5 font-bold rounded-2xl text-sm transition-all ${
-              canSubmit
-                ? 'bg-brand-600 hover:bg-brand-500 text-white shadow-neon'
-                : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-            }`}
+            disabled={saving}
+            type="submit"
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand-600 py-3.5 text-sm font-bold text-white transition-colors hover:bg-brand-500 disabled:cursor-wait disabled:opacity-60"
           >
             <Check size={16} />
-            Crear
+            {saving ? 'Guardando…' : exercise ? 'Guardar cambios' : 'Crear ejercicio'}
           </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
