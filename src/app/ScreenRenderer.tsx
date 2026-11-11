@@ -51,7 +51,7 @@ export default function ScreenRenderer({ navigation, profile, onLogout }: Screen
     case 'programRoutine':
       return <CoachProgramRoutine />;
     case 'exerciseLibrary':
-      return <CoachExerciseLibrary />;
+      return <CoachExerciseLibrary profile={profile} />;
     case 'profile':
       return <CoachProfile profile={profile} onLogout={onLogout} />;
     default:

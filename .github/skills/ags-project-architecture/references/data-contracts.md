@@ -30,7 +30,41 @@ For CU-00, use `src/domain/tenant.ts` for typed payloads and validators, `src/da
 
 ## Routine Model
 
-The current local Supabase schema contains tenants and profiles only; `supabase/seed.sql` currently seeds tenants only. Exercises, invitations, routine assignments, and workout logs do not yet have database tables or Supabase repository adapters. Adding local Supabase configuration alone does not make the current mock-backed screens persistent.
+## Exercise Library Model (CU-02)
+
+Treat the shared catalog and gym library as separate sources with separate permissions:
+
+- `exercise_catalog`: curated cross-tenant reference records. Active authenticated users may read records needed for the library and their assigned-workout experience. Client roles receive no insert/update/delete grants. Initial records are seeded with stable IDs and original AGS-authored descriptions; seed upserts must not overwrite curator-edited content.
+- `tenant_exercises`: gym-owned records. Every row has a non-null `tenant_id`; only an active authorized coach in that active tenant may create, read, update, archive, or restore its records. Members do not receive library management access.
+- A copy from catalog to gym inserts a new `tenant_exercises` record, copies the source definition as it exists at copy time, and stores `source_catalog_exercise_id` for provenance. It is an independent snapshot, not a live relation. Never update the catalog as a side effect of editing a copy.
+
+Prefer distinct tables over a nullable-tenant single table so immutable global rows cannot accidentally inherit tenant write policies. Add foreign keys, `created_by`/`updated_by` where they can be validated against the current actor, timestamps, `archived_at`, checks for non-empty names/valid difficulty/media, and indexes for tenant plus common filters/search. Avoid arbitrary uniqueness constraints such as globally unique names unless product behavior explicitly requires them. Define delete as archive by default; prevent archived rows from appearing in new routine selection while preserving references and immutable assignment snapshots.
+
+The reusable exercise definition should be independent from workout prescription. Proposed typed shape:
+
+```ts
+interface ExerciseDefinition {
+	id: string;
+	name: string;
+	focus: 'glutes' | 'upper_body' | 'core' | 'full_body';
+	primaryMuscles: string[];
+	secondaryMuscles: string[];
+	equipment: string[];
+	movementPattern: string;
+	difficulty: 'Principiante' | 'Intermedio' | 'Avanzado';
+	instructions: string;
+	tips: string;
+	videoUrl?: string;
+}
+```
+
+Treat this as a planning contract, not a demand to persist those literal enum values without review. Keep Spanish labels in the UI and stable normalized keys in storage. Prefer controlled equipment/focus options with an explicit extensibility strategy; do not make emojis the taxonomy. CU-03 prescription items own sets, reps, target load, work duration, and rest. Until CU-03 is migrated, use an explicit mapper for screens that still consume the legacy combined `Exercise` type; never persist prescription defaults as global catalog facts.
+
+Repository operations should expose explicit source/ownership, for example list shared records, list current-tenant records, create tenant exercise, copy shared exercise, update tenant exercise, and archive tenant exercise. The browser must not provide a trusted tenant or actor identity; derive both from the authenticated profile/JWT in RLS or trusted server-side code. Do not silently merge fixtures with Supabase results. Preserve loading, empty, permission-denied, validation, and network error states.
+
+RLS/pgTAP coverage must prove: active signed-in users can read the shared catalog; clients cannot mutate shared rows; coach CRUD is limited to the caller's active tenant; one gym cannot read/update/archive another gym's exercises; members cannot perform coach writes; inactive profiles and suspended tenants cannot use tenant-owned library data; copying preserves content/provenance but isolates subsequent updates; archived records remain unavailable for new assignment selection. Add safe deterministic catalog seeds without fake Auth users or personal data.
+
+The local Supabase schema now includes CU-02 `exercise_catalog` and `tenant_exercises` tables with RLS (migrations 012-013), and `supabase/seed.sql` adds 15 stable-ID shared catalog exercises idempotently. Production has not received migrations 012-013. The coach exercise screen still reads fixtures; no exercise Supabase repository adapter/UI persistence exists yet. Routine assignments and workout logs also do not yet have database tables or Supabase repository adapters. Adding a local schema alone does not make the mock-backed screens persistent.
 
 Keep both data modes during migration, but make the selected source explicit (for example, a development setting selecting `mock` or `supabase`). Give both adapters the same typed repository contract; use async operations where the Supabase implementation needs them. A database/network/permission error must remain an error and must never silently show or write mock data. Mocks remain isolated for unit tests and demo mode until the matching feature is verified against local Supabase.
 

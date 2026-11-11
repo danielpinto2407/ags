@@ -24,6 +24,10 @@ When a feature is being migrated from mocks to Supabase, retain an explicit mock
 
 For CU-02 and CU-03, trace the full exercise contract through library -> published assignment -> student routine/detail. Preserve the video reference and every instructional field; keep assignment prescription overrides separate from catalog defaults and freeze the published content/version.
 
+CU-02 specifically has two sources: a cross-tenant curated catalog that clients can read but never edit, and a tenant-owned library with CRUD for active authorized coaches. Copying a catalog entry creates an independent tenant-owned snapshot with source provenance; it does not create a live link. Archive instead of hard-delete by default so future assignment/history references remain valid. Current `coach_admin` is the coach UI role; do not invent a separate `coach` database role without defining and testing its permission mapping. Before implementation, agree the controlled equipment/focus/movement-pattern vocabulary and how video URLs are validated. Seed stable-ID, original AGS-authored entries idempotently; keep mock mode explicit and never fall back silently.
+
+Recommended CU-02 slice order: (1) separate exercise definition from prescription types with an explicit legacy mapper; (2) add global catalog and tenant-owned schema, constraints, grants, archive/provenance, and RLS; (3) add pgTAP allow/deny and cross-tenant copy-isolation tests; (4) add stable seed data; (5) add repository contract and Supabase adapter; (6) implement search/filter and shared/read-only versus gym-owned UI, then create/edit/copy/archive flows; (7) verify coach and member roles, inactive/suspended cases, reload persistence, and phone/full responsive layouts. CU-03 assignment snapshots must retain the chosen definition when the catalog or gym copy changes later.
+
 ## Placement
 
 - Domain model: `src/domain/<entity>.ts`.

@@ -41,7 +41,7 @@ export default function MemberStatusToggle({ member, onChange }: MemberStatusTog
         title={active ? 'Desactivar acceso' : 'Reactivar acceso'}
         type="button"
       >
-        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${active ? 'translate-x-4' : 'translate-x-0.5'}`} />
+        <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${active ? 'translate-x-4' : 'translate-x-0'}`} />
       </button>
       {confirming && (
         <div className="absolute right-0 top-full z-20 mt-2 w-48 rounded-xl border border-zinc-700 bg-zinc-950 p-2.5 shadow-xl">
