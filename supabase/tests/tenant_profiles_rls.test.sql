@@ -6,7 +6,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(33);
+select extensions.plan(37);
 
 insert into public.tenants (id, name, subdomain, status)
 values
@@ -21,7 +21,10 @@ values
   ('d1000000-0000-4000-8000-000000000003'),
   ('d1000000-0000-4000-8000-000000000004'),
   ('d1000000-0000-4000-8000-000000000005'),
-  ('d1000000-0000-4000-8000-000000000006');
+  ('d1000000-0000-4000-8000-000000000006'),
+  ('d1000000-0000-4000-8000-000000000007'),
+  ('d1000000-0000-4000-8000-000000000008'),
+  ('d1000000-0000-4000-8000-000000000009');
 
 insert into public.profiles (id, tenant_id, role, status, full_name)
 values
@@ -30,7 +33,20 @@ values
   ('d1000000-0000-4000-8000-000000000003', 'd0000000-0000-4000-8000-000000000002', 'coach_admin', 'ACTIVE', 'Coach Power Gym'),
   ('d1000000-0000-4000-8000-000000000004', null, 'super_admin', 'ACTIVE', 'Platform Admin'),
   ('d1000000-0000-4000-8000-000000000005', 'd0000000-0000-4000-8000-000000000001', 'user_personalized', 'INACTIVE', 'Inactive Student'),
-  ('d1000000-0000-4000-8000-000000000006', 'd0000000-0000-4000-8000-000000000003', 'coach_admin', 'ACTIVE', 'Coach Suspended Tenant');
+  ('d1000000-0000-4000-8000-000000000006', 'd0000000-0000-4000-8000-000000000003', 'coach_admin', 'ACTIVE', 'Coach Suspended Tenant'),
+  ('d1000000-0000-4000-8000-000000000007', 'd0000000-0000-4000-8000-000000000001', 'coach_admin', 'ACTIVE', 'Second Coach AGS');
+
+update public.profiles
+set coach_id = 'd1000000-0000-4000-8000-000000000001'
+where id in (
+  'd1000000-0000-4000-8000-000000000002',
+  'd1000000-0000-4000-8000-000000000005'
+);
+
+insert into public.profiles (id, tenant_id, role, status, full_name, coach_id)
+values
+  ('d1000000-0000-4000-8000-000000000008', 'd0000000-0000-4000-8000-000000000001', 'user_personalized', 'ACTIVE', 'First Coach Member', 'd1000000-0000-4000-8000-000000000001'),
+  ('d1000000-0000-4000-8000-000000000009', 'd0000000-0000-4000-8000-000000000001', 'user_personalized', 'ACTIVE', 'Second Coach Member', 'd1000000-0000-4000-8000-000000000007');
 
 select extensions.ok(
   (select relrowsecurity from pg_class where oid = 'public.tenants'::regclass),
@@ -149,6 +165,11 @@ select extensions.is(
   'a student cannot see profiles from another tenant'
 );
 select extensions.is(
+  (select count(*)::integer from public.profiles where id = 'd1000000-0000-4000-8000-000000000008'),
+  0,
+  'a student cannot see another member in the same tenant'
+);
+select extensions.is(
   (select count(*)::integer from public.tenants),
   1,
   'a student can see only their own tenant'
@@ -157,8 +178,8 @@ select extensions.is(
 select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000001', true);
 select extensions.is(
   (select count(*)::integer from public.profiles),
-  3,
-  'a coach can manage active and inactive profiles within their own tenant'
+  4,
+  'a coach sees only their own profile and personalized members they invited'
 );
 select extensions.is(
   (select count(*)::integer from public.profiles where tenant_id = 'd0000000-0000-4000-8000-000000000002'),
@@ -166,9 +187,26 @@ select extensions.is(
   'a coach cannot see profiles from another tenant'
 );
 select extensions.is(
+  (select count(*)::integer from public.profiles where id = 'd1000000-0000-4000-8000-000000000009'),
+  0,
+  'a coach cannot see a same-tenant member invited by another coach'
+);
+select extensions.is(
   (select count(*)::integer from public.tenants),
   1,
   'a coach can see only their own tenant'
+);
+
+select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000007', true);
+select extensions.is(
+  (select count(*)::integer from public.profiles),
+  2,
+  'a second coach sees only their own profile and invited member'
+);
+select extensions.is(
+  (select count(*)::integer from public.profiles where id = 'd1000000-0000-4000-8000-000000000002'),
+  0,
+  'a second coach cannot see the first coach member in the same tenant'
 );
 
 select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000005', true);
@@ -224,9 +262,12 @@ select extensions.is(
     'd1000000-0000-4000-8000-000000000003',
     'd1000000-0000-4000-8000-000000000004',
     'd1000000-0000-4000-8000-000000000005',
-    'd1000000-0000-4000-8000-000000000006'
+    'd1000000-0000-4000-8000-000000000006',
+    'd1000000-0000-4000-8000-000000000007',
+    'd1000000-0000-4000-8000-000000000008',
+    'd1000000-0000-4000-8000-000000000009'
   )),
-  6,
+  9,
   'a super admin can see every profile from this test fixture'
 );
 select extensions.throws_ok(
