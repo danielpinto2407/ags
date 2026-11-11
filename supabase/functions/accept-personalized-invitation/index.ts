@@ -29,7 +29,7 @@ function jsonResponse(request: Request, status: number, body: Record<string, unk
     headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
   }
 
-  return new Response(JSON.stringify(body), { status, headers });
+  return new Response(status === 204 ? null : JSON.stringify(body), { status, headers });
 }
 
 function acceptanceError(error: string): { status: number; code: string } {
