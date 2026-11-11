@@ -25,7 +25,7 @@ function jsonResponse(request: Request, status: number, body: Record<string, unk
 
   if (origin && allowedOrigins.has(origin)) {
     headers.set('Access-Control-Allow-Origin', origin);
-    headers.set('Access-Control-Allow-Headers', 'authorization, apikey, content-type');
+    headers.set('Access-Control-Allow-Headers', 'authorization, apikey, x-client-info, content-type');
     headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
   }
 
