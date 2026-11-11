@@ -1,19 +1,20 @@
 import { Users, ChevronRight, Calendar, Dumbbell } from 'lucide-react';
 import Header from '@/components/Header';
-import { fitnessRepository } from '@/data/fitnessRepository';
 import type { Screen } from '@/types';
 import type { Profile } from '@/domain/profile';
+import { useCoachMembers } from '@/app/useCoachMembers';
+import type { CoachMember } from '@/domain/coachMember';
 
 interface CoachDashboardProps {
   profile: Profile;
   onNavigate: (screen: Screen) => void;
-  onStudentSelect: (studentId: string) => void;
+  onStudentSelect: (member: CoachMember) => void;
 }
 
 export default function CoachDashboard({ profile, onNavigate, onStudentSelect }: CoachDashboardProps) {
-  const students = fitnessRepository.getStudents();
-  const activeStudents = students.filter(s => s.status === 'active').length;
-  const totalStudents = students.length;
+  const { state } = useCoachMembers(profile.id);
+  const members = state.members;
+  const activeMembers = members.filter((member) => member.status === 'ACTIVE').length;
 
   return (
     <div className="space-y-5">
@@ -25,8 +26,10 @@ export default function CoachDashboard({ profile, onNavigate, onStudentSelect }:
           <Users size={22} className="text-brand-400" />
         </div>
         <div>
-          <p className="text-2xl font-display font-bold text-white">{activeStudents}/{totalStudents}</p>
-          <p className="text-[10px] text-zinc-500 uppercase tracking-wide font-semibold">Alumnas activas</p>
+          <p className="text-2xl font-display font-bold text-white">
+            {state.status === 'loading' ? '…' : `${activeMembers}/${members.length}`}
+          </p>
+          <p className="text-[10px] text-zinc-500 uppercase tracking-wide font-semibold">Alumnas invitadas activas</p>
         </div>
       </div>
 
@@ -62,28 +65,33 @@ export default function CoachDashboard({ profile, onNavigate, onStudentSelect }:
           </button>
         </div>
         <div className="space-y-2">
-          {students.slice(0, 3).map((student) => (
+          {members.slice(0, 3).map((member) => (
             <button
-              key={student.id}
-              onClick={() => onStudentSelect(student.id)}
+              key={member.id}
+              onClick={() => onStudentSelect(member)}
               className="w-full flex items-center gap-3 p-3 bg-zinc-900 border border-zinc-800 rounded-2xl hover:bg-zinc-800/50 transition-colors text-left"
             >
-              <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center text-lg flex-shrink-0">
-                {student.avatar}
+              <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center text-sm font-bold text-zinc-300 flex-shrink-0">
+                {member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase()).join('')}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white truncate">{student.name}</p>
-                <p className="text-[11px] text-zinc-500">{student.lastActive} • {student.weeklyProgress}% completado</p>
+                <p className="text-sm font-bold text-white truncate">{member.fullName}</p>
+                <p className="text-[11px] text-zinc-500">
+                  Invitada {new Intl.DateTimeFormat('es', { dateStyle: 'medium' }).format(new Date(member.createdAt))}
+                </p>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${
-                  student.status === 'active' ? 'bg-emerald-500' :
-                  student.status === 'resting' ? 'bg-amber-500' : 'bg-zinc-600'
-                }`} />
+                <span className={`w-2 h-2 rounded-full ${member.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-zinc-600'}`} />
                 <ChevronRight size={16} className="text-zinc-700" />
               </div>
             </button>
           ))}
+          {state.status === 'error' && <p className="text-xs text-rose-400">No se pudo cargar el roster de alumnas.</p>}
+          {state.status === 'loaded' && members.length === 0 && (
+            <p className="rounded-xl border border-dashed border-zinc-800 p-4 text-xs text-zinc-500">
+              Las alumnas aparecerán aquí cuando acepten tu invitación.
+            </p>
+          )}
         </div>
       </div>
     </div>

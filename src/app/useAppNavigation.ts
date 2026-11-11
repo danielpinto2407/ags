@@ -1,37 +1,33 @@
 import { useState } from 'react';
-import { fitnessRepository } from '@/data/fitnessRepository';
-import type { Role, Screen, Student } from '@/types';
+import type { CoachMember } from '@/domain/coachMember';
+import type { Role, Screen } from '@/types';
 
 export function useAppNavigation(role: Role | null) {
   const [navigationState, setNavigationState] = useState({
     role,
     screen: 'home' as Screen,
-    selectedStudentId: null as string | null,
+    selectedMember: null as CoachMember | null,
   });
   const stateMatchesRole = navigationState.role === role;
   const screen = stateMatchesRole ? navigationState.screen : 'home';
-  const selectedStudentId = stateMatchesRole ? navigationState.selectedStudentId : null;
+  const selectedMember = stateMatchesRole ? navigationState.selectedMember : null;
 
   const handleNavigate = (nextScreen: Screen) => {
-    setNavigationState({ role, screen: nextScreen, selectedStudentId: null });
+    setNavigationState({ role, screen: nextScreen, selectedMember: null });
   };
 
-  const handleStudentSelect = (studentId: string) => {
-    setNavigationState({ role, screen: 'studentDetail', selectedStudentId: studentId });
+  const handleStudentSelect = (member: CoachMember) => {
+    setNavigationState({ role, screen: 'studentDetail', selectedMember: member });
   };
-
-  const selectedStudent = selectedStudentId
-    ? fitnessRepository.getStudents().find((student) => student.id === selectedStudentId) ?? null
-    : null;
 
   return {
     role,
     screen,
-    selectedStudent,
+    selectedMember,
     handleNavigate,
     handleStudentSelect,
   };
 }
 
 export type AppNavigation = ReturnType<typeof useAppNavigation>;
-export type SelectedStudent = Student | null;
+export type SelectedCoachMember = CoachMember | null;
