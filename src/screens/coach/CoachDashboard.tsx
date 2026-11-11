@@ -1,4 +1,4 @@
-import { Users, ChevronRight, Calendar, Dumbbell, Mail } from 'lucide-react';
+import { Users, Calendar, Dumbbell, Mail } from 'lucide-react';
 import Header from '@/components/Header';
 import MemberStatusToggle from '@/components/MemberStatusToggle';
 import type { Screen } from '@/types';
@@ -92,7 +92,6 @@ export default function CoachDashboard({ profile, onNavigate, onStudentSelect }:
                     {' · '}Sin programación activa
                   </p>
                 </div>
-                <ChevronRight size={16} className="shrink-0 text-zinc-700" />
               </button>
               <MemberStatusToggle member={member} onChange={setMemberStatus} />
             </div>

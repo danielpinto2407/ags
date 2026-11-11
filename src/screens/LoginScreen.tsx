@@ -41,7 +41,7 @@ export default function LoginScreen({
             <Dumbbell size={36} className="text-white" />
           )}
         </div>
-        <span className="font-display font-extrabold tracking-[0.2em] text-[11px] text-brand-500 uppercase mb-1" style={{ textShadow: '0 0 8px rgba(255,10,120,0.6)' }}>
+        <span className="font-display font-extrabold tracking-[0.2em] text-[11px] text-brand-500 uppercase mb-1" style={{ textShadow: '0 0 8px color-mix(in srgb, var(--tenant-primary) 30%, transparent)' }}>
           {tenantName}
         </span>
         <p className="text-sm text-zinc-500 text-center mt-2 max-w-[260px]">

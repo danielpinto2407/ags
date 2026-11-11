@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Archive, Check, Copy, Dumbbell, LoaderCircle, Pencil, Plus, RefreshCw, Search, Undo2 } from 'lucide-react';
 import Header from '@/components/Header';
 import CreateExerciseModal from '@/components/CreateExerciseModal';
+import SelectModalField from '@/components/SelectModalField';
 import { useExerciseLibrary } from '@/app/useExerciseLibrary';
 import type { Profile } from '@/domain/profile';
 import {
@@ -134,7 +135,7 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
         </p>
         {source === 'gym' && (
           <label className="flex shrink-0 items-center gap-1.5 text-[10px] text-zinc-500">
-            <input checked={library.includeArchived} onChange={(event) => library.setIncludeArchived(event.target.checked)} type="checkbox" className="accent-pink-500" />
+            <input checked={library.includeArchived} onChange={(event) => library.setIncludeArchived(event.target.checked)} type="checkbox" className="accent-brand-500" />
             Archivados
           </label>
         )}
@@ -154,24 +155,36 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
           Enfoque
-          <select className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-xs normal-case text-zinc-300 focus:border-brand-500 focus:outline-none" value={focusFilter} onChange={(event) => setFocusFilter(event.target.value as 'ALL' | ExerciseFocus)}>
-            <option value="ALL">Todos los enfoques</option>
-            {EXERCISE_FOCUSES.map((focus) => <option key={focus} value={focus}>{exerciseFocusLabels[focus]}</option>)}
-          </select>
+          <SelectModalField
+            ariaLabel="Filtrar por enfoque"
+            className="mt-1.5"
+            modalTitle="Filtrar por enfoque"
+            onChange={(value) => setFocusFilter(value as 'ALL' | ExerciseFocus)}
+            options={[{ value: 'ALL', label: 'Todos los enfoques' }, ...EXERCISE_FOCUSES.map((focus) => ({ value: focus, label: exerciseFocusLabels[focus] }))]}
+            value={focusFilter}
+          />
         </label>
         <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
           Equipo
-          <select className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-xs normal-case text-zinc-300 focus:border-brand-500 focus:outline-none" value={equipmentFilter} onChange={(event) => setEquipmentFilter(event.target.value)}>
-            <option value="ALL">Todos los equipos</option>
-            {Object.entries(exerciseEquipmentLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-          </select>
+          <SelectModalField
+            ariaLabel="Filtrar por equipo"
+            className="mt-1.5"
+            modalTitle="Filtrar por equipo"
+            onChange={setEquipmentFilter}
+            options={[{ value: 'ALL', label: 'Todos los equipos' }, ...Object.entries(exerciseEquipmentLabels).map(([value, label]) => ({ value, label }))]}
+            value={equipmentFilter}
+          />
         </label>
         <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
           Dificultad
-          <select className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-xs normal-case text-zinc-300 focus:border-brand-500 focus:outline-none" value={difficultyFilter} onChange={(event) => setDifficultyFilter(event.target.value as 'ALL' | ExerciseDefinitionDifficulty)}>
-            <option value="ALL">Todos los niveles</option>
-            {Object.entries(exerciseDifficultyLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-          </select>
+          <SelectModalField
+            ariaLabel="Filtrar por dificultad"
+            className="mt-1.5"
+            modalTitle="Filtrar por dificultad"
+            onChange={(value) => setDifficultyFilter(value as 'ALL' | ExerciseDefinitionDifficulty)}
+            options={[{ value: 'ALL', label: 'Todos los niveles' }, ...Object.entries(exerciseDifficultyLabels).map(([value, label]) => ({ value, label }))]}
+            value={difficultyFilter}
+          />
         </label>
       </div>
 
@@ -224,7 +237,7 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
 
               <div className="mt-3 flex items-center justify-between gap-2">
                 <span className={`text-[9px] font-semibold uppercase tracking-wide ${exercise.archivedAt ? 'text-zinc-500' : source === 'catalog' ? 'text-sky-300' : 'text-brand-300'}`}>
-                  {exercise.archivedAt ? 'Archivado' : source === 'catalog' ? 'Compartido · solo lectura' : exercise.sourceCatalogExerciseId ? 'Copia del catálogo' : 'Del gimnasio'}
+                  {exercise.archivedAt ? 'Archivado' : source === 'catalog' ? 'Catálogo general' : exercise.sourceCatalogExerciseId ? 'Copia del catálogo' : 'Del gimnasio'}
                 </span>
                 {source === 'catalog' ? (
                   <button

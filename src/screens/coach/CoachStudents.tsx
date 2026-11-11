@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, ChevronRight, Plus, RefreshCw, Users, Mail } from 'lucide-react';
+import { Search, Plus, RefreshCw, Users, Mail } from 'lucide-react';
 import Header from '@/components/Header';
 import InviteMemberModal from '@/components/InviteMemberModal';
 import MemberStatusToggle from '@/components/MemberStatusToggle';
@@ -129,7 +129,6 @@ export default function CoachStudents({ coachId, onStudentSelect }: CoachStudent
                     <span className="text-[10px] text-zinc-500">Sin programación activa</span>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-zinc-700 flex-shrink-0" />
               </button>
               <MemberStatusToggle member={member} onChange={setMemberStatus} />
             </div>

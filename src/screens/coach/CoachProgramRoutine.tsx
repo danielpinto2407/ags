@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
+import SelectModalField from '@/components/SelectModalField';
 import { useCoachMembers } from '@/app/useCoachMembers';
 import { useCoachRoutineAssignments } from '@/app/useCoachRoutineAssignments';
 import { useExerciseLibrary } from '@/app/useExerciseLibrary';
@@ -196,19 +197,24 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
           Alumna
-          <select
-            className={`${fieldClass} mt-1.5 normal-case`}
-            value={selectedStudentId}
-            onChange={(event) => setSelectedStudentId(event.target.value)}
+          <SelectModalField
+            ariaLabel="Alumna de la rutina"
+            className="mt-1.5"
             disabled={membersQuery.state.status !== 'loaded' || activeMembers.length === 0}
-          >
-            {activeMembers.length === 0 && <option value="">No hay alumnas activas</option>}
-            {activeMembers.map((member) => <option key={member.id} value={member.id}>{member.fullName}</option>)}
-          </select>
+            modalTitle="Seleccionar alumna"
+            onChange={setSelectedStudentId}
+            options={activeMembers.map((member) => ({
+              value: member.id,
+              label: member.fullName,
+              description: member.email ?? undefined,
+            }))}
+            placeholder={membersQuery.state.status === 'loading' ? 'Cargando alumnas…' : 'No hay alumnas activas'}
+            value={selectedStudentId}
+          />
         </label>
         <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
           Fecha de programación
-          <input className={`${fieldClass} mt-1.5`} type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
+          <input className={`${fieldClass} mt-1.5 accent-brand-500`} style={{ colorScheme: 'dark', accentColor: 'var(--tenant-primary)' }} type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
         </label>
       </div>
 
@@ -275,19 +281,20 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
               <div className="space-y-3 border-t border-zinc-800 pt-3">
                 <label className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
                   Añadir ejercicio
-                  <select className={`${fieldClass} mt-1.5 normal-case`} value={selectedExerciseKey} onChange={(event) => setSelectedExerciseKey(event.target.value)} disabled={library.state.status !== 'loaded'}>
-                    <option value="">Selecciona del catálogo o del gimnasio</option>
-                    {library.state.status === 'loaded' && (
-                      <>
-                        <optgroup label="Catálogo general">
-                          {library.state.catalog.map((exercise) => <option key={exercise.id} value={`catalog:${exercise.id}`}>{exercise.name}</option>)}
-                        </optgroup>
-                        <optgroup label="Mi gimnasio">
-                          {library.state.tenantExercises.map((exercise) => <option key={exercise.id} value={`tenant:${exercise.id}`}>{exercise.name}</option>)}
-                        </optgroup>
-                      </>
-                    )}
-                  </select>
+                  <SelectModalField
+                    ariaLabel="Ejercicio para la rutina"
+                    className="mt-1.5"
+                    disabled={library.state.status !== 'loaded'}
+                    modalTitle="Seleccionar ejercicio"
+                    onChange={setSelectedExerciseKey}
+                    options={availableExercises.map(({ source, exercise }) => ({
+                      value: `${source}:${exercise.id}`,
+                      label: exercise.name,
+                      description: `${source === 'catalog' ? 'Catálogo general' : 'Mi gimnasio'} · ${exercise.primaryMuscles.join(', ')}`,
+                    }))}
+                    placeholder={library.state.status === 'loading' ? 'Cargando biblioteca…' : 'Selecciona del catálogo o del gimnasio'}
+                    value={selectedExerciseKey}
+                  />
                 </label>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                   <label className="text-[10px] text-zinc-500">Series<input className={`${fieldClass} mt-1`} type="number" min="1" max="50" value={prescribedSets} onChange={(event) => setPrescribedSets(Number(event.target.value))} /></label>
