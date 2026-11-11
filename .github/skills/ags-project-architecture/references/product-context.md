@@ -18,11 +18,11 @@ AGS GluteHouse is intended to become a multi-tenant fitness SaaS. The current ap
 |---|---|---|
 | CU-00 | Detect tenant by subdomain, load theme, handle unknown/suspended tenant | local slice implemented; production domain/DNS pending |
 | CU-01 | Authenticate, validate profile/tenant, redirect by role | local password sign-in/session/profile slice implemented; provisioning and remote deployment pending |
-| CU-01B | Coach invites one member to the gym by email; onboarding can grant personalized access, group-class access, or both, under one account and the gym member limit | partial: personalized local send/accept/password flow works end to end; cancellation, inactivation, and group entitlement pending |
-| CU-02 | Browse the shared immutable exercise catalog and create/manage a gym-owned exercise library; coaches may copy a shared exercise as the starting point for an independently editable gym exercise | local UI only; current fixtures are not persisted |
+| CU-01B | Coach invites one member to the gym by email; current onboarding grants personalized access | invite/acceptance and active/inactive lifecycle are implemented; group entitlements are deferred. Personalized membership operations do not enforce `tenants.max_clients` |
+| CU-02 | Browse the shared immutable exercise catalog and create/manage a gym-owned exercise library; coaches may copy a shared exercise as the starting point for an independently editable gym exercise | schema, RLS, 15-record shared catalog, and coach CRUD UI are implemented; UI verified locally. See project status for Production/Vercel publication state |
 | CU-02B | Create reusable routine templates and reorder items | planned; optional after direct personalized assignment works |
-| CU-03 | Assign a personalized routine to one user by date/day slot; save as draft and publish to that user | partial local UI; MVP priority |
-| CU-04 | User views their published routine, executes it, checks off exercises, and records completion and actual training data | partial UI; MVP priority; offline sync deferred |
+| CU-03 | Assign a personalized routine to one user by date/day slot; save as draft and publish to that user | Local persistence/RLS and coach/student browser flow implemented and verified; Production deployment pending |
+| CU-04 | User views their published routine, executes it, checks off exercises, and records completion and actual training data | Student reads the real published CU-03 snapshot; completion and actual set persistence are not implemented; offline sync deferred |
 | CU-04B | Derive training history, progression, and personal records from persisted workout logs | planned after CU-04 persistence |
 | CU-05 | Exercise detail, video, rest timer, sound/vibration alert | partial UI; supporting experience after the core cycle |
 | CU-06 | Direct WhatsApp contact with coach | placeholder; supporting experience |
@@ -34,7 +34,7 @@ AGS GluteHouse is intended to become a multi-tenant fitness SaaS. The current ap
 ### Personalized-Training MVP Order
 
 1. CU-01B: the coach enters an invitee's email in the tenant UI; the invitee receives an email, accepts it, and completes account setup. A trusted server-side flow validates the active coach and tenant, creates the invitation/account/profile, and assigns `user_personalized` and `tenant_id`; the browser never chooses either value. Public self-signup remains disabled.
-2. CU-02: provide two sources in one coach-facing library: a curated cross-tenant catalog that authenticated users can read but cannot edit, and tenant-owned exercises that authorized coaches can create, read, update, and archive. A coach may copy a shared exercise into their gym as a starting point; the copy is independently editable and never changes the shared source or another gym's copy. Seed stable-ID, original AGS-authored exercise records idempotently after schema/RLS exists. Existing exercise-library UI and fixtures are not persisted tenant data.
+2. CU-02: provide two sources in one coach-facing library: a curated cross-tenant catalog that authenticated users can read but cannot edit, and tenant-owned exercises that authorized coaches can create, read, update, and archive. A coach may copy a shared exercise into their gym as a starting point; the copy is independently editable and never changes the shared source or another gym's copy. Seed stable-ID, original AGS-authored exercise records idempotently after schema/RLS exists. Production catalog records use reviewed migrations; `supabase/seed.sql` is local-only and also creates development tenants.
 3. CU-03: let the coach assign a routine to a specific personalized user and date/day slot, with draft/published state. Templates are not a prerequisite for the first usable assignment.
 4. CU-04: let the user see only their own published assignments, execute them, check off exercises, and persist completion and set-level actual values. Offline synchronization is not required for this first online cycle and must be specified separately before implementation.
 5. CU-04B: build history and progress from persisted workout sessions, not independent mock totals.
@@ -55,13 +55,13 @@ Per-gym From addresses are deferred. They require each gym to prove domain owner
 The Gmail SMTP helper is a local delivery test only. It sends from the developer's Gmail account to a recipient entered in the invitation form; it does not imply per-gym senders or define the production From identity. Use a Google App Password (never the normal Gmail password) and remove/revoke it after testing if no longer needed. Production Auth email must use the platform-controlled transactional sender above.
 ## Exercise And Mock-Data Preservation
 
-The current `Exercise` UI contract includes prescription fields (`series`, `reps`, `weight`, `workDuration`, `rest`) alongside movement details. For CU-02, separate the reusable exercise definition from prescription: definition fields describe the movement; per-assignment sets/reps/load/work duration/rest belong to CU-03 prescription items. Preserve an explicit mapping while legacy mock screens still need the old combined shape.
+CU-02 has a shared, read-only catalog and a separate gym-owned library. Coaches may copy shared exercises as independent gym-owned records; editing a copy never changes its source or other gyms. Normal deletion is archive. The current coach role is `coach_admin`; there is no separate `coach` database role.
 
-The reusable definition should support a stable ID, name, primary training focus (glutes, upper body, core, or full body), primary and secondary muscles, equipment (including dumbbells, barbell, traditional gym machines/cables, bands, and bodyweight), movement pattern, difficulty, instructions, technique/safety tips, an optional validated HTTPS video reference, author/source, and creation/update/archive metadata. Do not invent clinical claims or copy third-party descriptions/media without permission; seed concise original AGS-authored guidance. The existing emoji may remain a presentation hint, not a required exercise identity or taxonomy.
+Seeded coaching descriptions are original AGS content; do not copy third-party descriptions/media or make unsupported clinical claims. The typed exercise-definition fields, storage enums, provenance, RLS, and mapping to future prescriptions are specified in `data-contracts.md`.
 
-Model the cross-tenant curated catalog separately from tenant-owned exercises so their permissions are unambiguous. Global catalog records are readable to authenticated active product users as required by the library/assignment flow, have no client write grants or edit/delete UI, and are changed only through reviewed migrations/seeds/platform administration if that is later authorized. Tenant exercises carry a tenant owner and are visible only within that active tenant. CRUD is allowed only to an active, authorized coach in that same active tenant; members may consume exercise snapshots through their own published assignments, not manage the library. Current database role `coach_admin` is the coach-facing role; there is no distinct `coach` enum value today. If `coach` becomes a separate role, explicitly define its permission relationship and cover it in RLS/tests before granting CRUD.
+The shared catalog is immutable to client roles. Active coaches may manage exercises only in their active gym; members consume exercise details through their own published assignments and do not manage the library. Any new role or permission change must be defined and tested server-side.
 
-Copying a global exercise creates a new tenant-owned record, copying the content at that moment and retaining the source catalog ID for provenance. The copy is not a live link: later catalog or copy edits must not cascade across records or gyms. Tenant-owned edits update only that tenant's record. Use archive/soft-delete as the normal delete operation so an exercise already referenced by a future assignment/history is not broken; permanent deletion may be restricted to never-used records under explicit policy. A published assignment must retain the exact exercise details and video reference used when it was published, through an immutable version or equivalent snapshot. `videoUrl` remains optional; validate HTTPS and show an explicit no-video state.
+Published routines must retain the exercise details used at publication; the exact snapshot/version contract belongs to CU-03. Video is optional and must be a validated HTTPS reference with a clear no-video state.
 
 CU-02 acceptance behavior:
 - An active coach can browse and search the shared catalog and their gym library, and filter by focus, muscle, equipment, and difficulty.
@@ -71,17 +71,16 @@ CU-02 acceptance behavior:
 - Coaches in another gym, members, inactive profiles, and users of suspended tenants cannot read/manage tenant-owned library records outside their allowed scope or perform writes. RLS tests cover allowed and denied reads/writes for each actor and tenant boundary.
 - Reapplying seed data is idempotent and does not overwrite curator edits; production personal data and Auth identities are never seeded.
 - A deleted/archived exercise cannot be newly selected for a routine, while existing assignment snapshots/history continue rendering intact.
-- Mock and Supabase modes are explicit; database failures remain visible errors and never fall back to fixtures.
+- Database, permission, and validation failures remain visible; never disguise them with demo records.
 
-Mocks remain useful for isolated UI/unit tests and an explicit demo mode while the real data path is built. Supabase local is the integration environment for persisted tenant-owned exercises, invitations, routine assignments, and workout logs. Select one source explicitly per run (for example `mock` or `supabase`); never silently merge mock records into database results or fall back to mocks after a database error. Promote each use case to Supabase only after its schema, RLS, repository adapter, seed/test data, and user flow are verified. Remove mock dependencies feature by feature after parity, not in a single risky rewrite.
+Mocks remain for legacy demo screens and isolated tests; persisted features use their typed repository as the single source and never merge or fall back to fixtures. CU-02 is Supabase-backed; CU-03/CU-04 are still planned persisted slices.
 
-Seed safe, stable-ID sample exercises idempotently after the exercise schema exists, preserving every field and video reference. These are demo fixtures persisted in the local database, not real user-generated data. Do not seed fake `auth.users` or real people's personal data in SQL. Local coach/student accounts must be created with development-only provisioning scripts; seed or create user-owned assignments only after those Auth identities exist.
+Exercise catalog records are original AGS-authored content with stable IDs. Production catalog entries are added through reviewed idempotent migrations. `supabase/seed.sql` is local-only and also creates development tenants; never execute it against Production. Do not seed fake `auth.users` or personal data; create local test accounts through development-only scripts.
 
 ### Capacity Terms
 
-- `tenants.max_clients` is the maximum number of unique member accounts allowed for a gym, not the capacity of an individual class. It must be an integer of at least 1; zero is invalid. A member with both services counts once, not once per service. CU-01B currently supports only personalized profiles; when group members are introduced, count all active unique members and pending unique invitations. Migration 003 repairs/enforces the minimum; never rewrite applied migrations.
-- CU-01B invitations add a member to the gym and grant application access; they are not group-class bookings. A pending invitation occupies one gym membership place while the account is being provisioned; once accepted, the active profile is the source of truth and remains registered until the coach-admin changes it to `INACTIVE`. Expiration of an email link does not expire an already-linked account or release its place; the coach can resend access. An unlinked/failed invitation that expires or is cancelled can release its temporary onboarding allocation.
-- Count active unique gym members plus pending unique onboarding invitations atomically under a tenant lock. Service entitlements do not multiply member capacity. On acceptance, transition the pending invitation to an active profile in one transaction so the same member is counted once. A coach-programmed personalized routine is assigned to the user by date/day; the user completes that programming and does not book or reserve a class slot.
+- `tenants.max_clients` is a retained gym-level setting, not a class-seat limit. The current personalized invitation, acceptance, and reactivation flows do not enforce it and do not reserve membership places. Do not introduce such checks without a new product decision. Any future gym-wide member limit requires its own definition; per-class capacity remains separate and deferred to CU-10.
+- CU-01B invitations add a member to the gym and grant application access; they are not group-class bookings. Invitation-link expiry controls account setup only; an accepted member remains active until the coach-admin changes the profile to `INACTIVE`. A coach-programmed personalized routine is assigned to the user by date/day; the user completes that programming and does not book or reserve a class slot.
 - Group-class capacity is a separate per-class value, deferred to CU-10. When implemented, each class must have capacity of at least 1; do not reuse `tenants.max_clients` for class attendance.
 
 ## Local Authentication Note
@@ -96,13 +95,12 @@ For temporary Vercel Preview testing before a custom domain exists, `VITE_PREVIE
 2. Tenant scope, actor role, profile status, and tenant status apply to protected features.
 3. Client-side role switching is demo tooling, never authorization.
 4. Routines are scoped to tenant, student, and date/day slot.
-5. Personalized membership capacity is checked during invitation onboarding and account acceptance. An accepted active profile counts until the coach-admin disables it; invite-link expiry is not membership expiry.
-6. `SUSPENDED` tenants and `INACTIVE` profiles are blocked even with cached sessions.
-7. Draft, published, offline, failed, and synchronized states are distinct.
-8. Target load, actual load, RPE, completion, and historical records are distinct concepts.
-9. Feature flags affect visibility, but backend authorization still enforces access.
-10. Personalized training is the first business workflow to make real; group-class capacity, scheduling, and booking are explicitly deferred.
-11. Personalized routine programming is coach-assigned; there is no user-facing class booking/reservation in CU-01B through CU-04.
+5. `SUSPENDED` tenants and `INACTIVE` profiles are blocked even with cached sessions.
+6. Draft, published, offline, failed, and synchronized states are distinct.
+7. Target load, actual load, RPE, completion, and historical records are distinct concepts.
+8. Feature flags affect visibility, but backend authorization still enforces access.
+9. Personalized training is the first business workflow to make real; group-class capacity, scheduling, and booking are explicitly deferred.
+10. Personalized routine programming is coach-assigned; there is no user-facing class booking/reservation in CU-01B through CU-04.
 
 ## Future Domain Entities
 

@@ -1,298 +1,334 @@
-import { useState, useSyncExternalStore } from 'react';
-import { Plus, Trash2, GripVertical, Save, X, Check } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
-import DaySelector from '@/components/DaySelector';
-import { fitnessRepository } from '@/data/fitnessRepository';
-import type { Day, Exercise } from '@/types';
+import { useCoachMembers } from '@/app/useCoachMembers';
+import { useCoachRoutineAssignments } from '@/app/useCoachRoutineAssignments';
+import { useExerciseLibrary } from '@/app/useExerciseLibrary';
+import { formatMuscleName } from '@/domain/exerciseDefinition';
+import type { ExerciseDefinition } from '@/domain/exerciseDefinition';
+import type { Profile } from '@/domain/profile';
+import { formatLocalDate, localDateInputValue } from '@/domain/localDate';
+import type {
+  RoutineAssignment,
+  RoutineAssignmentItemInput,
+  RoutineExerciseSnapshot,
+} from '@/domain/routineAssignment';
 
-interface ExerciseConfig {
-  reps: string;
-  weight: string;
-  workDuration: string;
-  rest: string;
-  series: number;
+interface CoachProgramRoutineProps {
+  profile: Profile;
 }
 
-export default function CoachProgramRoutine() {
-  const [selectedDay, setSelectedDay] = useState<Day>('LUN');
-  const routines = useSyncExternalStore(
-    fitnessRepository.subscribeToRoutines,
-    fitnessRepository.getRoutinesSnapshot,
-    fitnessRepository.getRoutinesSnapshot
-  );
-  const [showAddSheet, setShowAddSheet] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState(() => fitnessRepository.getStudents()[0]);
-  const [pendingExercise, setPendingExercise] = useState<Exercise | null>(null);
-  const [config, setConfig] = useState<ExerciseConfig>({
-    reps: '',
-    weight: '',
-    workDuration: '',
-    rest: '',
-    series: 3,
-  });
+interface DraftItem extends RoutineAssignmentItemInput {
+  exercise: RoutineExerciseSnapshot;
+}
 
-  const removeExercise = (id: string) => {
-    const nextRoutines = {
-      ...routines,
-      [selectedDay]: routines[selectedDay].filter((exercise) => exercise.id !== id),
-    };
-    fitnessRepository.saveRoutines(nextRoutines);
+const fieldClass = 'w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none disabled:opacity-60';
+
+function snapshotExercise(exercise: ExerciseDefinition): RoutineExerciseSnapshot {
+  return {
+    id: exercise.id,
+    name: exercise.name,
+    focus: exercise.focus,
+    primaryMuscles: [...exercise.primaryMuscles],
+    secondaryMuscles: [...exercise.secondaryMuscles],
+    equipment: [...exercise.equipment],
+    movementPattern: exercise.movementPattern,
+    difficulty: exercise.difficulty,
+    instructions: exercise.instructions,
+    tips: exercise.tips,
+    videoUrl: exercise.videoUrl,
+  };
+}
+
+function fromAssignment(assignment: RoutineAssignment | undefined): DraftItem[] {
+  return (assignment?.items ?? []).map((item) => ({
+    source: item.source,
+    sourceId: item.sourceId,
+    exercise: item.exercise,
+    prescribedSets: item.prescribedSets,
+    prescribedReps: item.prescribedReps,
+    targetLoad: item.targetLoad,
+    workDuration: item.workDuration,
+    rest: item.rest,
+  }));
+}
+
+export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProps) {
+  const tenantId = profile.tenant_id;
+  const [selectedDate, setSelectedDate] = useState(localDateInputValue);
+  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [title, setTitle] = useState('Rutina personalizada');
+  const [items, setItems] = useState<DraftItem[]>([]);
+  const [selectedExerciseKey, setSelectedExerciseKey] = useState('');
+  const [prescribedSets, setPrescribedSets] = useState(3);
+  const [prescribedReps, setPrescribedReps] = useState('10-12');
+  const [targetLoad, setTargetLoad] = useState('');
+  const [workDuration, setWorkDuration] = useState('');
+  const [rest, setRest] = useState('60 s');
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const membersQuery = useCoachMembers(profile.id);
+  const library = useExerciseLibrary(tenantId ?? '', profile.id);
+  const assignmentsQuery = useCoachRoutineAssignments(tenantId ?? '', profile.id, selectedDate);
+  const activeMembers = membersQuery.state.members.filter((member) => member.status === 'ACTIVE');
+  const selectedAssignment = assignmentsQuery.state.assignments.find(
+    (assignment) => assignment.studentId === selectedStudentId
+  );
+  const isPublished = selectedAssignment?.status === 'PUBLISHED';
+  const availableExercises = useMemo(() => [
+    ...library.state.catalog.map((exercise) => ({ source: 'catalog' as const, exercise })),
+    ...library.state.tenantExercises.map((exercise) => ({ source: 'tenant' as const, exercise })),
+  ], [library.state]);
+
+  useEffect(() => {
+    if (!selectedStudentId && activeMembers.length > 0) setSelectedStudentId(activeMembers[0].id);
+  }, [activeMembers, selectedStudentId]);
+
+  useEffect(() => {
+    if (assignmentsQuery.state.status !== 'loaded') return;
+    setTitle(selectedAssignment?.title ?? 'Rutina personalizada');
+    setItems(fromAssignment(selectedAssignment));
+    setActionError(null);
+  }, [assignmentsQuery.state.status, selectedAssignment]);
+
+  if (!tenantId) {
+    return (
+      <div className="space-y-4">
+        <Header title="Programar Rutina" subtitle="Acceso de gimnasio no disponible" />
+        <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-4 text-sm text-rose-300" role="alert">
+          Esta cuenta no tiene un gimnasio asociado.
+        </p>
+      </div>
+    );
+  }
+
+  const editable = !isPublished && !saving;
+  const selectedExercise = availableExercises.find(({ source, exercise }) => `${source}:${exercise.id}` === selectedExerciseKey);
+
+  const addExercise = () => {
+    if (!selectedExercise) return;
+    setItems((current) => [...current, {
+      source: selectedExercise.source,
+      sourceId: selectedExercise.exercise.id,
+      exercise: snapshotExercise(selectedExercise.exercise),
+      prescribedSets,
+      prescribedReps: prescribedReps.trim(),
+      targetLoad: targetLoad.trim(),
+      workDuration: workDuration.trim() || null,
+      rest: rest.trim(),
+    }]);
+    setSelectedExerciseKey('');
+    setActionError(null);
   };
 
-  const selectExercise = (ex: Exercise) => {
-    setPendingExercise(ex);
-    setConfig({
-      reps: ex.reps,
-      weight: ex.weight,
-      workDuration: ex.workDuration || '',
-      rest: ex.rest,
-      series: ex.series,
+  const moveItem = (index: number, direction: -1 | 1) => {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= items.length) return;
+    setItems((current) => {
+      const reordered = [...current];
+      [reordered[index], reordered[nextIndex]] = [reordered[nextIndex], reordered[index]];
+      return reordered;
     });
   };
 
-  const confirmAddExercise = () => {
-    if (!pendingExercise) return;
-    const newEx: Exercise = {
-      ...pendingExercise,
-      id: `ex-${Date.now()}`,
-      reps: config.reps || pendingExercise.reps,
-      weight: config.weight || pendingExercise.weight,
-      workDuration: config.workDuration || undefined,
-      rest: config.rest || pendingExercise.rest,
-      series: config.series || pendingExercise.series,
-    };
-    fitnessRepository.saveRoutines({
-      ...routines,
-      [selectedDay]: [...routines[selectedDay], newEx],
-    });
-    setPendingExercise(null);
-    setShowAddSheet(false);
-  };
+  const saveDraft = async (publishAfterSave: boolean) => {
+    if (assignmentsQuery.state.status !== 'loaded') {
+      setActionError('Espera a que termine de cargar la programación de esta fecha antes de guardar.');
+      return;
+    }
+    if (!selectedStudentId) {
+      setActionError('Selecciona una alumna activa para continuar.');
+      return;
+    }
+    if (isPublished) return;
+    if (!selectedDate || !title.trim()) {
+      setActionError('La fecha y el nombre de la rutina son obligatorios.');
+      return;
+    }
+    if (items.some((item) => !item.prescribedReps.trim() || item.prescribedSets < 1 || !item.rest.trim())) {
+      setActionError('Cada ejercicio debe tener series, repeticiones y descanso válidos.');
+      return;
+    }
 
-  const exercises = routines[selectedDay];
-  const availableExercises = fitnessRepository.getExercises().filter(
-    (ex) => !exercises.some((exercise) => exercise.name === ex.name)
-  );
+    setSaving(true);
+    setActionError(null);
+    setNotice(null);
+    try {
+      const assignmentId = await assignmentsQuery.saveDraft({
+        assignmentId: selectedAssignment?.id ?? null,
+        studentId: selectedStudentId,
+        scheduledFor: selectedDate,
+        title,
+        items: items.map((item) => ({
+          source: item.source,
+          sourceId: item.sourceId,
+          prescribedSets: item.prescribedSets,
+          prescribedReps: item.prescribedReps,
+          targetLoad: item.targetLoad,
+          workDuration: item.workDuration,
+          rest: item.rest,
+        })),
+      });
+      if (publishAfterSave) {
+        await assignmentsQuery.publish(assignmentId);
+        setNotice('Rutina publicada. La alumna ya puede verla.');
+      } else {
+        setNotice('Borrador guardado.');
+      }
+      assignmentsQuery.reload();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'No se pudo guardar la rutina.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <Header title="Programar Rutina" subtitle="Asigna ejercicios por día" />
+      <Header title="Programar Rutina" subtitle="Asigna ejercicios a una alumna y fecha" />
 
-      {/* Student Selector */}
-      <div>
-        <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">Alumna</label>
-        <div className="relative">
+      {membersQuery.state.status === 'error' && <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{membersQuery.state.message}</p>}
+      {library.state.status === 'error' && <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{library.state.message}</p>}
+      {assignmentsQuery.state.status === 'error' && <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{assignmentsQuery.state.message}</p>}
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+          Alumna
           <select
-            value={selectedStudent.id}
-            onChange={(e) => setSelectedStudent(fitnessRepository.getStudents().find(s => s.id === e.target.value)!)}
-            className="w-full appearance-none bg-zinc-900 border border-zinc-800 rounded-2xl p-3 text-sm text-zinc-200 focus:outline-none focus:border-brand-500 transition-colors pr-10"
+            className={`${fieldClass} mt-1.5 normal-case`}
+            value={selectedStudentId}
+            onChange={(event) => setSelectedStudentId(event.target.value)}
+            disabled={membersQuery.state.status !== 'loaded' || activeMembers.length === 0}
           >
-            {fitnessRepository.getStudents().map((s) => (
-              <option key={s.id} value={s.id}>{s.avatar} {s.name} ({s.plan})</option>
-            ))}
+            {activeMembers.length === 0 && <option value="">No hay alumnas activas</option>}
+            {activeMembers.map((member) => <option key={member.id} value={member.id}>{member.fullName}</option>)}
           </select>
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 text-xs pointer-events-none">▼</span>
-        </div>
+        </label>
+        <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+          Fecha de programación
+          <input className={`${fieldClass} mt-1.5`} type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
+        </label>
       </div>
 
-      <DaySelector selectedDay={selectedDay} onSelectDay={setSelectedDay} />
-
-      {/* Exercise List */}
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <p className="text-xs text-zinc-500 font-medium">
-            Rutina — {selectedDay} ({exercises.length} ejercicios)
-          </p>
-          <button
-            onClick={() => setShowAddSheet(true)}
-            className="flex items-center gap-1 text-xs bg-brand-600 hover:bg-brand-500 text-white px-2.5 py-1.5 rounded-xl font-semibold transition-colors"
-          >
-            <Plus size={14} />
-            Añadir
-          </button>
-        </div>
-
-        {exercises.map((ex, i) => (
-          <div key={ex.id} className="bg-zinc-900 p-3.5 rounded-2xl border border-zinc-800 flex items-center gap-3 group">
-            <GripVertical size={16} className="text-zinc-700 flex-shrink-0 cursor-grab" />
-            <span className="text-xl flex-shrink-0">{ex.emoji}</span>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-zinc-100 truncate">{i + 1}. {ex.name}</h4>
-              <p className="text-[11px] text-zinc-500">
-                {ex.series} series • {ex.reps} • {ex.weight} • Desc: {ex.rest}
-                {ex.workDuration && ` • Trabajo: ${ex.workDuration}`}
-              </p>
-            </div>
-            <button
-              onClick={() => removeExercise(ex.id)}
-              className="text-zinc-600 hover:text-brand-500 p-1.5 rounded-lg hover:bg-brand-950/30 transition-colors flex-shrink-0"
-            >
-              <Trash2 size={15} />
-            </button>
-          </div>
-        ))}
-
-        {exercises.length === 0 && (
-          <div className="p-8 text-center border-2 border-dashed border-zinc-800 rounded-2xl">
-            <p className="text-sm text-zinc-500">No hay ejercicios asignados</p>
-            <button
-              onClick={() => setShowAddSheet(true)}
-              className="mt-2 text-xs text-brand-400 hover:text-brand-300 font-semibold"
-            >
-              + Añadir primer ejercicio
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Save Button */}
-      <button className="w-full flex items-center justify-center gap-2 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-2xl text-sm transition-all shadow-neon">
-        <Save size={16} />
-        Guardar Rutina
-      </button>
-
-      {/* Add Exercise Bottom Sheet */}
-      {showAddSheet && !pendingExercise && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end justify-center z-50 animate-fade-in">
-          <div className="w-full max-w-[390px] bg-zinc-900 border border-zinc-800 rounded-t-[32px] p-5 animate-slide-up max-h-[70vh] overflow-y-auto no-scrollbar">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-display font-bold text-lg text-white">Biblioteca de Ejercicios</h3>
-              <button
-                onClick={() => setShowAddSheet(false)}
-                className="text-zinc-400 hover:text-white bg-zinc-800 w-8 h-8 rounded-full flex items-center justify-center transition-colors text-sm"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="space-y-2">
-              {availableExercises.length === 0 ? (
-                <p className="text-sm text-zinc-500 text-center py-4">Todos los ejercicios ya están asignados</p>
-              ) : (
-                availableExercises.map((ex) => (
-                  <button
-                    key={ex.id}
-                    onClick={() => selectExercise(ex)}
-                    className="w-full flex items-center gap-3 p-3 bg-zinc-950 border border-zinc-800 rounded-2xl hover:bg-zinc-800/50 transition-colors text-left"
-                  >
-                    <span className="text-xl">{ex.emoji}</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-zinc-100">{ex.name}</p>
-                      <p className="text-[11px] text-zinc-500">{ex.muscles} • {ex.difficulty}</p>
-                    </div>
-                    <Plus size={18} className="text-brand-400 flex-shrink-0" />
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
+      {membersQuery.state.status === 'loaded' && activeMembers.length === 0 && (
+        <div className="rounded-xl border border-dashed border-zinc-800 p-4 text-sm text-zinc-500">No hay alumnas activas disponibles para programar.</div>
       )}
 
-      {/* Configure Exercise Bottom Sheet */}
-      {showAddSheet && pendingExercise && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end justify-center z-50 animate-fade-in">
-          <div className="w-full max-w-[390px] bg-zinc-900 border border-zinc-800 rounded-t-[32px] p-5 animate-slide-up max-h-[85vh] overflow-y-auto no-scrollbar">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{pendingExercise.emoji}</span>
-                <div>
-                  <h3 className="font-display font-bold text-base text-white">{pendingExercise.name}</h3>
-                  <p className="text-[11px] text-zinc-500">{pendingExercise.muscles}</p>
-                </div>
+      {selectedStudentId && (
+        <>
+          <label className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+            Nombre de la rutina
+            <input className={`${fieldClass} mt-1.5`} maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} disabled={!editable} />
+          </label>
+
+          {assignmentsQuery.state.status === 'loading' && (
+            <p className="flex items-center justify-center gap-2 py-4 text-xs text-zinc-500" role="status">
+              <LoaderCircle className="animate-spin" size={15} /> Cargando programación de {formatLocalDate(selectedDate)}…
+            </p>
+          )}
+
+          {isPublished && (
+            <p className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-3 text-xs text-emerald-300" role="status">
+              Esta rutina está publicada y no se puede editar. Para cambiarla en esta fecha se definirá un flujo de revisión/versionado.
+            </p>
+          )}
+
+          <section className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                Ejercicios · {formatLocalDate(selectedDate, { weekday: 'long', day: 'numeric', month: 'long' })}
+              </h2>
+              <span className="text-[10px] text-zinc-600">{items.length} en la rutina</span>
+            </div>
+
+            {items.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-zinc-800 p-4 text-center text-xs text-zinc-500">Aún no agregas ejercicios a esta rutina.</p>
+            ) : (
+              <div className="space-y-2">
+                {items.map((item, index) => (
+                  <article key={`${item.source}:${item.sourceId}:${index}`} className="rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-semibold text-zinc-100">{index + 1}. {item.exercise.name}</h3>
+                        <p className="mt-0.5 text-[10px] text-zinc-500">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
+                        <p className="mt-1 text-[11px] text-zinc-400">
+                          {item.prescribedSets} × {item.prescribedReps} · {item.targetLoad || 'Carga por definir'} · Descanso {item.rest}
+                          {item.workDuration ? ` · Trabajo ${item.workDuration}` : ''}
+                        </p>
+                      </div>
+                      {editable && (
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button aria-label={`Subir ${item.exercise.name}`} className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-800 hover:text-white disabled:opacity-30" disabled={index === 0} onClick={() => moveItem(index, -1)} title="Subir" type="button"><ArrowUp size={13} /></button>
+                          <button aria-label={`Bajar ${item.exercise.name}`} className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-800 hover:text-white disabled:opacity-30" disabled={index === items.length - 1} onClick={() => moveItem(index, 1)} title="Bajar" type="button"><ArrowDown size={13} /></button>
+                          <button aria-label={`Quitar ${item.exercise.name}`} className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-600 hover:bg-rose-950/40 hover:text-rose-300" onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))} title="Quitar" type="button"><Trash2 size={13} /></button>
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                ))}
               </div>
+            )}
+
+            {editable && (
+              <div className="space-y-3 border-t border-zinc-800 pt-3">
+                <label className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                  Añadir ejercicio
+                  <select className={`${fieldClass} mt-1.5 normal-case`} value={selectedExerciseKey} onChange={(event) => setSelectedExerciseKey(event.target.value)} disabled={library.state.status !== 'loaded'}>
+                    <option value="">Selecciona del catálogo o del gimnasio</option>
+                    {library.state.status === 'loaded' && (
+                      <>
+                        <optgroup label="Catálogo general">
+                          {library.state.catalog.map((exercise) => <option key={exercise.id} value={`catalog:${exercise.id}`}>{exercise.name}</option>)}
+                        </optgroup>
+                        <optgroup label="Mi gimnasio">
+                          {library.state.tenantExercises.map((exercise) => <option key={exercise.id} value={`tenant:${exercise.id}`}>{exercise.name}</option>)}
+                        </optgroup>
+                      </>
+                    )}
+                  </select>
+                </label>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  <label className="text-[10px] text-zinc-500">Series<input className={`${fieldClass} mt-1`} type="number" min="1" max="50" value={prescribedSets} onChange={(event) => setPrescribedSets(Number(event.target.value))} /></label>
+                  <label className="text-[10px] text-zinc-500">Repeticiones<input className={`${fieldClass} mt-1`} value={prescribedReps} onChange={(event) => setPrescribedReps(event.target.value)} /></label>
+                  <label className="text-[10px] text-zinc-500">Carga objetivo<input className={`${fieldClass} mt-1`} value={targetLoad} onChange={(event) => setTargetLoad(event.target.value)} placeholder="Ej. 20 kg" /></label>
+                  <label className="text-[10px] text-zinc-500">Trabajo<input className={`${fieldClass} mt-1`} value={workDuration} onChange={(event) => setWorkDuration(event.target.value)} placeholder="Opcional" /></label>
+                  <label className="text-[10px] text-zinc-500">Descanso<input className={`${fieldClass} mt-1`} value={rest} onChange={(event) => setRest(event.target.value)} /></label>
+                </div>
+                <button className="flex min-h-9 items-center gap-1.5 rounded-xl border border-brand-800 px-3 text-xs font-semibold text-brand-300 hover:bg-brand-950/40 disabled:cursor-not-allowed disabled:opacity-40" disabled={!selectedExercise || prescribedSets < 1 || !prescribedReps.trim() || !rest.trim()} onClick={addExercise} type="button">
+                  <Plus size={14} /> Agregar a la rutina
+                </button>
+              </div>
+            )}
+          </section>
+
+          {actionError && <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{actionError}</p>}
+          {notice && <p className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-3 text-xs text-emerald-300" role="status">{notice}</p>}
+
+          {!isPublished && (
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <button
-                onClick={() => setPendingExercise(null)}
-                className="text-zinc-400 hover:text-white bg-zinc-800 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 text-sm font-semibold text-zinc-200 hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-50"
+                disabled={saving || assignmentsQuery.state.status !== 'loaded'}
+                onClick={() => void saveDraft(false)}
+                type="button"
               >
-                <X size={16} />
+                {saving ? <LoaderCircle size={16} className="animate-spin" /> : <Save size={16} />}
+                Guardar borrador
+              </button>
+              <button
+                className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 text-sm font-bold text-white hover:bg-brand-500 disabled:cursor-wait disabled:opacity-50"
+                disabled={saving || assignmentsQuery.state.status !== 'loaded' || items.length === 0}
+                onClick={() => void saveDraft(true)}
+                type="button"
+              >
+                {saving ? <LoaderCircle size={16} className="animate-spin" /> : <Send size={16} />}
+                Guardar y publicar
               </button>
             </div>
-
-            {/* Config Form */}
-            <div className="space-y-3">
-              {/* Series */}
-              <div>
-                <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">Series</label>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setConfig((c) => ({ ...c, series: Math.max(1, c.series - 1) }))}
-                    className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 font-bold text-lg flex items-center justify-center hover:bg-zinc-700 transition-colors flex-shrink-0"
-                  >
-                    −
-                  </button>
-                  <div className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl py-2.5 text-center text-sm font-bold text-white">
-                    {config.series}
-                  </div>
-                  <button
-                    onClick={() => setConfig((c) => ({ ...c, series: Math.min(10, c.series + 1) }))}
-                    className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-300 font-bold text-lg flex items-center justify-center hover:bg-zinc-700 transition-colors flex-shrink-0"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Reps */}
-              <div>
-                <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">Repeticiones</label>
-                <input
-                  type="text"
-                  value={config.reps}
-                  onChange={(e) => setConfig((c) => ({ ...c, reps: e.target.value }))}
-                  placeholder="Ej: 12-15 reps"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
-                />
-              </div>
-
-              {/* Weight */}
-              <div>
-                <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">Peso</label>
-                <input
-                  type="text"
-                  value={config.weight}
-                  onChange={(e) => setConfig((c) => ({ ...c, weight: e.target.value }))}
-                  placeholder="Ej: 40 kg o Peso corporal"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
-                />
-              </div>
-
-              {/* Work Duration */}
-              <div>
-                <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
-                  Duración del trabajo <span className="text-zinc-600 normal-case">(si aplica)</span>
-                </label>
-                <input
-                  type="text"
-                  value={config.workDuration}
-                  onChange={(e) => setConfig((c) => ({ ...c, workDuration: e.target.value }))}
-                  placeholder="Ej: 45 seg (dejar vacío si no aplica)"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
-                />
-              </div>
-
-              {/* Rest Duration */}
-              <div>
-                <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">Duración del descanso</label>
-                <input
-                  type="text"
-                  value={config.rest}
-                  onChange={(e) => setConfig((c) => ({ ...c, rest: e.target.value }))}
-                  placeholder="Ej: 90s"
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Confirm */}
-            <button
-              onClick={confirmAddExercise}
-              className="w-full mt-5 flex items-center justify-center gap-2 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-2xl text-sm transition-all shadow-neon"
-            >
-              <Check size={16} />
-              Confirmar Ejercicio
-            </button>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -27,7 +27,7 @@ export default function ScreenRenderer({ navigation, profile, onLogout }: Screen
       case 'home':
         return <StudentHome profile={profile} onNavigate={handleNavigate} />;
       case 'routines':
-        return <StudentRoutines />;
+        return <StudentRoutines profile={profile} />;
       case 'progress':
         return <StudentProgress />;
       case 'profile':
@@ -49,7 +49,7 @@ export default function ScreenRenderer({ navigation, profile, onLogout }: Screen
         <CoachStudents coachId={profile.id} onStudentSelect={handleStudentSelect} />
       );
     case 'programRoutine':
-      return <CoachProgramRoutine />;
+      return <CoachProgramRoutine profile={profile} />;
     case 'exerciseLibrary':
       return <CoachExerciseLibrary profile={profile} />;
     case 'profile':

@@ -1,113 +1,125 @@
-import { useState, useSyncExternalStore } from 'react';
-import { ChevronRight, CheckCircle2, Circle, MessageCircle } from 'lucide-react';
+import { useState } from 'react';
+import { CalendarDays, Dumbbell, LoaderCircle } from 'lucide-react';
 import Header from '@/components/Header';
-import DaySelector from '@/components/DaySelector';
-import ExerciseDetailModal from '@/components/ExerciseDetailModal';
-import { fitnessRepository } from '@/data/fitnessRepository';
-import type { Day, Exercise } from '@/types';
+import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
+import type { Profile } from '@/domain/profile';
+import { exerciseEquipmentLabels, exerciseFocusLabels, exerciseMovementLabels, formatMuscleName } from '@/domain/exerciseDefinition';
+import { formatLocalDate, localDateInputValue } from '@/domain/localDate';
 
-export default function StudentRoutines() {
-  const [selectedDay, setSelectedDay] = useState<Day>('LUN');
-  const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
-  const [completed, setCompleted] = useState<Set<string>>(new Set(['LUN:ex-1', 'LUN:ex-2']));
+interface StudentRoutinesProps {
+  profile: Profile;
+}
 
-  const toggleComplete = (id: string) => {
-    const completionKey = `${selectedDay}:${id}`;
-    setCompleted((prev) => {
-      const next = new Set(prev);
-      if (next.has(completionKey)) next.delete(completionKey);
-      else next.add(completionKey);
-      return next;
-    });
-  };
+const dateInputClass = 'w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none';
 
-  const routines = useSyncExternalStore(
-    fitnessRepository.subscribeToRoutines,
-    fitnessRepository.getRoutinesSnapshot,
-    fitnessRepository.getRoutinesSnapshot
-  );
-  const dayExercises = routines[selectedDay];
-  const completedCount = dayExercises.filter((ex) => completed.has(`${selectedDay}:${ex.id}`)).length;
-  const progress = dayExercises.length === 0 ? 0 : Math.round((completedCount / dayExercises.length) * 100);
+export default function StudentRoutines({ profile }: StudentRoutinesProps) {
+  const [selectedDate, setSelectedDate] = useState(localDateInputValue);
+  const tenantId = profile.tenant_id ?? '';
+  const { state, reload } = useStudentRoutineAssignment(profile.id, tenantId, selectedDate);
+  const assignment = state.assignment;
 
   return (
     <div className="space-y-4">
-      <Header title="Mis Rutinas" subtitle="Semana del 1-7 Sept" />
+      <Header title="Mis Rutinas" subtitle="Programación asignada por tu coach" />
 
-      <DaySelector selectedDay={selectedDay} onSelectDay={setSelectedDay} />
+      <label className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+        Fecha
+        <input
+          aria-label="Fecha de rutina"
+          className={`${dateInputClass} mt-1.5`}
+          type="date"
+          value={selectedDate}
+          onChange={(event) => setSelectedDate(event.target.value)}
+        />
+      </label>
 
-      {/* Progress bar */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-zinc-400 font-medium">Progreso del día</span>
-          <span className="text-xs font-bold text-brand-400">{completedCount}/{dayExercises.length} completados</span>
+      {state.status === 'loading' && (
+        <p className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-500" role="status">
+          <LoaderCircle className="animate-spin" size={17} /> Cargando tu rutina…
+        </p>
+      )}
+
+      {state.status === 'error' && (
+        <div className="rounded-2xl border border-rose-900/60 bg-rose-950/20 p-4" role="alert">
+          <p className="text-sm text-rose-300">{state.message}</p>
+          <button className="mt-2 text-xs font-semibold text-rose-200 underline underline-offset-2" onClick={reload} type="button">Reintentar</button>
         </div>
-        <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-brand-500 to-brand-600 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+      )}
 
-      {/* Exercise List */}
-      <div className="space-y-2.5">
-        <p className="text-[11px] text-zinc-500 font-semibold uppercase tracking-wide">Ejercicios — {selectedDay}</p>
-        {dayExercises.length === 0 && (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-center">
-            <p className="text-sm font-semibold text-zinc-300">Día de descanso</p>
-            <p className="text-xs text-zinc-500 mt-1">Recupera y vuelve con energía.</p>
-          </div>
-        )}
-        {dayExercises.map((ex, i) => {
-          const isDone = completed.has(`${selectedDay}:${ex.id}`);
-          return (
-            <div
-              key={ex.id}
-              className={`bg-zinc-900 p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
-                isDone ? 'border-brand-900/50 bg-brand-950/20' : 'border-zinc-800'
-              }`}
-            >
-              <button
-                onClick={() => toggleComplete(ex.id)}
-                className="flex items-center gap-3 flex-1 text-left"
-              >
-                {isDone ? (
-                  <CheckCircle2 size={22} className="text-brand-500 flex-shrink-0" />
-                ) : (
-                  <Circle size={22} className="text-zinc-700 flex-shrink-0" />
-                )}
-                <div>
-                  <h4 className={`text-sm font-bold ${isDone ? 'text-zinc-500 line-through' : 'text-zinc-100'}`}>
-                    {i + 1}. {ex.name}
-                  </h4>
-                  <p className="text-[11px] text-zinc-500">
-                    {ex.series} series • {ex.reps} • {ex.weight} • Desc: {ex.rest}
-                  </p>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveExercise(ex)}
-                className="bg-brand-500/10 text-brand-400 hover:bg-brand-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1"
-              >
-                Ver
-                <ChevronRight size={14} />
-              </button>
+      {state.status === 'loaded' && !assignment && (
+        <div className="rounded-2xl border border-dashed border-zinc-800 px-5 py-10 text-center">
+          <CalendarDays className="mx-auto mb-3 text-zinc-600" size={25} />
+          <p className="text-sm font-semibold text-zinc-300">Aún no tienes programación para esta fecha</p>
+          <p className="mt-1 text-xs text-zinc-500">Tu coach puede asignarte una rutina para {formatLocalDate(selectedDate)}.</p>
+        </div>
+      )}
+
+      {state.status === 'loaded' && assignment && (
+        <>
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand-900/50 bg-brand-950/30 text-brand-300">
+                <CalendarDays size={18} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-400">Programación publicada</p>
+                <h2 className="mt-1 text-base font-bold text-white">{assignment.title}</h2>
+                <p className="mt-1 text-xs text-zinc-500">{formatLocalDate(assignment.scheduledFor)}</p>
+              </div>
             </div>
-          );
-        })}
-      </div>
+          </section>
 
-      {/* WhatsApp */}
-      <div className="p-3 bg-emerald-950/30 border border-emerald-800/40 rounded-2xl flex items-center justify-between text-xs">
-        <span className="text-emerald-400 flex items-center gap-2">
-          <MessageCircle size={14} /> ¿Dudas con la técnica?
-        </span>
-        <button className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg font-bold">WhatsApp</button>
-      </div>
+          {assignment.items.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-zinc-800 p-5 text-center text-sm text-zinc-500">Esta rutina aún no tiene ejercicios.</p>
+          ) : (
+            <section className="space-y-2.5">
+              <div className="flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                <Dumbbell size={13} /> {assignment.items.length} ejercicios
+              </div>
+              {assignment.items.map((item, index) => (
+                <article key={item.id} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-white">{index + 1}. {item.exercise.name}</h3>
+                      <p className="mt-1 text-[11px] text-zinc-400">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
+                      <p className="mt-1.5 text-xs font-medium text-brand-300">
+                        {item.prescribedSets} × {item.prescribedReps}
+                        {item.targetLoad ? ` · ${item.targetLoad}` : ''}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full border border-zinc-800 px-2 py-1 text-[9px] text-zinc-500">
+                      {exerciseFocusLabels[item.exercise.focus]}
+                    </span>
+                  </div>
 
-      {activeExercise && (
-        <ExerciseDetailModal exercise={activeExercise} onClose={() => setActiveExercise(null)} />
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {item.exercise.equipment.map((equipment) => (
+                      <span key={equipment} className="rounded-full border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[9px] text-zinc-500">
+                        {exerciseEquipmentLabels[equipment]}
+                      </span>
+                    ))}
+                    <span className="rounded-full border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[9px] text-zinc-500">
+                      {exerciseMovementLabels[item.exercise.movementPattern]}
+                    </span>
+                  </div>
+
+                  <details className="mt-3 border-t border-zinc-800 pt-2.5">
+                    <summary className="cursor-pointer text-[11px] font-medium text-brand-400">Instrucciones y técnica</summary>
+                    <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">{item.exercise.instructions}</p>
+                    {item.exercise.tips && <p className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-amber-200/70">{item.exercise.tips}</p>}
+                    <p className="mt-2 text-[10px] text-zinc-500">Descanso: {item.rest}{item.workDuration ? ` · Trabajo: ${item.workDuration}` : ''}</p>
+                    {item.exercise.videoUrl
+                      ? <a className="mt-2 inline-block text-[11px] text-brand-300 underline underline-offset-2" href={item.exercise.videoUrl} target="_blank" rel="noreferrer">Ver video</a>
+                      : <p className="mt-2 text-[10px] text-zinc-600">Sin video disponible</p>}
+                  </details>
+                </article>
+              ))}
+            </section>
+          )}
+          <p className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-[11px] text-zinc-500">
+            El registro de ejercicios completados estará disponible cuando se active el seguimiento de entrenamiento.
+          </p>
+        </>
       )}
     </div>
   );
