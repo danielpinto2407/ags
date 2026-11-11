@@ -13,8 +13,8 @@ Use this skill as the canonical project context before changing code. Keep the a
 
 - React 18, Vite 5, TypeScript strict mode, Tailwind CSS 3.
 - Lucide React and ESLint 9 with TypeScript/React Hooks rules.
-- Business data still uses local fixtures and browser `localStorage`.
-- `@supabase/supabase-js` is integrated with local CU-00 tenant resolution and CU-01 password sign-in/session/profile validation; remote project linking and trusted profile provisioning are not implemented.
+- Business data is migrated incrementally: CU-01B memberships and CU-02 exercises use Supabase; legacy routines, execution, and progress still contain mock/localStorage behavior. Consult `references/project-status.md` for the verified deployment state.
+- `@supabase/supabase-js` supports local and hosted tenant resolution, password Auth/session/profile validation, invitation onboarding, member status, and the exercise library. Keep secrets server-side and use the status reference for current deployment details.
 
 ## Current Structure
 
@@ -96,11 +96,11 @@ Dependencies flow inward. Screens may use feature hooks and repositories; domain
 
 Keep Auth calls in `src/data/authRepository.ts` and session lifecycle in `src/app/session/AuthProvider.tsx`. Use only public Vite client configuration, never service-role keys. Resolve tenant before login, load and subscribe to session changes, validate profile/tenant status, preserve silent refresh, and keep session separate from profile role and tenant state. Public signup stays disabled until trusted invitation/provisioning exists.
 
-CU-00 and the core CU-01 password-auth flow have local vertical slices: subdomain parsing, public RPC resolution, typed response validation, local theme variables, persistent session, verified user/profile lookup, signup denial, logout, and active/suspended/not-found/error states. `.env.local` is local-only; `.env.example` documents variables. A development default tenant may be used on localhost. Production root domains must use the neutral platform fallback. Remote linking, profile invitation provisioning, and production auth configuration remain pending.
+CU-00 and CU-01 include tenant resolution, typed public RPC validation, theme mapping, persistent session, verified user/profile lookup, signup denial, logout, and active/suspended/not-found/error states. `.env.local` is local-only; `.env.example` documents variables. A development default tenant may be used on localhost. Production root domains must use the neutral platform fallback. Consult `references/project-status.md` for current hosting and deployment facts instead of duplicating them here.
 
-The current local database contains tenants/profiles only; business screens still use mocks and localStorage. Keep a working mock adapter while adding a selectable Supabase-local mode per vertical slice. Both modes must share repository contracts, and database failures must not silently fall back to mocks. Seed idempotent catalog fixtures only after schema/RLS exists; create test Auth users through local-only scripts, not SQL seeds. For exercises, preserve the complete `Exercise` contract, including instructional fields and `videoUrl` when supplied, through library, published assignment, and student execution.
+Persisted business data is introduced by vertical slice. A Supabase-backed screen must surface database/permission errors and never silently fall back to mocks. Retain a mock adapter only where an explicit demo/test mode is needed; do not add one solely to duplicate a production repository. Create test Auth users through local-only scripts, not SQL seeds. Exercise catalog definitions remain separate from CU-03 prescription values, and published assignments must preserve the complete exercise snapshot, including instructional fields and `videoUrl` when supplied.
 
-For CU-01B, invitation UI belongs to the coach workflow but account creation, email delivery, tenant/role assignment, and the `max_clients` capacity transaction must be handled by trusted server-side code. `tenants.max_clients` is the gym-wide member limit (minimum 1), not group-class capacity; current CU-01B only counts personalized members, so extend the calculation before group-only users are enabled. Migration 003 enforces the minimum; never rewrite applied migration history. Group classes and per-class capacity are deferred to proposed CU-10.
+For CU-01B, invitation UI belongs to the coach workflow, while account creation, email delivery, and tenant/role assignment are handled by trusted server-side code. Personalized invite, acceptance, and reactivation flows do not enforce `tenants.max_clients`; never add capacity logic to them without an explicit product decision. Keep any future CU-10 class capacity separate. Never rewrite applied migration history. Production migration/seed changes require local tests, a remote dry-run, explicit approval, and post-deploy verification; do not run the local `supabase/seed.sql` against Production because it contains development tenants. Production catalog records are introduced through reviewed, idempotent migrations.
 
 ## Validation
 

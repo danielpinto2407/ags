@@ -21,14 +21,14 @@
 - Are mock and Supabase modes explicit, with no silent fallback or accidental mixing of data sources?
 - Are local sample seeds idempotent, tenant-scoped, stable-ID, and free of fake Auth users or real personal data?
 - Are personalized assignments scoped to tenant, student, and date, with drafts hidden from students and published work visible only to its owner?
-- Does invitation provisioning happen server-side, with role/tenant assigned by trusted code and capacity enforced atomically?
-- Is `tenants.max_clients` always at least 1, with pending membership onboarding counted consistently? Keep this gym limit separate from future per-class capacity.
+- Does invitation provisioning happen server-side, with role/tenant assigned by trusted code?
+- Does personalized invitation/acceptance/reactivation avoid enforcing `tenants.max_clients` or reserving class seats? Keep any future per-class capacity separate.
 - Does invitation acceptance grant gym app access without booking a class, and does post-login navigation follow the server-authorized service track?
 - Does invitation acceptance require the member to set a reusable password, verify the invitation email/session, and allow a subsequent password login?
 - Are demo workout routines/metrics clearly separated from actual member assignments after onboarding?
 - Does personalized programming take priority for personalized members, while group-only discovery/booking remains gated until CU-10 is implemented?
 - Can one member hold both service entitlements under one Auth identity, with personalized programming primary and group-class data/navigation separate?
-- Is gym member capacity counted once per unique member, regardless of the number of service entitlements?
+- If a future product decision introduces a gym-wide membership cap, is it defined separately from personalized training and per-class group capacity?
 - Is the responsible coach relationship explicit rather than inferred permanently from who sent the invitation?
 
 ## UI and Visuals
@@ -45,7 +45,7 @@
 - Is authorization enforced server-side rather than by hidden navigation?
 - Is tenant isolation enforced through backend policies such as RLS?
 - Do RLS tests cover inactive profiles and suspended tenants, including allowed self-status and coach administration reads?
-- Do invitation/capacity tests cover unauthorized coaches, wrong tenant, full capacity, concurrent requests, and expired/cancelled invitations?
+- Do invitation tests cover unauthorized coaches, wrong tenant, email mismatch, duplicate/pending invite behavior, and expired/replayed invitations without asserting a personalized capacity limit?
 - Are only public client configuration values exposed to Vite?
 - Are service-role keys and secrets excluded?
 - Do production Auth emails use a platform-controlled, domain-authenticated sender rather than a tenant-supplied From address? Are local Gmail credentials isolated from Vite and Git?
