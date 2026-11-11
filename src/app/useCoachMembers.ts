@@ -15,7 +15,7 @@ export function useCoachMembers(coachId: string) {
     let cancelled = false;
     setState((current) => ({ status: 'loading', members: current.members }));
 
-    coachMemberRepository.listInvitedByCoach(coachId)
+    coachMemberRepository.listInvitedByCoach()
       .then((members) => {
         if (!cancelled) setState({ status: 'loaded', members });
       })

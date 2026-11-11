@@ -6,7 +6,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(52);
+select extensions.plan(56);
 
 insert into public.tenants (id, name, subdomain, status)
 values
@@ -25,6 +25,21 @@ values
   ('d1000000-0000-4000-8000-000000000007'),
   ('d1000000-0000-4000-8000-000000000008'),
   ('d1000000-0000-4000-8000-000000000009');
+
+update auth.users
+set email = case id
+  when 'd1000000-0000-4000-8000-000000000002' then 'student-ags@example.test'
+  when 'd1000000-0000-4000-8000-000000000005' then 'inactive-ags@example.test'
+  when 'd1000000-0000-4000-8000-000000000008' then 'first-coach-member@example.test'
+  when 'd1000000-0000-4000-8000-000000000009' then 'second-coach-member@example.test'
+  else email
+end
+where id in (
+  'd1000000-0000-4000-8000-000000000002',
+  'd1000000-0000-4000-8000-000000000005',
+  'd1000000-0000-4000-8000-000000000008',
+  'd1000000-0000-4000-8000-000000000009'
+);
 
 insert into public.profiles (id, tenant_id, role, status, full_name)
 values
@@ -95,6 +110,12 @@ select extensions.throws_ok(
   '42501',
   null,
   'anonymous clients cannot read the profiles table'
+);
+select extensions.throws_ok(
+  $$select * from public.list_coach_personalized_members()$$,
+  '42501',
+  null,
+  'anonymous clients cannot read coach member emails'
 );
 select extensions.is(
   (select count(*)::integer from public.resolve_tenant_by_subdomain('rls-ags')),
@@ -182,6 +203,16 @@ select extensions.is(
   'a coach sees only their own profile and personalized members they invited'
 );
 select extensions.is(
+  (select count(*)::integer from public.list_coach_personalized_members()),
+  3,
+  'coach roster RPC returns only members invited by that coach, including inactive members'
+);
+select extensions.is(
+  (select email from public.list_coach_personalized_members() where member_id = 'd1000000-0000-4000-8000-000000000008'),
+  'first-coach-member@example.test',
+  'coach roster RPC returns the auth email for an owned member'
+);
+select extensions.is(
   (select count(*)::integer from public.profiles where tenant_id = 'd0000000-0000-4000-8000-000000000002'),
   0,
   'a coach cannot see profiles from another tenant'
@@ -198,6 +229,11 @@ select extensions.is(
 );
 
 select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000007', true);
+select extensions.is(
+  (select count(*)::integer from public.list_coach_personalized_members()),
+  1,
+  'second coach roster RPC does not expose another coach member or email'
+);
 select extensions.is(
   (select count(*)::integer from public.profiles),
   2,

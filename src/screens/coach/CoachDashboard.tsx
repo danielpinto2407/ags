@@ -1,5 +1,6 @@
-import { Users, ChevronRight, Calendar, Dumbbell } from 'lucide-react';
+import { Users, ChevronRight, Calendar, Dumbbell, Mail } from 'lucide-react';
 import Header from '@/components/Header';
+import MemberStatusToggle from '@/components/MemberStatusToggle';
 import type { Screen } from '@/types';
 import type { Profile } from '@/domain/profile';
 import { useCoachMembers } from '@/app/useCoachMembers';
@@ -12,7 +13,7 @@ interface CoachDashboardProps {
 }
 
 export default function CoachDashboard({ profile, onNavigate, onStudentSelect }: CoachDashboardProps) {
-  const { state } = useCoachMembers(profile.id);
+  const { state, setMemberStatus } = useCoachMembers(profile.id);
   const members = state.members;
   const activeMembers = members.filter((member) => member.status === 'ACTIVE').length;
 
@@ -66,25 +67,35 @@ export default function CoachDashboard({ profile, onNavigate, onStudentSelect }:
         </div>
         <div className="space-y-2">
           {members.slice(0, 3).map((member) => (
-            <button
+            <div
               key={member.id}
-              onClick={() => onStudentSelect(member)}
-              className="w-full flex items-center gap-3 p-3 bg-zinc-900 border border-zinc-800 rounded-2xl hover:bg-zinc-800/50 transition-colors text-left"
+              className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-3"
             >
-              <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center text-sm font-bold text-zinc-300 flex-shrink-0">
-                {member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase()).join('')}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white truncate">{member.fullName}</p>
-                <p className="text-[11px] text-zinc-500">
-                  Invitada {new Intl.DateTimeFormat('es', { dateStyle: 'medium' }).format(new Date(member.createdAt))}
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${member.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-zinc-600'}`} />
-                <ChevronRight size={16} className="text-zinc-700" />
-              </div>
-            </button>
+              <button
+                onClick={() => onStudentSelect(member)}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                type="button"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-sm font-bold text-zinc-300">
+                  {member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase()).join('')}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-white">{member.fullName}</p>
+                  <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] text-zinc-400">
+                    <Mail size={10} className="shrink-0 text-zinc-500" />
+                    <span className="truncate">{member.email ?? 'Correo no disponible'}</span>
+                  </p>
+                  <p className="mt-1 text-[10px] text-zinc-500">
+                    <span className={member.status === 'ACTIVE' ? 'text-brand-400' : 'text-zinc-400'}>
+                      {member.status === 'ACTIVE' ? 'Activa' : 'Inactiva'}
+                    </span>
+                    {' · '}Sin programación activa
+                  </p>
+                </div>
+                <ChevronRight size={16} className="shrink-0 text-zinc-700" />
+              </button>
+              <MemberStatusToggle member={member} onChange={setMemberStatus} />
+            </div>
           ))}
           {state.status === 'error' && <p className="text-xs text-rose-400">No se pudo cargar el roster de alumnas.</p>}
           {state.status === 'loaded' && members.length === 0 && (

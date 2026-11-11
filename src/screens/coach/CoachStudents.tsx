@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Search, ChevronRight, Plus, RefreshCw, Users } from 'lucide-react';
+import { Search, ChevronRight, Plus, RefreshCw, Users, Mail } from 'lucide-react';
 import Header from '@/components/Header';
 import InviteMemberModal from '@/components/InviteMemberModal';
+import MemberStatusToggle from '@/components/MemberStatusToggle';
 import { useCoachMembers } from '@/app/useCoachMembers';
 import type { CoachMember, CoachMemberStatus } from '@/domain/coachMember';
 
@@ -25,33 +26,6 @@ export default function CoachStudents({ coachId, onStudentSelect }: CoachStudent
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'all' | CoachMemberStatus>('all');
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [confirmingStatus, setConfirmingStatus] = useState<{ memberId: string; status: CoachMemberStatus } | null>(null);
-  const [updatingMember, setUpdatingMember] = useState<string | null>(null);
-  const [statusError, setStatusError] = useState<string | null>(null);
-
-  const requestStatusChange = (member: CoachMember) => {
-    setStatusError(null);
-    setConfirmingStatus({
-      memberId: member.id,
-      status: member.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE',
-    });
-  };
-
-  const confirmStatusChange = async (member: CoachMember) => {
-    if (!confirmingStatus || confirmingStatus.memberId !== member.id) return;
-
-    setStatusError(null);
-    setUpdatingMember(member.id);
-    try {
-      await setMemberStatus(member.id, confirmingStatus.status);
-      setConfirmingStatus(null);
-    } catch (error) {
-      setStatusError(error instanceof Error ? error.message : 'No se pudo actualizar el acceso de la alumna.');
-    } finally {
-      setUpdatingMember(null);
-    }
-  };
-
   const filtered = members.filter((member) => {
     const matchesQuery = member.fullName.toLocaleLowerCase().includes(query.toLocaleLowerCase());
     const matchesFilter = filter === 'all' || member.status === filter;
@@ -113,11 +87,6 @@ export default function CoachStudents({ coachId, onStudentSelect }: CoachStudent
 
       {/* Student List */}
       <div className="space-y-2">
-          {statusError && (
-            <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-sm text-rose-300" role="alert">
-              {statusError}
-            </p>
-          )}
           {state.status === 'loading' && members.length === 0 && (
             <p className="py-8 text-center text-sm text-zinc-500" role="status">Cargando alumnas invitadas…</p>
           )}
@@ -133,7 +102,7 @@ export default function CoachStudents({ coachId, onStudentSelect }: CoachStudent
           return (
             <div
               key={member.id}
-              className="flex items-center gap-3 p-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl"
+              className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-3"
             >
               <button
                 aria-label={`Ver perfil de ${member.fullName}`}
@@ -144,63 +113,25 @@ export default function CoachStudents({ coachId, onStudentSelect }: CoachStudent
                 <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-sm font-bold text-zinc-300 flex-shrink-0">
                   {memberInitials(member.fullName)}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-bold text-white truncate">{member.fullName}</p>
                     <span className={`w-1.5 h-1.5 rounded-full ${status.dot} flex-shrink-0`} />
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="mt-1 flex min-w-0 items-center gap-1.5">
+                    <Mail size={11} className="shrink-0 text-zinc-500" />
+                    <span className="truncate text-[10px] text-zinc-400">{member.email ?? 'Correo no disponible'}</span>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-semibold ${status.color}`}>
                       {status.label}
                     </span>
-                    <span className="text-[10px] text-zinc-600">
-                      Invitada {new Intl.DateTimeFormat('es', { dateStyle: 'medium' }).format(new Date(member.createdAt))}
-                    </span>
+                    <span className="text-[10px] text-zinc-500">Sin programación activa</span>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-zinc-700 flex-shrink-0" />
               </button>
-              <button
-                aria-checked={member.status === 'ACTIVE'}
-                aria-label={`${member.status === 'ACTIVE' ? 'Desactivar' : 'Activar'} a ${member.fullName}`}
-                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 disabled:cursor-wait disabled:opacity-50 ${member.status === 'ACTIVE' ? 'bg-emerald-600' : 'bg-zinc-700'}`}
-                disabled={updatingMember === member.id}
-                onClick={() => requestStatusChange(member)}
-                role="switch"
-                title={member.status === 'ACTIVE' ? 'Desactivar acceso' : 'Reactivar acceso'}
-                type="button"
-              >
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${member.status === 'ACTIVE' ? 'translate-x-5' : 'translate-x-0.5'}`} />
-              </button>
-              {confirmingStatus?.memberId === member.id && (
-                <div className="flex shrink-0 items-center gap-1">
-                  <span className="sr-only" role="status">
-                    {confirmingStatus.status === 'INACTIVE'
-                      ? `Confirmar desactivación de ${member.fullName}`
-                      : `Confirmar reactivación de ${member.fullName}`}
-                  </span>
-                  <button
-                    className="rounded-lg px-2 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800"
-                    disabled={updatingMember === member.id}
-                    onClick={() => setConfirmingStatus(null)}
-                    type="button"
-                  >
-                    Volver
-                  </button>
-                  <button
-                    className={`rounded-lg border px-2 py-1.5 text-xs font-semibold disabled:opacity-50 ${confirmingStatus.status === 'INACTIVE' ? 'border-rose-900/60 text-rose-300 hover:bg-rose-950/50' : 'border-emerald-900/60 text-emerald-300 hover:bg-emerald-950/50'}`}
-                    disabled={updatingMember === member.id}
-                    onClick={() => void confirmStatusChange(member)}
-                    type="button"
-                  >
-                    {updatingMember === member.id
-                      ? 'Guardando…'
-                      : confirmingStatus.status === 'INACTIVE'
-                        ? 'Desactivar'
-                        : 'Reactivar'}
-                  </button>
-                </div>
-              )}
+              <MemberStatusToggle member={member} onChange={setMemberStatus} />
             </div>
           );
         })}

@@ -3,6 +3,7 @@ export type CoachMemberStatus = 'ACTIVE' | 'INACTIVE';
 export interface CoachMember {
   id: string;
   fullName: string;
+  email: string | null;
   status: CoachMemberStatus;
   createdAt: string;
 }
@@ -14,18 +15,20 @@ export function toCoachMember(value: unknown): CoachMember {
 
   const row = value as Record<string, unknown>;
   if (
-    typeof row.id !== 'string'
+    typeof row.member_id !== 'string'
     || typeof row.full_name !== 'string'
-    || (row.status !== 'ACTIVE' && row.status !== 'INACTIVE')
+    || (row.member_status !== 'ACTIVE' && row.member_status !== 'INACTIVE')
     || typeof row.created_at !== 'string'
+    || (row.email !== null && typeof row.email !== 'string')
   ) {
     throw new Error('El perfil de alumna recibido no es válido.');
   }
 
   return {
-    id: row.id,
+    id: row.member_id,
     fullName: row.full_name,
-    status: row.status,
+    email: row.email,
+    status: row.member_status,
     createdAt: row.created_at,
   };
 }
