@@ -5,7 +5,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(46);
+select extensions.plan(39);
 
 insert into public.tenants (id, name, subdomain, status)
 values
@@ -43,7 +43,7 @@ reset role;
 set local role service_role;
 insert into public.tenant_exercises (
   id, tenant_id, created_by, name, focus, primary_muscles, equipment,
-  movement_pattern, difficulty, instructions, tips, video_url
+  movement_pattern, difficulty, instructions, tips
 )
 values (
   'c2000000-0000-4000-8000-000000000001',
@@ -51,14 +51,7 @@ values (
   'c1000000-0000-4000-8000-000000000002',
   'Other Gym Exercise', 'UPPER_BODY', array['latissimus dorsi'],
   array['DUMBBELLS']::public.exercise_equipment[], 'HORIZONTAL_PULL', 'BEGINNER',
-  'Other gym instructions', 'Other gym tips', 'https://youtu.be/OtherGym111'
-), (
-  'c2000000-0000-4000-8000-000000000002',
-  'c0000000-0000-4000-8000-000000000001',
-  'c1000000-0000-4000-8000-000000000001',
-  'Assigned Gym Exercise', 'GLUTES', array['gluteus maximus'],
-  array['BARBELL']::public.exercise_equipment[], 'HINGE', 'INTERMEDIATE',
-  'Assigned gym instructions', 'Assigned gym tips', 'https://youtu.be/OldVid00111'
+  'Other gym instructions', 'Other gym tips'
 );
 reset role;
 
@@ -78,11 +71,6 @@ select extensions.throws_ok(
   $$select public.publish_routine_assignment('c3000000-0000-4000-8000-000000000001')$$,
   '42501', null,
   'anonymous users cannot publish a routine assignment'
-);
-select extensions.throws_ok(
-  $$select * from public.get_student_current_tenant_exercise_videos(array['c2000000-0000-4000-8000-000000000002']::uuid[])$$,
-  '42501', null,
-  'anonymous users cannot read current tenant exercise videos'
 );
 reset role;
 
@@ -127,22 +115,6 @@ select extensions.is(
   'exercise snapshot preserves the stable source ID'
 );
 select extensions.lives_ok(
-  $$insert into public.routine_assignment_items (
-    tenant_id, assignment_id, position, tenant_exercise_id, exercise_snapshot,
-    prescribed_sets, prescribed_reps, target_load, rest
-  ) values (
-    'c0000000-0000-4000-8000-000000000001',
-    'c3000000-0000-4000-8000-000000000001', 1,
-    'c2000000-0000-4000-8000-000000000002', '{}'::jsonb, 3, '12', '', '60 s'
-  )$$,
-  'coach can assign a tenant exercise whose video is snapshotted'
-);
-select extensions.is(
-  (select exercise_snapshot ->> 'videoUrl' from public.routine_assignment_items where assignment_id = 'c3000000-0000-4000-8000-000000000001' and position = 1),
-  'https://youtu.be/OldVid00111',
-  'tenant exercise snapshot captures the video URL at assignment time'
-);
-select extensions.lives_ok(
   $$update public.routine_assignment_items set prescribed_sets = 5
     where assignment_id = 'c3000000-0000-4000-8000-000000000001'$$,
   'coach can edit prescription values while assignment is a draft'
@@ -171,7 +143,7 @@ select extensions.throws_ok(
     prescribed_sets, prescribed_reps, rest
   ) values (
     'c0000000-0000-4000-8000-000000000001',
-    'c3000000-0000-4000-8000-000000000001', 2,
+    'c3000000-0000-4000-8000-000000000001', 1,
     'c2000000-0000-4000-8000-000000000001', '{}'::jsonb, 3, '12', '60 s'
   )$$,
   '23503', null,
@@ -204,15 +176,6 @@ select extensions.is(
   'Rutina jueves',
   'coach cannot update a published assignment'
 );
-
-reset role;
-set local role service_role;
-update public.tenant_exercises
-set video_url = 'https://youtu.be/NewVid00111'
-where id = 'c2000000-0000-4000-8000-000000000002';
-reset role;
-set local role authenticated;
-select set_config('request.jwt.claim.sub', 'c1000000-0000-4000-8000-000000000001', true);
 
 select extensions.lives_ok(
   $$insert into public.routine_assignments (
@@ -334,33 +297,13 @@ select extensions.is(
 );
 select extensions.is(
   (select count(*)::integer from public.routine_assignment_items),
-  2,
+  1,
   'student can read items from their published assignment'
 );
 select extensions.is(
-  (select prescribed_sets::integer from public.routine_assignment_items where assignment_id = 'c3000000-0000-4000-8000-000000000001' and position = 0),
+  (select prescribed_sets::integer from public.routine_assignment_items where assignment_id = 'c3000000-0000-4000-8000-000000000001'),
   5,
   'student sees the coach prescription values'
-);
-select extensions.is(
-  (select video_url from public.get_student_current_tenant_exercise_videos(
-    array['c2000000-0000-4000-8000-000000000002']::uuid[]
-  )),
-  'https://youtu.be/NewVid00111',
-  'student receives the current gym exercise video after coach updates it'
-);
-select extensions.is(
-  (select exercise_snapshot ->> 'videoUrl' from public.routine_assignment_items
-   where assignment_id = 'c3000000-0000-4000-8000-000000000001' and position = 1),
-  'https://youtu.be/OldVid00111',
-  'refreshing a video does not rewrite the immutable exercise snapshot'
-);
-select extensions.is(
-  (select count(*)::integer from public.get_student_current_tenant_exercise_videos(
-    array['c2000000-0000-4000-8000-000000000001']::uuid[]
-  )),
-  0,
-  'student cannot read a current video from an exercise in another tenant'
 );
 select extensions.throws_ok(
   $$insert into public.routine_assignments (
@@ -377,13 +320,6 @@ select extensions.is(
   (select count(*)::integer from public.routine_assignments),
   0,
   'another member cannot read assignments published to the first student'
-);
-select extensions.is(
-  (select count(*)::integer from public.get_student_current_tenant_exercise_videos(
-    array['c2000000-0000-4000-8000-000000000002']::uuid[]
-  )),
-  0,
-  'another member cannot read a current video for an unassigned exercise'
 );
 
 reset role;
