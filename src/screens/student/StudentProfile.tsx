@@ -1,4 +1,4 @@
-import { Settings, ChevronRight, Bell, Lock, HelpCircle, LogOut, Heart, Target, Calendar } from 'lucide-react';
+import { Settings, Bell, Lock, HelpCircle, LogOut, Heart, Target, Calendar } from 'lucide-react';
 import Header from '@/components/Header';
 import type { Profile } from '@/domain/profile';
 
@@ -9,9 +9,9 @@ interface StudentProfileProps {
 
 export default function StudentProfile({ profile, onLogout }: StudentProfileProps) {
   const menuItems = [
-    { icon: Bell, label: 'Notificaciones', value: 'Activadas' },
-    { icon: Target, label: 'Mi objetivo', value: 'Hipertrofia de glúteos' },
-    { icon: Calendar, label: 'Mi plan', value: 'Personalizado' },
+    { icon: Bell, label: 'Notificaciones', value: 'Sin configurar' },
+    { icon: Target, label: 'Mi objetivo', value: 'Sin configurar' },
+    { icon: Calendar, label: 'Mi plan', value: profile.role === 'user_personalized' ? 'Personalizado' : 'No disponible' },
     { icon: Lock, label: 'Privacidad y seguridad', value: '' },
     { icon: HelpCircle, label: 'Ayuda y soporte', value: '' },
     { icon: Settings, label: 'Configuración', value: '' },
@@ -29,40 +29,26 @@ export default function StudentProfile({ profile, onLogout }: StudentProfileProp
           </div>
           <div>
             <h2 className="text-lg font-display font-bold text-white">{profile.full_name}</h2>
-            <p className="text-xs text-zinc-500">24 años • 58 kg</p>
             <span className="inline-block mt-1 text-[10px] bg-brand-950/50 text-brand-400 px-2 py-0.5 rounded-full font-semibold border border-brand-900/50">
-              Plan Personalizado
+              {profile.role === 'user_personalized' ? 'Plan Personalizado' : 'Perfil'}
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 pt-4 border-t border-zinc-800">
-          <div className="text-center">
-            <p className="text-xl font-display font-bold text-white">12</p>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Racha</p>
-          </div>
-          <div className="text-center border-x border-zinc-800">
-            <p className="text-xl font-display font-bold text-white">28</p>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Sesiones</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xl font-display font-bold text-white">3</p>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Logros</p>
-          </div>
+        <div className="border-t border-zinc-800 pt-4">
+          <p className="text-xs leading-relaxed text-zinc-500">
+            Tu progreso y medidas aparecerán aquí cuando haya registros disponibles.
+          </p>
         </div>
       </div>
 
       {/* Coach Info */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-brand-600/20 flex items-center justify-center text-xl">💪</div>
-        <div className="flex-1">
+      <div className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600/20 text-xl">💪</div>
+        <div>
           <p className="text-xs text-zinc-500">Tu Coach</p>
-          <p className="text-sm font-bold text-white">Andrea Gómez</p>
-          <p className="text-[11px] text-zinc-500">Especialista en Glúteos</p>
+          <p className="text-sm font-bold text-white">Información no disponible</p>
         </div>
-        <button className="text-brand-400 hover:text-brand-300">
-          <ChevronRight size={18} />
-        </button>
       </div>
 
       {/* Menu */}
@@ -72,12 +58,14 @@ export default function StudentProfile({ profile, onLogout }: StudentProfileProp
           return (
             <button
               key={item.label}
-              className="w-full flex items-center gap-3 p-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl hover:bg-zinc-800/50 transition-colors text-left"
+              aria-disabled="true"
+              className="flex w-full cursor-not-allowed items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-3.5 text-left opacity-75"
+              disabled
+              type="button"
             >
               <Icon size={18} className="text-zinc-400 flex-shrink-0" />
               <span className="text-sm text-zinc-200 flex-1">{item.label}</span>
               {item.value && <span className="text-[11px] text-zinc-500">{item.value}</span>}
-              <ChevronRight size={16} className="text-zinc-700" />
             </button>
           );
         })}
