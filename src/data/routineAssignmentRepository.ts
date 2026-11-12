@@ -3,8 +3,9 @@ import {
   toRoutineAssignment,
   toRoutineAssignmentItem,
   toRoutineAssignmentItemPayload,
+  withCurrentTenantExerciseVideos,
 } from '@/domain/routineAssignment';
-import type { RoutineAssignment, SaveRoutineAssignmentDraftInput } from '@/domain/routineAssignment';
+import type { CurrentTenantExerciseVideo, RoutineAssignment, SaveRoutineAssignmentDraftInput } from '@/domain/routineAssignment';
 
 const ASSIGNMENT_COLUMNS = [
   'id',
@@ -36,6 +37,11 @@ const ASSIGNMENT_ITEM_COLUMNS = [
 
 interface AssignmentItemRow {
   assignment_id: string;
+}
+
+interface CurrentTenantExerciseVideoRow {
+  tenant_exercise_id: string;
+  video_url: string | null;
 }
 
 function requireClient() {
@@ -118,7 +124,26 @@ export const routineAssignmentRepository = {
     if (error) throw new Error('No se pudo cargar la rutina de esta fecha.');
     if (!data) return null;
     const [assignment] = await mapAssignments([data]);
-    return assignment ?? null;
+    if (!assignment) return null;
+
+    const tenantExerciseIds = [...new Set(assignment.items
+      .filter((item) => item.source === 'tenant')
+      .map((item) => item.sourceId))];
+    if (tenantExerciseIds.length === 0) return assignment;
+
+    const { data: videoRows, error: videoError } = await client.rpc('get_student_current_tenant_exercise_videos', {
+      p_tenant_exercise_ids: tenantExerciseIds,
+    });
+    if (videoError) {
+      if (videoError.code === 'PGRST202' || videoError.code === '42883') return assignment;
+      throw new Error('No se pudieron actualizar los videos de tu rutina.');
+    }
+
+    const videos: CurrentTenantExerciseVideo[] = ((videoRows ?? []) as CurrentTenantExerciseVideoRow[]).map((row) => ({
+      tenantExerciseId: row.tenant_exercise_id,
+      videoUrl: row.video_url,
+    }));
+    return withCurrentTenantExerciseVideos(assignment, videos);
   },
 
   async saveDraft(input: SaveRoutineAssignmentDraftInput): Promise<string> {

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { toRoutineAssignment, toRoutineAssignmentItem } from '@/domain/routineAssignment';
+import {
+  toRoutineAssignment,
+  toRoutineAssignmentItem,
+  withCurrentTenantExerciseVideos,
+} from '@/domain/routineAssignment';
 
 const assignmentItemRow = {
   id: 'item-id',
@@ -72,5 +76,42 @@ describe('routine assignment mapping', () => {
     expect(assignment.studentId).toBe('student-id');
     expect(assignment.status).toBe('PUBLISHED');
     expect(assignment.items.map((item) => item.id)).toEqual(['first', 'later']);
+  });
+
+  it('refreshes only the current video URL for assigned tenant exercises', () => {
+    const tenantItem = toRoutineAssignmentItem({
+      ...assignmentItemRow,
+      id: 'tenant-item-id',
+      catalog_exercise_id: null,
+      tenant_exercise_id: 'tenant-exercise-id',
+      exercise_snapshot: { ...assignmentItemRow.exercise_snapshot, videoUrl: 'https://youtu.be/oldVideo001' },
+    });
+    const catalogItem = toRoutineAssignmentItem(assignmentItemRow);
+    const assignment = toRoutineAssignment(assignmentRow, [tenantItem, catalogItem]);
+
+    const refreshed = withCurrentTenantExerciseVideos(assignment, [
+      { tenantExerciseId: 'tenant-exercise-id', videoUrl: 'https://youtu.be/newVideo001' },
+    ]);
+
+    expect(refreshed.items[0].exercise.videoUrl).toBe('https://youtu.be/newVideo001');
+    expect(refreshed.items[0].exercise.instructions).toBe(tenantItem.exercise.instructions);
+    expect(refreshed.items[0].prescribedSets).toBe(tenantItem.prescribedSets);
+    expect(refreshed.items[1].exercise.videoUrl).toBe(catalogItem.exercise.videoUrl);
+    expect(assignment.items[0].exercise.videoUrl).toBe('https://youtu.be/oldVideo001');
+  });
+
+  it('can clear the current video URL when the coach removes it', () => {
+    const tenantItem = toRoutineAssignmentItem({
+      ...assignmentItemRow,
+      catalog_exercise_id: null,
+      tenant_exercise_id: 'tenant-exercise-id',
+    });
+    const assignment = toRoutineAssignment(assignmentRow, [tenantItem]);
+
+    const refreshed = withCurrentTenantExerciseVideos(assignment, [
+      { tenantExerciseId: 'tenant-exercise-id', videoUrl: null },
+    ]);
+
+    expect(refreshed.items[0].exercise.videoUrl).toBeNull();
   });
 });

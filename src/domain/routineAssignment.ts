@@ -55,6 +55,11 @@ export interface RoutineAssignment {
   items: RoutineAssignmentItem[];
 }
 
+export interface CurrentTenantExerciseVideo {
+  tenantExerciseId: string;
+  videoUrl: string | null;
+}
+
 export interface RoutineAssignmentItemInput {
   source: RoutineExerciseSource;
   sourceId: string;
@@ -184,6 +189,24 @@ export function toRoutineAssignment(value: unknown, items: RoutineAssignmentItem
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     items: [...items].sort((first, second) => first.position - second.position),
+  };
+}
+
+export function withCurrentTenantExerciseVideos(
+  assignment: RoutineAssignment,
+  videos: CurrentTenantExerciseVideo[],
+): RoutineAssignment {
+  const videosByExerciseId = new Map(videos.map(({ tenantExerciseId, videoUrl }) => [tenantExerciseId, videoUrl]));
+
+  return {
+    ...assignment,
+    items: assignment.items.map((item) => {
+      if (item.source !== 'tenant' || !videosByExerciseId.has(item.sourceId)) return item;
+      return {
+        ...item,
+        exercise: { ...item.exercise, videoUrl: videosByExerciseId.get(item.sourceId) ?? null },
+      };
+    }),
   };
 }
 
