@@ -101,19 +101,20 @@ export default function SelectModalField({
                     aria-selected={selected}
                     className={`flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-brand-400 ${
                       selected
-                        ? 'bg-brand-950/50 text-brand-200'
+                        ? 'font-semibold'
                         : 'text-zinc-300 hover:bg-zinc-900'
                     } ${option.disabled ? 'cursor-not-allowed opacity-40' : ''}`}
                     disabled={option.disabled}
                     onClick={() => selectOption(option)}
                     role="option"
+                    style={selected ? { backgroundColor: 'var(--tenant-primary)', color: 'var(--tenant-background)' } : undefined}
                     type="button"
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{option.label}</span>
-                      {option.description && <span className="mt-0.5 block truncate text-[10px] text-zinc-500">{option.description}</span>}
+                      {option.description && <span className={`mt-0.5 block truncate text-[10px] ${selected ? 'text-white/80' : 'text-zinc-500'}`}>{option.description}</span>}
                     </span>
-                    {selected && <Check aria-hidden="true" className="shrink-0 text-brand-400" size={16} />}
+                    {selected && <Check aria-hidden="true" className="shrink-0" size={16} style={{ color: 'var(--tenant-background)' }} />}
                   </button>
                 );
               })}
