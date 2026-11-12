@@ -1,23 +1,14 @@
 import { useState } from 'react';
-import { Search, Plus, RefreshCw, Users, Mail } from 'lucide-react';
+import { Search, Plus, RefreshCw, Users } from 'lucide-react';
 import Header from '@/components/Header';
 import InviteMemberModal from '@/components/InviteMemberModal';
-import MemberStatusToggle from '@/components/MemberStatusToggle';
+import CoachMemberCard from '@/components/CoachMemberCard';
 import { useCoachMembers } from '@/app/useCoachMembers';
 import type { CoachMember, CoachMemberStatus } from '@/domain/coachMember';
 
 interface CoachStudentsProps {
   coachId: string;
   onStudentSelect: (member: CoachMember) => void;
-}
-
-function memberInitials(fullName: string): string {
-  return fullName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toLocaleUpperCase() ?? '')
-    .join('');
 }
 
 export default function CoachStudents({ coachId, onStudentSelect }: CoachStudentsProps) {
@@ -37,11 +28,6 @@ export default function CoachStudents({ coachId, onStudentSelect }: CoachStudent
     { key: 'ACTIVE', label: 'Activas', count: members.filter((member) => member.status === 'ACTIVE').length },
     { key: 'INACTIVE', label: 'Inactivas', count: members.filter((member) => member.status === 'INACTIVE').length },
   ];
-
-  const statusConfig: Record<CoachMemberStatus, { label: string; color: string; dot: string }> = {
-    ACTIVE: { label: 'Activa', color: 'text-emerald-400 bg-emerald-950/40 border-emerald-800/40', dot: 'bg-emerald-500' },
-    INACTIVE: { label: 'Inactiva', color: 'text-zinc-400 bg-zinc-800/40 border-zinc-700/40', dot: 'bg-zinc-600' },
-  };
 
   return (
     <div className="space-y-4">
@@ -97,43 +83,9 @@ export default function CoachStudents({ coachId, onStudentSelect }: CoachStudent
               <p className="mt-1 text-xs text-zinc-500">Las alumnas aparecerán aquí cuando acepten tu invitación.</p>
             </div>
           )}
-          {filtered.map((member) => {
-          const status = statusConfig[member.status];
-          return (
-            <div
-              key={member.id}
-              className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-3"
-            >
-              <button
-                aria-label={`Ver perfil de ${member.fullName}`}
-                className="flex flex-1 min-w-0 items-center gap-3 text-left"
-                onClick={() => onStudentSelect(member)}
-                type="button"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-sm font-bold text-zinc-300 flex-shrink-0">
-                  {memberInitials(member.fullName)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-white truncate">{member.fullName}</p>
-                    <span className={`w-1.5 h-1.5 rounded-full ${status.dot} flex-shrink-0`} />
-                  </div>
-                  <div className="mt-1 flex min-w-0 items-center gap-1.5">
-                    <Mail size={11} className="shrink-0 text-zinc-500" />
-                    <span className="truncate text-[10px] text-zinc-400">{member.email ?? 'Correo no disponible'}</span>
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full border font-semibold ${status.color}`}>
-                      {status.label}
-                    </span>
-                    <span className="text-[10px] text-zinc-500">Sin programación activa</span>
-                  </div>
-                </div>
-              </button>
-              <MemberStatusToggle member={member} onChange={setMemberStatus} />
-            </div>
-          );
-        })}
+        {filtered.map((member) => (
+          <CoachMemberCard key={member.id} member={member} onSelect={onStudentSelect} onStatusChange={setMemberStatus} />
+        ))}
       </div>
 
       {/* Add Student */}

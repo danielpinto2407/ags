@@ -101,6 +101,10 @@
   .tenant-app .text-red-300 {
     color: var(--tenant-secondary, #572239);
   }
+  .tenant-app [class~="text-amber-200/70"],
+  .tenant-app [class~="text-amber-200/80"] {
+    color: var(--tenant-secondary, #572239);
+  }
   .tenant-app [class*="border-emerald-"],
   .tenant-app [class*="border-amber-"],
   .tenant-app [class*="border-sky-"],
@@ -150,6 +154,46 @@
   .tenant-app textarea::placeholder {
     color: var(--tenant-muted, #76696d);
     opacity: .8;
+  }
+  .tenant-app .tenant-date-field {
+    position: relative;
+    padding-right: 2.75rem;
+    color-scheme: light;
+  }
+  .tenant-app .tenant-date-field::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 2.75rem;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .tenant-app .routine-exercise-card {
+    color: var(--tenant-background, #f4eae3);
+    background-color: var(--tenant-secondary, #572239);
+    border-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 45%, var(--tenant-secondary, #572239));
+  }
+  .tenant-app .routine-exercise-card .routine-exercise-title,
+  .tenant-app .routine-exercise-card .routine-exercise-copy {
+    color: var(--tenant-background, #f4eae3);
+  }
+  .tenant-app .routine-exercise-card .routine-exercise-meta {
+    color: var(--tenant-accent, #d8bac4);
+  }
+  .tenant-app .routine-exercise-card .routine-exercise-prescription,
+  .tenant-app .routine-exercise-card .routine-exercise-action {
+    color: var(--tenant-background, #f4eae3);
+  }
+  .tenant-app .routine-exercise-card .routine-exercise-chip {
+    color: var(--tenant-background, #f4eae3);
+    background-color: color-mix(in srgb, var(--tenant-primary, #7b2545) 45%, var(--tenant-secondary, #572239));
+    border-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 34%, var(--tenant-secondary, #572239));
+  }
+  .tenant-app .routine-exercise-card .routine-exercise-tip {
+    color: var(--tenant-background, #f4eae3);
+    background-color: color-mix(in srgb, var(--tenant-primary, #7b2545) 54%, var(--tenant-secondary, #572239));
+    border-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 36%, var(--tenant-secondary, #572239));
   }
   .tenant-app h1,
   .tenant-app h2,

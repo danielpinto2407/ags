@@ -14,7 +14,7 @@ export default function AppShell({ navigation, children }: AppShellProps) {
 
   return (
     <div className="tenant-app relative min-h-screen w-full overflow-hidden">
-      <main className="h-[100dvh] overflow-y-auto px-5 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 no-scrollbar">
+      <main data-app-scroll-container className="h-[100dvh] overflow-y-auto px-5 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 no-scrollbar">
         {children}
       </main>
       <BottomNav role={role} activeScreen={screen} onNavigate={handleNavigate} />

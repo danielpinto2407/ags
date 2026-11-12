@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
+import DateField from '@/components/DateField';
 import SelectModalField from '@/components/SelectModalField';
 import { useCoachMembers } from '@/app/useCoachMembers';
 import { useCoachRoutineAssignments } from '@/app/useCoachRoutineAssignments';
@@ -214,7 +215,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
         </label>
         <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
           Fecha de programación
-          <input className={`${fieldClass} mt-1.5 accent-brand-500`} style={{ colorScheme: 'dark', accentColor: 'var(--tenant-primary)' }} type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
+          <DateField ariaLabel="Fecha de programación" onChange={setSelectedDate} value={selectedDate} />
         </label>
       </div>
 
@@ -254,12 +255,12 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
             ) : (
               <div className="space-y-2">
                 {items.map((item, index) => (
-                  <article key={`${item.source}:${item.sourceId}:${index}`} className="rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+                  <article key={`${item.source}:${item.sourceId}:${index}`} className="routine-exercise-card rounded-xl border border-zinc-800 bg-zinc-950 p-3">
                     <div className="flex items-start gap-2">
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-semibold text-zinc-100">{index + 1}. {item.exercise.name}</h3>
-                        <p className="mt-0.5 text-[10px] text-zinc-500">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
-                        <p className="mt-1 text-[11px] text-zinc-400">
+                        <h3 className="routine-exercise-title text-sm font-semibold">{index + 1}. {item.exercise.name}</h3>
+                        <p className="routine-exercise-meta mt-0.5 text-[10px]">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
+                        <p className="routine-exercise-meta mt-1 text-[11px]">
                           {item.prescribedSets} × {item.prescribedReps} · {item.targetLoad || 'Carga por definir'} · Descanso {item.rest}
                           {item.workDuration ? ` · Trabajo ${item.workDuration}` : ''}
                         </p>

@@ -35,11 +35,26 @@ export default function SelectModalField({
 
   useEffect(() => {
     if (!open) return undefined;
+    const scrollContainer = document.querySelector<HTMLElement>('[data-app-scroll-container]');
+    const previousOverflowY = scrollContainer?.style.overflowY;
+    const previousOverscrollBehavior = scrollContainer?.style.overscrollBehavior;
+
+    if (scrollContainer) {
+      scrollContainer.style.overflowY = 'hidden';
+      scrollContainer.style.overscrollBehavior = 'none';
+    }
+
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
     };
     window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('keydown', closeOnEscape);
+      if (scrollContainer) {
+        scrollContainer.style.overflowY = previousOverflowY ?? '';
+        scrollContainer.style.overscrollBehavior = previousOverscrollBehavior ?? '';
+      }
+    };
   }, [open]);
 
   const selectOption = (option: SelectModalOption) => {
@@ -66,14 +81,14 @@ export default function SelectModalField({
 
       {open && (
         <div
-          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/75 px-3 pb-3 backdrop-blur-sm sm:items-center sm:px-5"
+          className="fixed inset-0 z-[70] flex items-end justify-center overscroll-none bg-black/75 px-3 pb-3 backdrop-blur-sm sm:items-center sm:px-5"
           onClick={() => setOpen(false)}
           role="presentation"
         >
           <section
             aria-labelledby={titleId}
             aria-modal="true"
-            className="max-h-[min(78vh,620px)] w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/60 animate-slide-up sm:animate-scale-in"
+            className="max-h-[min(78vh,620px)] w-full max-w-lg overscroll-none overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/60 animate-slide-up sm:animate-scale-in"
             onClick={(event) => event.stopPropagation()}
             role="dialog"
           >
@@ -91,7 +106,7 @@ export default function SelectModalField({
                 <X size={16} />
               </button>
             </div>
-            <div className="max-h-[calc(min(78vh,620px)-68px)] overflow-y-auto p-2" role="listbox" aria-label={ariaLabel}>
+            <div className="max-h-[calc(min(78vh,620px)-68px)] overscroll-contain overflow-y-auto p-2" role="listbox" aria-label={ariaLabel}>
               {options.map((option) => {
                 const selected = option.value === value;
                 return (
