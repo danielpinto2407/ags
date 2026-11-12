@@ -20,7 +20,10 @@
 - Does an assigned exercise retain its complete catalog detail (including instructions, tips, difficulty, and video reference) while keeping prescription overrides separate?
 - Are mock and Supabase modes explicit, with no silent fallback or accidental mixing of data sources?
 - Are local sample seeds idempotent, tenant-scoped, stable-ID, and free of fake Auth users or real personal data?
-- Are personalized assignments scoped to tenant, student, and date, with drafts hidden from students and published work visible only to its owner?
+- Does CU-03 use the unified `SINGLE_DAY`/`CYCLE` plan model? Is a single-day program tied to its selected date, while cycle-day slots are ordinal plan positions and never calendar-date assignments?
+- Are cycle slots ordered and complete (N slots, one routine each), with per-exercise progression and a nonnegative additional-repeat count yielding `1 + additional` total iterations?
+- Are student executions tied to the selected plan/routine/slot and actual execution date, with one start per student/calendar day, same-day-only resume, day-end close/frozen progress, next-day eligibility, and concurrency-safe enforcement?
+- Are drafts hidden from students and published plans/routines visible only to their owner? Does the migration preserve tenant/coach/student ownership, prescriptions, and immutable snapshots before retiring date-bound routes?
 - Does invitation provisioning happen server-side, with role/tenant assigned by trusted code?
 - Does personalized invitation/acceptance/reactivation avoid enforcing `tenants.max_clients` or reserving class seats? Keep any future per-class capacity separate.
 - Does invitation acceptance grant gym app access without booking a class, and does post-login navigation follow the server-authorized service track?

@@ -1,0 +1,22 @@
+[
+  { "query": "En AGS quiero cambiar cómo la alumna inicia y completa una rutina; revisa el modelo y dime por dónde empezar.", "should_trigger": true },
+  { "query": "Agrega una tabla Supabase para guardar checks de ejercicios por alumna, con RLS por tenant.", "should_trigger": true },
+  { "query": "Estoy planeando un flujo nuevo para coach y alumna; revisa primero los casos de uso y el status del proyecto.", "should_trigger": true },
+  { "query": "La rutina se está mezclando con mockData en StudentHome. Ayúdame a encontrar el repository correcto y migrarla a Supabase.", "should_trigger": true },
+  { "query": "Necesito rediseñar esta pantalla de AGS para móvil respetando el tema de cada sede y los componentes existentes.", "should_trigger": true },
+  { "query": "Revisa si este cambio de permisos rompe el aislamiento entre gimnasios y qué pruebas de RLS faltan.", "should_trigger": true },
+  { "query": "En el repo AGS agrega un estado vacío para la alumna que todavía no tiene rutinas publicadas.", "should_trigger": true },
+  { "query": "Antes de cambiar la asignación de entrenamientos, contrasta el comportamiento actual de Production con el plan flexible.", "should_trigger": true },
+  { "query": "Quiero refactorizar el hook de asignaciones sin duplicar la lógica de tenant ni romper los tests.", "should_trigger": true },
+  { "query": "Actualiza los criterios de aceptación y el orden de implementación de CU-03 en este proyecto.", "should_trigger": true },
+  { "query": "Traduce al inglés este texto de invitación, sin cambiar el código ni el flujo del producto.", "should_trigger": false },
+  { "query": "¿Qué hora es ahora en Ciudad de México?", "should_trigger": false },
+  { "query": "Actualiza únicamente la versión de TypeScript y resuelve los errores de migración de npm.", "should_trigger": false },
+  { "query": "Resume la PR #18 de GitHub, no revises ni edites los archivos del proyecto.", "should_trigger": false },
+  { "query": "Cambia el título de este componente aislado en un repositorio de demostración que no es AGS.", "should_trigger": false },
+  { "query": "Dame el comando de PowerShell para listar los archivos de esta carpeta.", "should_trigger": false },
+  { "query": "Corrige una errata en el README, sin tocar arquitectura, producto ni comportamiento.", "should_trigger": false },
+  { "query": "Revisa solo la ortografía de este correo de soporte sobre una membresía.", "should_trigger": false },
+  { "query": "Crea una función genérica de ordenamiento en un kata local sin relación con AGS.", "should_trigger": false },
+  { "query": "Explícame qué es RLS en general, sin analizar este repositorio ni proponer cambios al proyecto.", "should_trigger": false }
+]
