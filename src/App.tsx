@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import LoginScreen from '@/screens/LoginScreen';
 import AppShell from '@/app/AppShell';
 import ScreenRenderer from '@/app/ScreenRenderer';
@@ -13,13 +13,21 @@ const tenantThemeStyle = (theme: typeof DEFAULT_TENANT_THEME): CSSProperties => 
   '--tenant-secondary': theme.secondaryColor,
   '--tenant-background': theme.backgroundColor,
   '--tenant-accent': theme.accentColor,
+  '--tenant-surface': theme.surfaceColor,
+  '--tenant-text': theme.textColor,
+  '--tenant-muted': theme.mutedColor,
+  '--tenant-border': theme.borderColor,
+  '--tenant-warm-accent': theme.warmAccentColor,
+  '--tenant-soft-accent': theme.softAccentColor,
+  '--tenant-body-font': `"${theme.bodyFont}"`,
+  '--tenant-display-font': `"${theme.displayFont}"`,
 } as CSSProperties);
 
 function TenantMessage({ title, message, action }: { title: string; message: string; action?: ReactNode }) {
   return (
     <main className="tenant-app min-h-screen w-full flex items-center justify-center px-6 py-12 text-center">
       <section className="max-w-md space-y-3">
-        <p className="font-display text-xl font-bold text-white">{title}</p>
+        <p className="font-display text-xl font-bold text-zinc-900">{title}</p>
         <p className="text-sm leading-relaxed text-zinc-400">{message}</p>
         {action}
       </section>
@@ -33,6 +41,25 @@ export default function App() {
   const invitationId = new URLSearchParams(window.location.search).get('invitation_id');
   const role = authState.status === 'authenticated' ? authState.productRole : null;
   const navigation = useAppNavigation(role);
+  const fontTheme = tenantState.status === 'tenant' ? tenantState.tenant.theme : DEFAULT_TENANT_THEME;
+
+  useEffect(() => {
+    const families = [
+      `${fontTheme.bodyFont}:wght@400;500;600;700`,
+      `${fontTheme.displayFont}:wght@600;700`,
+    ];
+    const href = `https://fonts.googleapis.com/css2?${families.map((family) => `family=${encodeURIComponent(family)}`).join('&')}&display=swap`;
+    let fontLink = document.querySelector<HTMLLinkElement>('#tenant-fonts');
+
+    if (!fontLink) {
+      fontLink = document.createElement('link');
+      fontLink.id = 'tenant-fonts';
+      fontLink.rel = 'stylesheet';
+      document.head.append(fontLink);
+    }
+
+    fontLink.href = href;
+  }, [fontTheme.bodyFont, fontTheme.displayFont]);
 
   if (tenantState.status === 'loading') {
     return <TenantMessage title="Cargando gimnasio" message="Estamos preparando tu espacio de entrenamiento." />;

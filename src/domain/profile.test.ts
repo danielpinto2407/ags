@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Tenant } from '@/domain/tenant';
+import { DEFAULT_TENANT_THEME, type Tenant } from '@/domain/tenant';
 import { isProfile, resolveProfileAccess, type Profile } from '@/domain/profile';
 
 const activeTenant: Tenant = {
@@ -8,6 +8,7 @@ const activeTenant: Tenant = {
   subdomain: 'ags',
   status: 'ACTIVE',
   theme: {
+    ...DEFAULT_TENANT_THEME,
     logoUrl: null,
     primaryColor: '#ff0a78',
     secondaryColor: '#d9005d',

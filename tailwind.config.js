@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Sora', 'Inter', 'sans-serif'],
+        sans: ['var(--tenant-body-font, sans-serif)'],
+        display: ['var(--tenant-display-font, var(--tenant-body-font, sans-serif))'],
       },
       colors: {
         brand: {
