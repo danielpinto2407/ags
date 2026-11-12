@@ -36,6 +36,7 @@ function acceptanceError(error: string): { status: number; code: string } {
   if (error.includes('invalid_full_name')) return { status: 400, code: 'invalid_full_name' };
   if (error.includes('invite_email_mismatch')) return { status: 403, code: 'invite_email_mismatch' };
   if (error.includes('tenant_inactive')) return { status: 403, code: 'gym_not_active' };
+  if (error.includes('inviter_not_eligible')) return { status: 403, code: 'coach_not_active' };
   if (error.includes('invitation_expired')) return { status: 410, code: 'invitation_expired' };
   if (error.includes('capacity_reached')) return { status: 409, code: 'gym_member_limit_reached' };
   if (error.includes('account_not_eligible')) return { status: 409, code: 'account_not_eligible' };
