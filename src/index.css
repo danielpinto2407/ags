@@ -161,13 +161,7 @@
     color-scheme: light;
   }
   .tenant-app .tenant-date-field::-webkit-calendar-picker-indicator {
-    position: absolute;
-    inset: 0 0 0 auto;
-    width: 2.75rem;
-    height: 100%;
-    margin: 0;
-    opacity: 0;
-    cursor: pointer;
+    display: none;
   }
   .tenant-app h1,
   .tenant-app h2,
