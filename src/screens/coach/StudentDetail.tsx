@@ -23,7 +23,7 @@ export default function StudentDetail({ member, onBack }: StudentDetailProps) {
             <UserRound size={24} />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-lg font-bold text-white">{member.fullName}</h2>
+            <h2 className="truncate font-display text-lg font-bold text-white">{member.fullName}</h2>
             <p className="mt-1 text-xs text-zinc-400">{statusLabel}</p>
           </div>
         </div>

@@ -169,32 +169,6 @@
     opacity: 0;
     cursor: pointer;
   }
-  .tenant-app .routine-exercise-card {
-    color: var(--tenant-background, #f4eae3);
-    background-color: var(--tenant-secondary, #572239);
-    border-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 45%, var(--tenant-secondary, #572239));
-  }
-  .tenant-app .routine-exercise-card .routine-exercise-title,
-  .tenant-app .routine-exercise-card .routine-exercise-copy {
-    color: var(--tenant-background, #f4eae3);
-  }
-  .tenant-app .routine-exercise-card .routine-exercise-meta {
-    color: var(--tenant-accent, #d8bac4);
-  }
-  .tenant-app .routine-exercise-card .routine-exercise-prescription,
-  .tenant-app .routine-exercise-card .routine-exercise-action {
-    color: var(--tenant-background, #f4eae3);
-  }
-  .tenant-app .routine-exercise-card .routine-exercise-chip {
-    color: var(--tenant-background, #f4eae3);
-    background-color: color-mix(in srgb, var(--tenant-primary, #7b2545) 45%, var(--tenant-secondary, #572239));
-    border-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 34%, var(--tenant-secondary, #572239));
-  }
-  .tenant-app .routine-exercise-card .routine-exercise-tip {
-    color: var(--tenant-background, #f4eae3);
-    background-color: color-mix(in srgb, var(--tenant-primary, #7b2545) 54%, var(--tenant-secondary, #572239));
-    border-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 36%, var(--tenant-secondary, #572239));
-  }
   .tenant-app h1,
   .tenant-app h2,
   .tenant-app h3 {

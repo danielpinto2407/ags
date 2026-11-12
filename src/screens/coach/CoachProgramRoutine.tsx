@@ -255,12 +255,12 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
             ) : (
               <div className="space-y-2">
                 {items.map((item, index) => (
-                  <article key={`${item.source}:${item.sourceId}:${index}`} className="routine-exercise-card rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+                  <article key={`${item.source}:${item.sourceId}:${index}`} className="rounded-xl border border-zinc-800 bg-zinc-950 p-3">
                     <div className="flex items-start gap-2">
                       <div className="min-w-0 flex-1">
-                        <h3 className="routine-exercise-title text-sm font-semibold">{index + 1}. {item.exercise.name}</h3>
-                        <p className="routine-exercise-meta mt-0.5 text-[10px]">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
-                        <p className="routine-exercise-meta mt-1 text-[11px]">
+                        <h3 className="text-sm font-semibold text-zinc-100">{index + 1}. {item.exercise.name}</h3>
+                        <p className="mt-0.5 text-[10px] text-zinc-500">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
+                        <p className="mt-1 text-[11px] text-zinc-400">
                           {item.prescribedSets} × {item.prescribedReps} · {item.targetLoad || 'Carga por definir'} · Descanso {item.rest}
                           {item.workDuration ? ` · Trabajo ${item.workDuration}` : ''}
                         </p>

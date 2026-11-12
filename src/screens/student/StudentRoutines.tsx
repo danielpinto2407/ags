@@ -56,7 +56,7 @@ export default function StudentRoutines({ profile }: StudentRoutinesProps) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-400">Programación publicada</p>
-                <h2 className="mt-1 text-base font-bold text-white">{assignment.title}</h2>
+                <h2 className="mt-1 font-display text-base font-bold text-white">{assignment.title}</h2>
                 <p className="mt-1 text-xs text-zinc-500">{formatLocalDate(assignment.scheduledFor)}</p>
               </div>
             </div>
@@ -70,40 +70,40 @@ export default function StudentRoutines({ profile }: StudentRoutinesProps) {
                 <Dumbbell size={13} /> {assignment.items.length} ejercicios
               </div>
               {assignment.items.map((item, index) => (
-                <article key={item.id} className="routine-exercise-card rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+                <article key={item.id} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="routine-exercise-title text-sm font-bold">{index + 1}. {item.exercise.name}</h3>
-                      <p className="routine-exercise-meta mt-1 text-[11px]">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
-                      <p className="routine-exercise-prescription mt-1.5 text-xs font-semibold">
+                      <h3 className="text-sm font-bold text-white">{index + 1}. {item.exercise.name}</h3>
+                      <p className="mt-1 text-[11px] text-zinc-400">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
+                      <p className="mt-1.5 text-xs font-medium text-brand-300">
                         {item.prescribedSets} × {item.prescribedReps}
                         {item.targetLoad ? ` · ${item.targetLoad}` : ''}
                       </p>
                     </div>
-                    <span className="routine-exercise-chip shrink-0 rounded-full border px-2 py-1 text-[9px]">
+                    <span className="shrink-0 rounded-full border border-zinc-800 px-2 py-1 text-[9px] text-zinc-500">
                       {exerciseFocusLabels[item.exercise.focus]}
                     </span>
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {item.exercise.equipment.map((equipment) => (
-                      <span key={equipment} className="routine-exercise-chip rounded-full border px-2 py-0.5 text-[9px]">
+                      <span key={equipment} className="rounded-full border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[9px] text-zinc-500">
                         {exerciseEquipmentLabels[equipment]}
                       </span>
                     ))}
-                    <span className="routine-exercise-chip rounded-full border px-2 py-0.5 text-[9px]">
+                    <span className="rounded-full border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[9px] text-zinc-500">
                       {exerciseMovementLabels[item.exercise.movementPattern]}
                     </span>
                   </div>
 
                   <details className="mt-3 border-t border-zinc-800 pt-2.5">
-                    <summary className="routine-exercise-action cursor-pointer text-[11px] font-semibold">Instrucciones y técnica</summary>
-                    <p className="routine-exercise-copy mt-2 whitespace-pre-wrap text-xs leading-relaxed">{item.exercise.instructions}</p>
-                    {item.exercise.tips && <p className="routine-exercise-tip mt-2 whitespace-pre-wrap rounded-lg border p-2.5 text-[11px] leading-relaxed">{item.exercise.tips}</p>}
-                    <p className="routine-exercise-meta mt-2 text-[10px]">Descanso: {item.rest}{item.workDuration ? ` · Trabajo: ${item.workDuration}` : ''}</p>
+                    <summary className="cursor-pointer text-[11px] font-medium text-brand-400">Instrucciones y técnica</summary>
+                    <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">{item.exercise.instructions}</p>
+                    {item.exercise.tips && <p className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-amber-200/70">{item.exercise.tips}</p>}
+                    <p className="mt-2 text-[10px] text-zinc-500">Descanso: {item.rest}{item.workDuration ? ` · Trabajo: ${item.workDuration}` : ''}</p>
                     {item.exercise.videoUrl
-                      ? <a className="routine-exercise-action mt-2 inline-block text-[11px] font-semibold underline underline-offset-2" href={item.exercise.videoUrl} target="_blank" rel="noreferrer">Ver video</a>
-                      : <p className="routine-exercise-meta mt-2 text-[10px]">Sin video disponible</p>}
+                      ? <a className="mt-2 inline-block text-[11px] text-brand-300 underline underline-offset-2" href={item.exercise.videoUrl} target="_blank" rel="noreferrer">Ver video</a>
+                      : <p className="mt-2 text-[10px] text-zinc-600">Sin video disponible</p>}
                   </details>
                 </article>
               ))}
