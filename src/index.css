@@ -69,6 +69,45 @@
   .tenant-app .to-zinc-950 {
     --tw-gradient-to: color-mix(in srgb, var(--tenant-accent, #d8bac4) 18%, var(--tenant-surface, #fff9f6)) var(--tw-gradient-to-position);
   }
+  .tenant-app .bg-brand-950,
+  .tenant-app .bg-brand-900,
+  .tenant-app [class*="bg-brand-950/"],
+  .tenant-app [class*="bg-brand-900/"] {
+    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 30%, var(--tenant-surface, #fff9f6));
+  }
+  .tenant-app [class*="border-brand-"] {
+    border-color: color-mix(in srgb, var(--tenant-primary, #7b2545) 24%, var(--tenant-border, #e5d8d2));
+  }
+  .tenant-app .text-brand-100,
+  .tenant-app .text-brand-200,
+  .tenant-app .text-brand-300,
+  .tenant-app .text-brand-400 {
+    color: var(--tenant-primary, #7b2545);
+  }
+  .tenant-app .bg-gradient-to-br.from-brand-600.to-brand-800 .text-brand-100 {
+    color: var(--tenant-background, #f4eae3);
+  }
+  .tenant-app .text-emerald-300,
+  .tenant-app .text-emerald-400,
+  .tenant-app .text-amber-100,
+  .tenant-app .text-amber-200,
+  .tenant-app .text-amber-300,
+  .tenant-app .text-amber-400,
+  .tenant-app .text-amber-500,
+  .tenant-app .text-sky-300,
+  .tenant-app .text-rose-200,
+  .tenant-app .text-rose-300,
+  .tenant-app .text-rose-400,
+  .tenant-app .text-red-300 {
+    color: var(--tenant-secondary, #572239);
+  }
+  .tenant-app [class*="border-emerald-"],
+  .tenant-app [class*="border-amber-"],
+  .tenant-app [class*="border-sky-"],
+  .tenant-app [class*="border-rose-"],
+  .tenant-app [class*="border-red-"] {
+    border-color: color-mix(in srgb, var(--tenant-secondary, #572239) 28%, var(--tenant-border, #e5d8d2));
+  }
   .tenant-app .workout-cover,
   .tenant-app .workout-cover h2,
   .tenant-app .workout-cover p {
@@ -97,10 +136,10 @@
   }
   .tenant-app .text-rose-200,
   .tenant-app .text-rose-300 {
-    color: #9f294b;
+    color: var(--tenant-secondary, #572239);
   }
   .tenant-app .bg-rose-950\/20 {
-    background-color: #f7e4e6;
+    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 30%, var(--tenant-surface, #fff9f6));
   }
   .tenant-app input,
   .tenant-app select,
@@ -129,5 +168,10 @@
   }
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tenant-app button:disabled,
+  .tenant-app input:disabled,
+  .tenant-app select:disabled {
+    opacity: .76;
   }
 }
