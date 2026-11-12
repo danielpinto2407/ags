@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CalendarDays, Dumbbell, LoaderCircle } from 'lucide-react';
 import Header from '@/components/Header';
+import DateField from '@/components/DateField';
 import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
 import type { Profile } from '@/domain/profile';
 import { exerciseEquipmentLabels, exerciseFocusLabels, exerciseMovementLabels, formatMuscleName } from '@/domain/exerciseDefinition';
@@ -9,8 +10,6 @@ import { formatLocalDate, localDateInputValue } from '@/domain/localDate';
 interface StudentRoutinesProps {
   profile: Profile;
 }
-
-const dateInputClass = 'w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-200 focus:border-brand-500 focus:outline-none';
 
 export default function StudentRoutines({ profile }: StudentRoutinesProps) {
   const [selectedDate, setSelectedDate] = useState(localDateInputValue);
@@ -24,14 +23,7 @@ export default function StudentRoutines({ profile }: StudentRoutinesProps) {
 
       <label className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
         Fecha
-        <input
-          aria-label="Fecha de rutina"
-          className={`${dateInputClass} mt-1.5 accent-brand-500`}
-          style={{ colorScheme: 'dark', accentColor: 'var(--tenant-primary)' }}
-          type="date"
-          value={selectedDate}
-          onChange={(event) => setSelectedDate(event.target.value)}
-        />
+        <DateField ariaLabel="Fecha de rutina" onChange={setSelectedDate} value={selectedDate} />
       </label>
 
       {state.status === 'loading' && (
@@ -78,40 +70,40 @@ export default function StudentRoutines({ profile }: StudentRoutinesProps) {
                 <Dumbbell size={13} /> {assignment.items.length} ejercicios
               </div>
               {assignment.items.map((item, index) => (
-                <article key={item.id} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+                <article key={item.id} className="routine-exercise-card rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="text-sm font-bold text-white">{index + 1}. {item.exercise.name}</h3>
-                      <p className="mt-1 text-[11px] text-zinc-400">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
-                      <p className="mt-1.5 text-xs font-medium text-brand-300">
+                      <h3 className="routine-exercise-title text-sm font-bold">{index + 1}. {item.exercise.name}</h3>
+                      <p className="routine-exercise-meta mt-1 text-[11px]">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
+                      <p className="routine-exercise-prescription mt-1.5 text-xs font-semibold">
                         {item.prescribedSets} × {item.prescribedReps}
                         {item.targetLoad ? ` · ${item.targetLoad}` : ''}
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full border border-zinc-800 px-2 py-1 text-[9px] text-zinc-500">
+                    <span className="routine-exercise-chip shrink-0 rounded-full border px-2 py-1 text-[9px]">
                       {exerciseFocusLabels[item.exercise.focus]}
                     </span>
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {item.exercise.equipment.map((equipment) => (
-                      <span key={equipment} className="rounded-full border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[9px] text-zinc-500">
+                      <span key={equipment} className="routine-exercise-chip rounded-full border px-2 py-0.5 text-[9px]">
                         {exerciseEquipmentLabels[equipment]}
                       </span>
                     ))}
-                    <span className="rounded-full border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[9px] text-zinc-500">
+                    <span className="routine-exercise-chip rounded-full border px-2 py-0.5 text-[9px]">
                       {exerciseMovementLabels[item.exercise.movementPattern]}
                     </span>
                   </div>
 
                   <details className="mt-3 border-t border-zinc-800 pt-2.5">
-                    <summary className="cursor-pointer text-[11px] font-medium text-brand-400">Instrucciones y técnica</summary>
-                    <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">{item.exercise.instructions}</p>
-                    {item.exercise.tips && <p className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-amber-200/70">{item.exercise.tips}</p>}
-                    <p className="mt-2 text-[10px] text-zinc-500">Descanso: {item.rest}{item.workDuration ? ` · Trabajo: ${item.workDuration}` : ''}</p>
+                    <summary className="routine-exercise-action cursor-pointer text-[11px] font-semibold">Instrucciones y técnica</summary>
+                    <p className="routine-exercise-copy mt-2 whitespace-pre-wrap text-xs leading-relaxed">{item.exercise.instructions}</p>
+                    {item.exercise.tips && <p className="routine-exercise-tip mt-2 whitespace-pre-wrap rounded-lg border p-2.5 text-[11px] leading-relaxed">{item.exercise.tips}</p>}
+                    <p className="routine-exercise-meta mt-2 text-[10px]">Descanso: {item.rest}{item.workDuration ? ` · Trabajo: ${item.workDuration}` : ''}</p>
                     {item.exercise.videoUrl
-                      ? <a className="mt-2 inline-block text-[11px] text-brand-300 underline underline-offset-2" href={item.exercise.videoUrl} target="_blank" rel="noreferrer">Ver video</a>
-                      : <p className="mt-2 text-[10px] text-zinc-600">Sin video disponible</p>}
+                      ? <a className="routine-exercise-action mt-2 inline-block text-[11px] font-semibold underline underline-offset-2" href={item.exercise.videoUrl} target="_blank" rel="noreferrer">Ver video</a>
+                      : <p className="routine-exercise-meta mt-2 text-[10px]">Sin video disponible</p>}
                   </details>
                 </article>
               ))}

@@ -1,6 +1,6 @@
-import { Users, Calendar, Dumbbell, Mail } from 'lucide-react';
+import { Users, Calendar, Dumbbell } from 'lucide-react';
 import Header from '@/components/Header';
-import MemberStatusToggle from '@/components/MemberStatusToggle';
+import CoachMemberCard from '@/components/CoachMemberCard';
 import type { Screen } from '@/types';
 import type { Profile } from '@/domain/profile';
 import { useCoachMembers } from '@/app/useCoachMembers';
@@ -67,34 +67,7 @@ export default function CoachDashboard({ profile, onNavigate, onStudentSelect }:
         </div>
         <div className="space-y-2">
           {members.slice(0, 3).map((member) => (
-            <div
-              key={member.id}
-              className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-3"
-            >
-              <button
-                onClick={() => onStudentSelect(member)}
-                className="flex min-w-0 flex-1 items-center gap-3 text-left"
-                type="button"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-sm font-bold text-zinc-300">
-                  {member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase()).join('')}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-white">{member.fullName}</p>
-                  <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] text-zinc-400">
-                    <Mail size={10} className="shrink-0 text-zinc-500" />
-                    <span className="truncate">{member.email ?? 'Correo no disponible'}</span>
-                  </p>
-                  <p className="mt-1 text-[10px] text-zinc-500">
-                    <span className={member.status === 'ACTIVE' ? 'text-brand-400' : 'text-zinc-400'}>
-                      {member.status === 'ACTIVE' ? 'Activa' : 'Inactiva'}
-                    </span>
-                    {' · '}Sin programación activa
-                  </p>
-                </div>
-              </button>
-              <MemberStatusToggle member={member} onChange={setMemberStatus} />
-            </div>
+            <CoachMemberCard key={member.id} member={member} onSelect={onStudentSelect} onStatusChange={setMemberStatus} />
           ))}
           {state.status === 'error' && <p className="text-xs text-rose-400">No se pudo cargar el roster de alumnas.</p>}
           {state.status === 'loaded' && members.length === 0 && (
