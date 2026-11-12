@@ -17,10 +17,18 @@ select
   'ACTIVE',
   '{
     "logoUrl": null,
-    "primaryColor": "#ff0a78",
-    "secondaryColor": "#d9005d",
-    "backgroundColor": "#050505",
-    "accentColor": "#ff70b5"
+    "primaryColor": "#7b2545",
+    "secondaryColor": "#572239",
+    "backgroundColor": "#f4eae3",
+    "accentColor": "#d8bac4",
+    "surfaceColor": "#fff9f6",
+    "textColor": "#2b2528",
+    "mutedColor": "#76696d",
+    "borderColor": "#e5d8d2",
+    "warmAccentColor": "#c4a47e",
+    "softAccentColor": "#c4b1d2",
+    "bodyFont": "DM Sans",
+    "displayFont": "Fraunces"
   }'::jsonb,
   '{
     "personalizedRoutines": true,
@@ -55,7 +63,15 @@ select
     "primaryColor": "#ff0a78",
     "secondaryColor": "#d9005d",
     "backgroundColor": "#050505",
-    "accentColor": "#ff70b5"
+    "accentColor": "#ff70b5",
+    "surfaceColor": "#18181b",
+    "textColor": "#f4f4f5",
+    "mutedColor": "#a1a1aa",
+    "borderColor": "#27272a",
+    "warmAccentColor": "#c4a47e",
+    "softAccentColor": "#c4b1d2",
+    "bodyFont": "Inter",
+    "displayFont": "Sora"
   }'::jsonb,
   '{
     "personalizedRoutines": true,

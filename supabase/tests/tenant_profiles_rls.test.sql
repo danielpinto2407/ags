@@ -83,7 +83,7 @@ select extensions.ok(
     where resolved.tenant_id = 'a0000000-0000-4000-8000-000000000001'
       and resolved.tenant_name = 'AGS GluteHouse (Local)'
       and resolved.tenant_status = 'ACTIVE'
-      and resolved.theme ->> 'primaryColor' = '#ff0a78'
+      and resolved.theme ->> 'primaryColor' = '#7b2545'
   ),
   'public resolver returns the seeded AGS tenant and its configured theme'
 );
