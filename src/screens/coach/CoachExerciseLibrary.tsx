@@ -214,7 +214,7 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
                   <Dumbbell size={19} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="break-words text-sm font-bold leading-snug text-white">{exercise.name}</h2>
+                  <h2 className="break-words font-display text-sm font-bold leading-snug text-white">{exercise.name}</h2>
                   <p className="mt-1 text-[11px] text-zinc-400">{exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
                   {exercise.secondaryMuscles.length > 0 && <p className="mt-0.5 text-[10px] text-zinc-600">También: {exercise.secondaryMuscles.map(formatMuscleName).join(', ')}</p>}
                 </div>
@@ -297,7 +297,7 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
       {archivingExercise && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 px-5 backdrop-blur-sm" role="presentation">
           <section aria-labelledby="archive-title" aria-modal="true" className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl" role="dialog">
-            <h2 id="archive-title" className="text-sm font-bold text-white">¿Archivar ejercicio?</h2>
+            <h2 id="archive-title" className="font-display text-sm font-bold text-white">¿Archivar ejercicio?</h2>
             <p className="mt-2 text-xs leading-relaxed text-zinc-400">{archivingExercise.name} dejará de aparecer para nuevas programaciones. Podrás restaurarlo después.</p>
             <div className="mt-5 flex justify-end gap-2">
               <button className="rounded-xl px-3 py-2 text-xs font-semibold text-zinc-400 hover:bg-zinc-900" onClick={() => setArchivingExercise(null)} type="button">Cancelar</button>

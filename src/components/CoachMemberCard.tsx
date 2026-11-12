@@ -21,31 +21,29 @@ export default function CoachMemberCard({ member, onSelect, onStatusChange }: Co
   const active = member.status === 'ACTIVE';
 
   return (
-    <article className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
+    <article className="flex items-center gap-2.5 rounded-2xl border border-zinc-800 bg-zinc-900 p-2.5">
       <button
         aria-label={`Ver perfil de ${member.fullName}`}
-        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
         onClick={() => onSelect(member)}
         type="button"
       >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-950/30 text-sm font-bold text-brand-300">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-950/30 text-sm font-bold text-brand-300">
           {memberInitials(member.fullName)}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-sm font-bold text-white">{member.fullName}</span>
-            <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${active
-              ? 'border-emerald-800/50 bg-emerald-950/30 text-emerald-300'
-              : 'border-zinc-700/50 bg-zinc-800/40 text-zinc-500'
-            }`}>
-              {active ? 'Activa' : 'Inactiva'}
-            </span>
-          </span>
+          <span className="block truncate text-[13px] font-bold text-white">{member.fullName}</span>
           <span className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] text-zinc-400">
             <Mail aria-hidden="true" className="shrink-0 text-zinc-500" size={10} />
             <span className="truncate">{member.email ?? 'Correo no disponible'}</span>
           </span>
-          <span className="mt-1 block text-[10px] text-zinc-500">Sin programación activa</span>
+          <span className="mt-1 flex min-w-0 items-center gap-1 text-[10px]">
+            <span className={`shrink-0 font-medium ${active ? 'text-brand-600' : 'text-zinc-500'}`}>
+              {active ? 'Activa' : 'Inactiva'}
+            </span>
+            <span aria-hidden="true" className="text-zinc-500">·</span>
+            <span className="truncate text-zinc-500">Sin programación activa</span>
+          </span>
         </span>
       </button>
       <MemberStatusToggle member={member} onChange={onStatusChange} />

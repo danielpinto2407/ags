@@ -94,7 +94,7 @@ export default function SelectModalField({
           >
             <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-3.5">
               <div className="min-w-0 flex-1">
-                <h2 className="truncate text-sm font-bold text-white" id={titleId}>{modalTitle}</h2>
+                <h2 className="truncate font-display text-sm font-bold text-white" id={titleId}>{modalTitle}</h2>
                 <p className="mt-0.5 text-[10px] text-zinc-500">{options.length} opciones</p>
               </div>
               <button
