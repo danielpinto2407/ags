@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CoachMember } from '@/domain/coachMember';
 import type { Role, Screen } from '@/types';
 
@@ -8,6 +8,11 @@ export function useAppNavigation(role: Role | null) {
     screen: 'home' as Screen,
     selectedMember: null as CoachMember | null,
   });
+
+  useEffect(() => {
+    setNavigationState({ role, screen: 'home', selectedMember: null });
+  }, [role]);
+
   const stateMatchesRole = navigationState.role === role;
   const screen = stateMatchesRole ? navigationState.screen : 'home';
   const selectedMember = stateMatchesRole ? navigationState.selectedMember : null;

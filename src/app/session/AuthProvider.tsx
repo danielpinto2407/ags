@@ -22,6 +22,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       ? { status: 'loading' }
       : { status: 'unconfigured' }
   ));
+  const sessionUserId = session?.user.id ?? null;
 
   useEffect(() => {
     if (!authRepository.isConfigured()) {
@@ -84,7 +85,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       setAuthState({ status: 'error', message: 'No se pudo recuperar la sesión. Inténtalo nuevamente.' });
       return;
     }
-    if (!session) {
+    if (!sessionUserId) {
       setAuthState((currentState) => currentState.status === 'signed-out'
         ? currentState
         : { status: 'signed-out', error: null, submitting: false });
@@ -99,7 +100,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     setAuthState({ status: 'profile-loading' });
 
     const loadProfile = async () => {
-      const user = await authRepository.getVerifiedUser(session.user.id);
+      const user = await authRepository.getVerifiedUser(sessionUserId);
       if (cancelled) return;
 
       let tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
@@ -152,7 +153,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, [attempt, bootstrapComplete, session, sessionError, sessionReady, tenantState]);
+  }, [attempt, bootstrapComplete, sessionError, sessionReady, sessionUserId, tenantState]);
 
   const signIn = async (email: string, password: string) => {
     setAuthState({ status: 'signed-out', error: null, submitting: true });
