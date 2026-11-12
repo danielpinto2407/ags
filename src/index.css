@@ -20,6 +20,18 @@
     background-color: var(--tenant-background, #f4eae3);
     color: var(--tenant-text, #2b2528);
   }
+  .tenant-app .bg-zinc-950,
+  .tenant-app .bg-zinc-900 {
+    background-color: var(--tenant-surface, #fff9f6);
+  }
+  .tenant-app [class~="bg-zinc-950/90"] {
+    background-color: color-mix(in srgb, var(--tenant-surface, #fff9f6) 94%, transparent);
+  }
+  .tenant-app [class*="bg-zinc-950/"],
+  .tenant-app [class*="bg-zinc-900/"],
+  .tenant-app [class*="bg-zinc-800/"] {
+    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 20%, var(--tenant-surface, #fff9f6));
+  }
   .tenant-app .bg-zinc-800 {
     background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 24%, var(--tenant-surface, #fff9f6));
   }
@@ -31,6 +43,31 @@
   }
   .tenant-app .text-zinc-900 {
     color: var(--tenant-text, #2b2528);
+  }
+  .tenant-app .text-zinc-100,
+  .tenant-app .text-zinc-200,
+  .tenant-app .text-zinc-300 {
+    color: var(--tenant-text, #2b2528);
+  }
+  .tenant-app .text-zinc-400,
+  .tenant-app .text-zinc-500,
+  .tenant-app .text-zinc-600,
+  .tenant-app .text-zinc-700,
+  .tenant-app .text-zinc-800 {
+    color: var(--tenant-muted, #76696d);
+  }
+  .tenant-app [class*="border-zinc-"] {
+    border-color: var(--tenant-border, #e5d8d2);
+  }
+  .tenant-app .divide-zinc-800 > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--tenant-border, #e5d8d2);
+  }
+  .tenant-app .from-zinc-900 {
+    --tw-gradient-from: var(--tenant-surface, #fff9f6) var(--tw-gradient-from-position);
+    --tw-gradient-to: color-mix(in srgb, var(--tenant-accent, #d8bac4) 18%, var(--tenant-surface, #fff9f6)) var(--tw-gradient-to-position);
+  }
+  .tenant-app .to-zinc-950 {
+    --tw-gradient-to: color-mix(in srgb, var(--tenant-accent, #d8bac4) 18%, var(--tenant-surface, #fff9f6)) var(--tw-gradient-to-position);
   }
   .tenant-app .workout-cover,
   .tenant-app .workout-cover h2,
