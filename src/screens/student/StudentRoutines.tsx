@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CalendarDays, Dumbbell, LoaderCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import DateField from '@/components/DateField';
+import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
 import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
 import type { Profile } from '@/domain/profile';
 import { exerciseEquipmentLabels, exerciseFocusLabels, exerciseMovementLabels, formatMuscleName } from '@/domain/exerciseDefinition';
@@ -101,9 +102,7 @@ export default function StudentRoutines({ profile }: StudentRoutinesProps) {
                     <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">{item.exercise.instructions}</p>
                     {item.exercise.tips && <p className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-amber-200/70">{item.exercise.tips}</p>}
                     <p className="mt-2 text-[10px] text-zinc-500">Descanso: {item.rest}{item.workDuration ? ` · Trabajo: ${item.workDuration}` : ''}</p>
-                    {item.exercise.videoUrl
-                      ? <a className="mt-2 inline-block text-[11px] text-brand-300 underline underline-offset-2" href={item.exercise.videoUrl} target="_blank" rel="noreferrer">Ver video</a>
-                      : <p className="mt-2 text-[10px] text-zinc-600">Sin video disponible</p>}
+                    <ExerciseVideoPreview className="mt-3" title={item.exercise.name} videoUrl={item.exercise.videoUrl} />
                   </details>
                 </article>
               ))}

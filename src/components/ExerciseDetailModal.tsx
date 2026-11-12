@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, Play, Clock, Repeat, Target, Timer, Dumbbell, Lightbulb } from 'lucide-react';
+import { X, Clock, Repeat, Target, Timer, Dumbbell, Lightbulb } from 'lucide-react';
+import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
 import type { Exercise } from '@/types';
 
 interface ExerciseDetailModalProps {
@@ -61,21 +62,7 @@ export default function ExerciseDetailModal({ exercise, onClose }: ExerciseDetai
         <p className="text-xs text-zinc-500 mb-4">{exercise.muscles}</p>
 
         {/* Video */}
-        <a
-          href={exercise.videoUrl}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`Ver video de ${exercise.name}`}
-          className="w-full h-44 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-2xl flex items-center justify-center mb-4 relative overflow-hidden border border-zinc-700 hover:border-brand-500/60 transition-colors"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-900/20 to-transparent" />
-          <div className="w-14 h-14 rounded-full bg-brand-600/90 flex items-center justify-center shadow-neon">
-            <Play size={24} className="text-white ml-1" fill="white" />
-          </div>
-          <span className="absolute bottom-3 right-3 bg-black/70 text-[10px] px-2.5 py-1 rounded-full text-zinc-300 font-medium">
-            Video Explicativo
-          </span>
-        </a>
+        <ExerciseVideoPreview className="mb-4" title={exercise.name} videoUrl={exercise.videoUrl} />
 
         {/* Metrics */}
         <div className="grid grid-cols-2 gap-2 mb-4">

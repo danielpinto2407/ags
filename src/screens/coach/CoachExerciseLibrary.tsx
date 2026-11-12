@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Archive, Check, Copy, Dumbbell, LoaderCircle, Pencil, Plus, RefreshCw, Search, Undo2 } from 'lucide-react';
 import Header from '@/components/Header';
 import CreateExerciseModal from '@/components/CreateExerciseModal';
+import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
 import SelectModalField from '@/components/SelectModalField';
 import { useExerciseLibrary } from '@/app/useExerciseLibrary';
 import type { Profile } from '@/domain/profile';
@@ -231,7 +232,7 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
                 <summary className="cursor-pointer list-none text-[11px] font-medium text-brand-400 marker:hidden">Ver instrucciones</summary>
                 <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">{exercise.instructions}</p>
                 {exercise.tips && <p className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-amber-200/70">{exercise.tips}</p>}
-                {exercise.videoUrl && <a className="mt-2 inline-block text-[11px] text-brand-300 underline decoration-brand-800 underline-offset-2" href={exercise.videoUrl} target="_blank" rel="noreferrer">Abrir video HTTPS</a>}
+                <ExerciseVideoPreview className="mt-3" title={exercise.name} videoUrl={exercise.videoUrl} />
                 {!exercise.videoUrl && <p className="mt-2 text-[10px] text-zinc-600">Sin video disponible</p>}
               </details>
 
