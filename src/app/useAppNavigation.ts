@@ -6,11 +6,12 @@ export function useAppNavigation(role: Role | null) {
   const [navigationState, setNavigationState] = useState({
     role,
     screen: 'home' as Screen,
+    returnScreen: 'home' as Screen,
     selectedMember: null as CoachMember | null,
   });
 
   useEffect(() => {
-    setNavigationState({ role, screen: 'home', selectedMember: null });
+    setNavigationState({ role, screen: 'home', returnScreen: 'home', selectedMember: null });
   }, [role]);
 
   const stateMatchesRole = navigationState.role === role;
@@ -18,11 +19,18 @@ export function useAppNavigation(role: Role | null) {
   const selectedMember = stateMatchesRole ? navigationState.selectedMember : null;
 
   const handleNavigate = (nextScreen: Screen) => {
-    setNavigationState({ role, screen: nextScreen, selectedMember: null });
+    setNavigationState({ role, screen: nextScreen, returnScreen: nextScreen, selectedMember: null });
   };
 
   const handleStudentSelect = (member: CoachMember) => {
-    setNavigationState({ role, screen: 'studentDetail', selectedMember: member });
+    const originScreen = stateMatchesRole ? navigationState.screen : 'home';
+    const returnScreen = originScreen === 'studentDetail' ? navigationState.returnScreen : originScreen;
+    setNavigationState({ role, screen: 'studentDetail', returnScreen, selectedMember: member });
+  };
+
+  const handleStudentBack = () => {
+    const returnScreen = stateMatchesRole ? navigationState.returnScreen : 'home';
+    setNavigationState({ role, screen: returnScreen, returnScreen, selectedMember: null });
   };
 
   return {
@@ -31,6 +39,7 @@ export function useAppNavigation(role: Role | null) {
     selectedMember,
     handleNavigate,
     handleStudentSelect,
+    handleStudentBack,
   };
 }
 

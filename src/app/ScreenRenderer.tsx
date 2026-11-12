@@ -18,7 +18,7 @@ interface ScreenRendererProps {
 }
 
 export default function ScreenRenderer({ navigation, profile, onLogout }: ScreenRendererProps) {
-  const { role, screen, selectedMember, handleNavigate, handleStudentSelect } = navigation;
+  const { role, screen, selectedMember, handleNavigate, handleStudentSelect, handleStudentBack } = navigation;
 
   if (!role) return null;
 
@@ -44,7 +44,7 @@ export default function ScreenRenderer({ navigation, profile, onLogout }: Screen
       return <CoachStudents coachId={profile.id} onStudentSelect={handleStudentSelect} />;
     case 'studentDetail':
       return selectedMember ? (
-        <StudentDetail member={selectedMember} onBack={() => handleNavigate('students')} />
+        <StudentDetail member={selectedMember} onBack={handleStudentBack} />
       ) : (
         <CoachStudents coachId={profile.id} onStudentSelect={handleStudentSelect} />
       );
