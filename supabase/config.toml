@@ -266,8 +266,12 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 [auth.email.template.invite]
-subject = "Tu invitación para entrenar en AGS GluteHouse"
+subject = "Una invitación para tu espacio de entrenamiento"
 content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.recovery]
+subject = "Continúa tu acceso a tu gimnasio"
+content_path = "./supabase/templates/recovery.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

@@ -17,6 +17,61 @@ const allowedOrigins = new Set(
 );
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DEFAULT_EMAIL_COLORS = {
+  primary: '#7b2545',
+  accent: '#d8bac4',
+  background: '#f4eae3',
+  surface: '#fff9f6',
+  text: '#2b2528',
+  muted: '#76696d',
+  border: '#e5d8d2',
+};
+
+function safeEmailColor(value: unknown, fallback: string): string {
+  return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : fallback;
+}
+
+function safeEmailLogoUrl(value: unknown, appOrigin: string): string {
+  if (
+    typeof value !== 'string'
+    || value.length > 2048
+    || !(value.startsWith('/') && !value.startsWith('//') || /^https:\/\//i.test(value))
+  ) return '';
+
+  try {
+    const url = new URL(value, appOrigin);
+    const isLocalDevelopment = ['localhost', '127.0.0.1'].includes(url.hostname);
+    if (url.username || url.password || !(url.protocol === 'https:' || (isLocalDevelopment && url.protocol === 'http:'))) {
+      return '';
+    }
+    return url.toString();
+  } catch {
+    return '';
+  }
+}
+
+function invitationTemplateData(
+  tenant: { name: string; theme: unknown },
+  coachName: string,
+  appOrigin: string,
+): Record<string, string> {
+  const theme = tenant.theme && typeof tenant.theme === 'object' && !Array.isArray(tenant.theme)
+    ? tenant.theme as Record<string, unknown>
+    : {};
+
+  return {
+    gym_name: tenant.name.trim().slice(0, 120) || 'tu gimnasio',
+    coach_name: coachName.trim().slice(0, 120),
+    gym_logo_url: safeEmailLogoUrl(theme.logoUrl, appOrigin),
+    gym_primary_color: safeEmailColor(theme.primaryColor, DEFAULT_EMAIL_COLORS.primary),
+    gym_accent_color: safeEmailColor(theme.accentColor, DEFAULT_EMAIL_COLORS.accent),
+    gym_background_color: safeEmailColor(theme.backgroundColor, DEFAULT_EMAIL_COLORS.background),
+    gym_surface_color: safeEmailColor(theme.surfaceColor, DEFAULT_EMAIL_COLORS.surface),
+    gym_text_color: safeEmailColor(theme.textColor, DEFAULT_EMAIL_COLORS.text),
+    gym_muted_color: safeEmailColor(theme.mutedColor, DEFAULT_EMAIL_COLORS.muted),
+    gym_border_color: safeEmailColor(theme.borderColor, DEFAULT_EMAIL_COLORS.border),
+  };
+}
 
 function jsonResponse(request: Request, status: number, body: Record<string, unknown>) {
   const headers = new Headers({
@@ -104,7 +159,7 @@ Deno.serve(async (request) => {
 
   const { data: profile, error: profileError } = await adminClient
     .from('profiles')
-    .select('id, tenant_id, role, status')
+    .select('id, tenant_id, role, status, full_name')
     .eq('id', userData.user.id)
     .maybeSingle();
 
@@ -120,6 +175,29 @@ Deno.serve(async (request) => {
   ) {
     return jsonResponse(request, 403, { error: 'coach_access_required' });
   }
+
+  const redirectBase = Deno.env.get('INVITATION_REDIRECT_URL')
+    ?? 'http://ags.localhost:5174/';
+  let redirectUrl: URL;
+  try {
+    redirectUrl = new URL(redirectBase);
+  } catch {
+    console.error('Invitation redirect URL is invalid.');
+    return jsonResponse(request, 500, { error: 'server_not_configured' });
+  }
+
+  const { data: tenant, error: tenantError } = await adminClient
+    .from('tenants')
+    .select('name, theme')
+    .eq('id', profile.tenant_id)
+    .single();
+
+  if (tenantError || !tenant) {
+    console.error('Could not load invitation tenant branding.');
+    return jsonResponse(request, 500, { error: 'tenant_branding_unavailable' });
+  }
+
+  const templateData = invitationTemplateData(tenant, profile.full_name ?? '', redirectUrl.origin);
 
   const { data: invitationId, error: prepareError } = await adminClient.rpc(
     'prepare_personalized_invitation',
@@ -156,19 +234,24 @@ Deno.serve(async (request) => {
     return jsonResponse(request, 500, { error: 'invitation_preparation_failed' });
   }
 
-  const redirectBase = Deno.env.get('INVITATION_REDIRECT_URL')
-    ?? 'http://ags.localhost:5174/';
-  let redirectTo: string;
-  try {
-    const redirectUrl = new URL(redirectBase);
-    redirectUrl.searchParams.set('invitation_id', invitationId);
-    redirectTo = redirectUrl.toString();
-  } catch {
-    console.error('Invitation redirect URL is invalid.');
-    return jsonResponse(request, 500, { error: 'server_not_configured' });
-  }
+  redirectUrl.searchParams.set('invitation_id', invitationId);
+  const redirectTo = redirectUrl.toString();
 
   if (invitation.auth_user_id) {
+    const { data: authUserData, error: authUserError } = await adminClient.auth.admin.getUserById(invitation.auth_user_id);
+    if (authUserError || !authUserData.user) {
+      console.error('Could not load invited member metadata.');
+      return jsonResponse(request, 502, { error: 'invitation_email_failed' });
+    }
+
+    const { error: metadataError } = await adminClient.auth.admin.updateUserById(invitation.auth_user_id, {
+      user_metadata: { ...authUserData.user.user_metadata, ...templateData },
+    });
+    if (metadataError) {
+      console.error('Could not update invited member email branding.');
+      return jsonResponse(request, 502, { error: 'invitation_email_failed' });
+    }
+
     const { error: resendError } = await authClient.auth.resetPasswordForEmail(email, { redirectTo });
     if (resendError) {
       console.error('Could not resend personalized member access email.');
@@ -179,7 +262,7 @@ Deno.serve(async (request) => {
 
   const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
     email,
-    { redirectTo }
+    { redirectTo, data: templateData }
   );
 
   if (inviteError || !inviteData.user) {
