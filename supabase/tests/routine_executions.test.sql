@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(29);
+select extensions.plan(31);
 
 insert into public.tenants (id, name, subdomain, status)
 values ('e0000000-0000-4000-8000-000000000001', 'Execution Gym', 'execution-gym', 'ACTIVE');
@@ -70,81 +70,89 @@ select extensions.is(
 
 select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000002', true);
 select extensions.throws_ok(
-  $$select public.save_routine_execution_performance(
+  $$select public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Ciclo A'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo A') and day.position = 1 limit 1),
-    '[{"setNumber":1,"completed":true,"actualRepetitions":8,"actualLoad":40,"loadUnit":"kg"}]'::jsonb, 3, 80
+    true, 8, 40, 'kg', null, null
   )$$,
   'P0001', 'single_day_program_takes_precedence',
   'published single-day routine takes precedence over cycle play on the same UTC date'
 );
 select extensions.throws_ok(
-  $$select public.save_routine_execution_performance(
+  $$select public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Hoy'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Hoy') limit 1),
-    '[{"setNumber":1,"completed":false,"actualRepetitions":null,"actualLoad":null,"loadUnit":null}]'::jsonb, null, null
+    false, null, null, null, null, null
   )$$,
-  'P0001', 'first_completed_set_required',
-  'play without a completed actual set does not create an execution'
+  'P0001', 'first_completed_exercise_required',
+  'opening an exercise without marking it complete does not create an execution'
 );
 select extensions.is(
   (select count(*)::integer from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000002'),
   0,
-  'no execution row exists before the first completed set is saved'
+  'no execution row exists before the first completed exercise is saved'
 );
 select extensions.throws_ok(
-  $$select public.save_routine_execution_performance(
+  $$select public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Hoy'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Hoy') limit 1),
-    '[{"setNumber":1,"completed":true,"actualRepetitions":10,"actualLoad":null,"loadUnit":null}]'::jsonb, null::numeric, null::numeric
+    true, 10, null, null, null::numeric, null::numeric
   )$$,
-  '22023', 'completed_weighted_set_requires_load',
-  'completed weighted set requires actual load and unit'
+  '22023', 'completed_weighted_exercise_requires_load',
+  'completed weighted exercise requires actual load and unit'
 );
 select extensions.throws_ok(
-  $$select public.save_routine_execution_performance(
+  $$select public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Hoy'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Hoy') limit 1),
-    '[{"setNumber":1,"completed":true,"actualRepetitions":10,"actualLoad":40,"loadUnit":"kg"}]'::jsonb, 2.5::numeric, 80::numeric
+    true, 10, 40, 'kg', 2.5::numeric, 80::numeric
   )$$,
   '22023', 'invalid_actual_performance',
   'fractional RIR is rejected before integer conversion'
 );
 select extensions.is(
-  (public.save_routine_execution_performance(
+  (public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Hoy'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Hoy') limit 1),
-    '[{"setNumber":1,"completed":true,"actualRepetitions":10,"actualLoad":40,"loadUnit":"kg"},{"setNumber":2,"completed":false,"actualRepetitions":null,"actualLoad":null,"loadUnit":null}]'::jsonb,
-    null, null
+    true, 10, 40, 'kg', null, null
   ) ->> 'progressPercent')::numeric,
-  50::numeric,
-  'one completed set derives fifty percent progress'
+  100::numeric,
+  'one completed exercise derives one hundred percent regardless of prescribed set count'
 );
 select extensions.is(
   (select count(*)::integer from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000002' and execution_date = (pg_catalog.timezone('UTC', pg_catalog.now()))::date),
   1,
-  'first completed set consumes one daily execution start'
+  'first completed exercise consumes one daily execution start'
 );
 select extensions.is(
-  (public.save_routine_execution_performance(
+  (public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Hoy'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Hoy') limit 1),
-    '[{"setNumber":1,"completed":true,"actualRepetitions":10,"actualLoad":40,"loadUnit":"kg"},{"setNumber":2,"completed":true,"actualRepetitions":9,"actualLoad":40,"loadUnit":"kg"}]'::jsonb,
-    2, 85
+    true, 9, 40, 'kg', 2, 85
   ) ->> 'progressPercent')::numeric,
   100::numeric,
-  'completed set records derive one hundred percent progress'
+  'one exercise record updates the existing exercise completion and effort'
+);
+select extensions.is(
+  (select count(*)::integer from public.routine_execution_exercises where execution_id = (select id from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000002')),
+  1,
+  'one execution stores exactly one performance record for the exercise'
+);
+select extensions.is(
+  (select count(*)::integer from public.routine_execution_sets where execution_id = (select id from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000002')),
+  0,
+  'new execution does not create redundant per-set actual records'
 );
 select extensions.is(
   (select status::text from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000002'),
   'COMPLETED',
-  'all prescribed sets and effort values close the execution as completed'
+  'all prescribed exercises and effort values close the execution as completed'
 );
 select extensions.throws_ok(
-  $$select public.save_routine_execution_performance(
+  $$select public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Hoy'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Hoy') limit 1),
-    '[{"setNumber":1,"completed":true,"actualRepetitions":10,"actualLoad":40,"loadUnit":"kg"}]'::jsonb, 2, 85
+    true, 10, 40, 'kg', 2, 85
   )$$,
   'P0001', 'execution_not_editable',
   'completed execution is immutable'
@@ -170,10 +178,10 @@ select extensions.is(
 
 select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000003', true);
 select extensions.is(
-  public.save_routine_execution_performance(
+  public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Ciclo B'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and day.position = 1 limit 1),
-    '[{"setNumber":1,"completed":true,"actualRepetitions":8,"actualLoad":40,"loadUnit":"kg"}]'::jsonb, null, null
+    true, 8, 40, 'kg', null, null
   ) ->> 'slotAttempt',
   '1',
   'first cycle execution uses slot attempt one'
@@ -194,19 +202,19 @@ select extensions.is(
   'closed incomplete execution remains in history'
 );
 select extensions.is(
-  public.save_routine_execution_performance(
+  public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Ciclo B'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and day.position = 1 limit 1),
-    '[{"setNumber":1,"completed":true,"actualRepetitions":8,"actualLoad":40,"loadUnit":"kg"}]'::jsonb, null, null
+    true, 8, 40, 'kg', null, null
   ) ->> 'slotAttempt',
   '2',
   'incomplete attempt consumes its slot attempt but next cycle iteration is available'
 );
 select extensions.throws_ok(
-  $$select public.save_routine_execution_performance(
+  $$select public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Ciclo B'), 2,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and day.position = 2 limit 1),
-    '[{"setNumber":1,"completed":true,"actualRepetitions":10,"actualLoad":30,"loadUnit":"lbs"}]'::jsonb, null, null
+    true, 10, 30, 'lbs', null, null
   )$$,
   'P0001', 'daily_execution_limit',
   'student cannot start a second routine on the same UTC date'
@@ -227,10 +235,10 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000003', true);
 select extensions.is(public.close_expired_routine_executions(), 1, 'second incomplete attempt closes after its UTC date');
 select extensions.throws_ok(
-  $$select public.save_routine_execution_performance(
+  $$select public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Ciclo B'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and day.position = 1 limit 1),
-    '[{"setNumber":1,"completed":true,"actualRepetitions":8,"actualLoad":40,"loadUnit":"kg"}]'::jsonb, null, null
+    true, 8, 40, 'kg', null, null
   )$$,
   'P0001', 'cycle_slot_attempts_exhausted',
   'slot cannot be attempted more than the authored cycle plus additional repeats'

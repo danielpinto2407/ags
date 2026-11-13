@@ -1,16 +1,11 @@
 import type { TrainingLoadUnit } from '@/domain/trainingCycle';
 
-export interface ActualSetPerformance {
-  setNumber: number;
+export interface ActualExercisePerformance {
+  routineItemId: string;
   completed: boolean;
   actualRepetitions: number | null;
   actualLoad: number | null;
   loadUnit: TrainingLoadUnit | null;
-}
-
-export interface ActualExercisePerformance {
-  routineItemId: string;
-  sets: ActualSetPerformance[];
   rir: number | null;
   rpePercent: number | null;
 }
@@ -25,8 +20,8 @@ export interface StudentRoutineExecutionSnapshot {
   status: RoutineExecutionStatus;
   slotAttempt: number | null;
   progressPercent: number;
-  completedSets: number;
-  prescribedSets: number;
+  completedExercises: number;
+  prescribedExercises: number;
   performances: Record<string, ActualExercisePerformance>;
 }
 
@@ -37,17 +32,38 @@ export interface CycleSlotHistory {
 
 export function validateActualExercisePerformance(
   performance: ActualExercisePerformance,
-  prescribedSets: number,
-  requiresLoad = false
+  requiresLoad: boolean
 ): void {
   if (!performance.routineItemId) throw new Error('El ejercicio de la ejecución no es válido.');
-  if (!Number.isSafeInteger(prescribedSets) || prescribedSets < 1) {
-    throw new Error('Las series prescritas deben ser un entero positivo.');
+  if (typeof performance.completed !== 'boolean') throw new Error('El estado del ejercicio no es válido.');
+
+  if (performance.actualRepetitions !== null && (
+    !Number.isSafeInteger(performance.actualRepetitions) || performance.actualRepetitions < 0
+  )) {
+    throw new Error('Las repeticiones reales deben ser un entero igual o mayor que cero.');
   }
-  if (!Number.isInteger(performance.rir) && performance.rir !== null) {
-    throw new Error('El RIR debe ser un entero entre 1 y 10.');
+  if (performance.completed && performance.actualRepetitions === null) {
+    throw new Error('Las repeticiones reales son obligatorias al completar el ejercicio.');
   }
-  if (performance.rir !== null && (performance.rir < 1 || performance.rir > 10)) {
+
+  if (performance.actualLoad !== null && (
+    !Number.isSafeInteger(performance.actualLoad) || performance.actualLoad < 0
+  )) {
+    throw new Error('La carga real debe ser un entero igual o mayor que cero.');
+  }
+  if (performance.completed && requiresLoad && performance.actualLoad === null) {
+    throw new Error('La carga real es obligatoria para este ejercicio.');
+  }
+  if ((performance.actualLoad === null) !== (performance.loadUnit === null)) {
+    throw new Error('La unidad debe corresponder a la carga real.');
+  }
+  if (performance.loadUnit !== null && performance.loadUnit !== 'lbs' && performance.loadUnit !== 'kg') {
+    throw new Error('La unidad de carga debe ser lbs o kg.');
+  }
+
+  if (performance.rir !== null && (
+    !Number.isSafeInteger(performance.rir) || performance.rir < 1 || performance.rir > 10
+  )) {
     throw new Error('El RIR debe ser un entero entre 1 y 10.');
   }
   if (performance.rpePercent !== null && (
@@ -57,39 +73,21 @@ export function validateActualExercisePerformance(
   )) {
     throw new Error('El RPE debe estar entre 0 y 100%.');
   }
-  if (performance.sets.length > prescribedSets) {
-    throw new Error('No se pueden registrar más series que las prescritas.');
-  }
-
-  const setNumbers = new Set<number>();
-  for (const set of performance.sets) {
-    if (!Number.isSafeInteger(set.setNumber) || set.setNumber < 1 || set.setNumber > prescribedSets) {
-      throw new Error('El número de serie está fuera de las series prescritas.');
-    }
-    if (setNumbers.has(set.setNumber)) throw new Error('La serie ya fue registrada.');
-    setNumbers.add(set.setNumber);
-
-    if (set.completed && (!Number.isSafeInteger(set.actualRepetitions) || (set.actualRepetitions ?? 0) < 0)) {
-      throw new Error('Las repeticiones reales deben ser un entero igual o mayor que cero.');
-    }
-    if (set.completed && requiresLoad && set.actualLoad === null) {
-      throw new Error('La carga real es obligatoria para este ejercicio.');
-    }
-    if (set.actualRepetitions !== null && (!Number.isSafeInteger(set.actualRepetitions) || set.actualRepetitions < 0)) {
-      throw new Error('Las repeticiones reales deben ser un entero igual o mayor que cero.');
-    }
-    if (set.actualLoad !== null && (!Number.isSafeInteger(set.actualLoad) || set.actualLoad < 0)) {
-      throw new Error('La carga real debe ser un entero igual o mayor que cero.');
-    }
-    if ((set.actualLoad === null) !== (set.loadUnit === null)) {
-      throw new Error('La unidad debe corresponder a la carga real.');
-    }
-    if (set.loadUnit !== null && set.loadUnit !== 'lbs' && set.loadUnit !== 'kg') {
-      throw new Error('La unidad de carga debe ser lbs o kg.');
-    }
-  }
 }
 
-export function getCompletedSetCount(performance: ActualExercisePerformance): number {
-  return performance.sets.filter((set) => set.completed).length;
+export function getCompletedExerciseCount(
+  performances: readonly ActualExercisePerformance[]
+): number {
+  return performances.filter(({ completed }) => completed).length;
+}
+
+export function calculateRoutineProgress(completedExercises: number, prescribedExercises: number): number {
+  if (!Number.isSafeInteger(prescribedExercises) || prescribedExercises < 1) {
+    throw new Error('Los ejercicios prescritos deben ser un entero positivo.');
+  }
+  if (!Number.isSafeInteger(completedExercises) || completedExercises < 0 || completedExercises > prescribedExercises) {
+    throw new Error('Los ejercicios completados deben estar entre cero y los ejercicios prescritos.');
+  }
+
+  return (completedExercises / prescribedExercises) * 100;
 }

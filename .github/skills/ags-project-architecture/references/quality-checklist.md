@@ -22,6 +22,8 @@
 - Are local sample seeds idempotent, tenant-scoped, stable-ID, and free of fake Auth users or real personal data?
 - Does CU-03 use the unified `SINGLE_DAY`/`CYCLE` plan model? Is a single-day program tied to its selected date, while cycle-day slots are ordinal plan positions and never calendar-date assignments?
 - Are cycle slots ordered and complete (N slots, one routine each), with per-exercise progression and a nonnegative additional-repeat count yielding `1 + additional` total iterations?
+- Does the student log actual reps/load/completion once per exercise, independent of prescribed set count, with progress derived from completed exercises / prescribed exercises rather than per-set records?
+- Does the student log actual reps/load and completion once per exercise, independent of prescribed set count, while the coach's prescribed sets/reps remain visible as the target? Is progress derived from completed exercises / prescribed exercises rather than per-set logs?
 - Are student executions tied to the selected plan/routine/slot and actual execution date, with one start per student/calendar day, same-day-only resume, day-end close/frozen progress, next-day eligibility, and concurrency-safe enforcement?
 - Are drafts hidden from students and published plans/routines visible only to their owner? Does the migration preserve tenant/coach/student ownership, prescriptions, and immutable snapshots before retiring date-bound routes?
 - Does invitation provisioning happen server-side, with role/tenant assigned by trusted code?

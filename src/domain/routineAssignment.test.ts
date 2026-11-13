@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { toRoutineAssignment, toRoutineAssignmentItem } from '@/domain/routineAssignment';
+import {
+  toRoutineAssignment,
+  toRoutineAssignmentItem,
+  toRoutineAssignmentItemPayload,
+} from '@/domain/routineAssignment';
 
 const assignmentItemRow = {
   id: 'item-id',
@@ -26,6 +30,7 @@ const assignmentItemRow = {
   prescribed_sets: 4,
   prescribed_reps: '10-12',
   target_load: '40 kg',
+  coach_instructions: null,
   work_duration: null,
   rest: '90 s',
   base_repetitions: 10,
@@ -64,7 +69,7 @@ describe('routine assignment mapping', () => {
       prescribedSets: 4,
       prescribedReps: '10-12',
       targetLoad: '40 kg',
-      workDuration: null,
+      coachInstructions: null,
       rest: '90 s',
       baseRepetitions: 10,
       repetitionsIncrement: 2,
@@ -79,6 +84,25 @@ describe('routine assignment mapping', () => {
       ...assignmentItemRow,
       tenant_exercise_id: 'tenant-exercise-id',
     })).toThrow('no es válido');
+  });
+
+  it('reads legacy work duration as coach instructions and emits the new payload field', () => {
+    const legacyItem = toRoutineAssignmentItem({
+      ...assignmentItemRow,
+      coach_instructions: undefined,
+      work_duration: 'Mantén controlado el descenso.',
+    });
+
+    expect(legacyItem.coachInstructions).toBe('Mantén controlado el descenso.');
+    expect(toRoutineAssignmentItemPayload({
+      source: 'catalog',
+      sourceId: 'exercise-id',
+      prescribedSets: 3,
+      prescribedReps: '8',
+      targetLoad: '20 kg',
+      coachInstructions: 'Respira durante el esfuerzo.',
+      rest: '60 s',
+    })).toMatchObject({ coachInstructions: 'Respira durante el esfuerzo.' });
   });
 
   it('maps assignment metadata and keeps items in prescribed order', () => {
