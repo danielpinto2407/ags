@@ -40,7 +40,7 @@ export interface RoutineAssignmentItem {
   prescribedSets: number;
   prescribedReps: string;
   targetLoad: string;
-  workDuration: string | null;
+  coachInstructions: string | null;
   rest: string;
   baseRepetitions: number | null;
   repetitionsIncrement: number;
@@ -80,7 +80,7 @@ export interface RoutineAssignmentItemInput {
   prescribedSets: number;
   prescribedReps: string;
   targetLoad: string;
-  workDuration: string | null;
+  coachInstructions: string | null;
   rest: string;
   baseRepetitions?: number | null;
   repetitionsIncrement?: number;
@@ -176,7 +176,8 @@ export function toRoutineAssignmentItem(value: unknown): RoutineAssignmentItem {
     || typeof row.prescribed_sets !== 'number'
     || typeof row.prescribed_reps !== 'string'
     || typeof row.target_load !== 'string'
-    || (row.work_duration !== null && typeof row.work_duration !== 'string')
+    || (row.coach_instructions != null && typeof row.coach_instructions !== 'string')
+    || (row.work_duration != null && typeof row.work_duration !== 'string')
     || typeof row.rest !== 'string'
     || (row.base_repetitions !== null && typeof row.base_repetitions !== 'number')
     || typeof row.repetitions_increment !== 'number'
@@ -198,7 +199,9 @@ export function toRoutineAssignmentItem(value: unknown): RoutineAssignmentItem {
     prescribedSets: row.prescribed_sets,
     prescribedReps: row.prescribed_reps,
     targetLoad: row.target_load,
-    workDuration: row.work_duration,
+    coachInstructions: typeof row.coach_instructions === 'string'
+      ? row.coach_instructions
+      : (typeof row.work_duration === 'string' ? row.work_duration : null),
     rest: row.rest,
     baseRepetitions: row.base_repetitions,
     repetitionsIncrement: row.repetitions_increment,
@@ -257,7 +260,7 @@ export function toRoutineAssignmentItemPayload(item: RoutineAssignmentItemInput)
     prescribedSets: item.prescribedSets,
     prescribedReps: item.prescribedReps,
     targetLoad: item.targetLoad,
-    workDuration: item.workDuration,
+    coachInstructions: item.coachInstructions,
     rest: item.rest,
     baseRepetitions: item.baseRepetitions ?? null,
     repetitionsIncrement: item.repetitionsIncrement ?? 0,

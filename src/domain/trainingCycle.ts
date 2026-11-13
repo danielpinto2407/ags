@@ -62,17 +62,6 @@ export function getCompletedCycleSlotRuns(attempts: readonly CycleSlotAttemptSta
   return attempts.filter((status) => status === 'COMPLETED').length;
 }
 
-export function calculateRoutineProgress(completedSets: number, prescribedSets: number): number {
-  if (!Number.isSafeInteger(prescribedSets) || prescribedSets < 1) {
-    throw new Error('Las series prescritas deben ser un entero positivo.');
-  }
-  if (!Number.isSafeInteger(completedSets) || completedSets < 0 || completedSets > prescribedSets) {
-    throw new Error('Las series completadas deben estar entre cero y las series prescritas.');
-  }
-
-  return (completedSets / prescribedSets) * 100;
-}
-
 export function validateCycleProgram(program: CycleProgram): void {
   getCycleIterationCount(program.additionalCycleRepeats);
   if (program.cycleDays.length === 0) {

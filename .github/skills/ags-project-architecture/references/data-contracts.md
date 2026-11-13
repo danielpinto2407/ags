@@ -74,6 +74,7 @@ interface RoutinePlan {
 		prescribedSets: number;
 		prescribedRepetitions: number;
 		prescribedLoad: number | null;
+		coachInstructions: string | null;
 	}>;
 }
 
@@ -111,13 +112,15 @@ interface ExerciseCompletionCheck {
 
 -- In `SINGLE_DAY` mode, the coach selects one calendar date and programs one routine. In `CYCLE` mode, the coach chooses positive integer N and defines one routine for each ordered cycle-day slot 1..N. These slots do not correspond to weekdays or fixed calendar dates. If a published `SINGLE_DAY` program exists for the student on a calendar date, it takes precedence for that date: display its routine and do not offer or allow starting a `CYCLE` routine that day.
 - The coach sets a nonnegative whole-number `additionalCycleRepeats`; 0 means one attempt per slot, and total attempts per slot equal `1 + additionalCycleRepeats`. Each slot advances independently and may be selected out of order while it has attempts remaining. A closed-incomplete execution consumes that slot's attempt but does not advance its progression; only `COMPLETED` executions advance the count used to compound that slot's per-exercise integer rep/load increments. Preserve the explicit `lbs` or `kg` unit and never convert implicitly. An incomplete slot therefore keeps the same target in its next available attempt.
-- During cycle mode, the student calendar groups actual execution dates and history but does not select a cycle-day slot. A student may start at most one routine per actual calendar date across both modes. Pressing Play alone does not create an execution or consume the daily allowance; the first valid completed-set record creates the execution. Resume is allowed only on the start date. At day end, an incomplete execution closes as `CLOSED_INCOMPLETE`; actual records and progress freeze and remain viewable, but it cannot be resumed or edited. The closed execution does not consume the next date's allowance. A different same-day start is rejected with the documented Spanish message.
-- Routine progress is derived as `100 * completed prescribed sets / total prescribed sets`; the first recorded completed set yields progress greater than zero. Completed executions remain viewable with no Play action. Do not store a mutable percentage that can disagree with set records.
+- During cycle mode, the student calendar groups actual execution dates and history but does not select a cycle-day slot. A student may start at most one routine per actual calendar date across both modes. Pressing Play or saving an incomplete exercise draft does not create an execution or consume the daily allowance; marking the first exercise complete with valid actual reps/load creates it. Resume is allowed only on the start date. At day end, an incomplete execution closes as `CLOSED_INCOMPLETE`; actual records and progress freeze and remain viewable, but it cannot be resumed or edited. The closed execution does not consume the next date's allowance. A different same-day start is rejected with the documented Spanish message.
+- Routine progress is derived as `100 * completed exercises / total prescribed exercises`; each exercise contributes once regardless of its prescribed set count. Completed executions remain viewable with no Play action. Do not store a mutable percentage that can disagree with exercise records.
 - Generated prescriptions are deterministic and versioned. Editing a published plan must not rewrite prior iterations, executions, or snapshots. The single-day and cycle modes share the unified data/domain/repository model; the deployed date-bound schema is migrated and retired as a user workflow after backfill validation.
 
 Repetition and load prescriptions, increments, and actual logged values are whole numbers; do not round them. In cycle mode, length is N ordinal slots; each slot has at most `1 + additionalCycleRepeats` attempts. Per-slot progression advances only on a completed execution, not on an incomplete attempt.
 
-### CU-04 Actual Workout Records (Production Schema Deployed; UI Pending)
+For `CYCLE` items, base repetitions/load and progression increments are the source of truth; do not collect duplicate target reps/load fields. Coach notes are stored in `coach_instructions` (up to 2000 characters), distinct from exercise-definition instructions and rest time. Migration 026 backfills historical `work_duration` text into `coach_instructions` while retaining the legacy column during rollout. Student profile coach identity is resolved only through the no-argument authenticated RPC `get_own_coach_name()`, which derives the student from `auth.uid()`; do not broaden profile-row RLS or accept caller-supplied profile IDs.
+
+### CU-04 Actual Workout Records (Exercise-Level Model Validated Locally; Production Migration/UI Pending)
 
 Keep the published prescription separate from what the student performed. Actual performance must reference the student's published plan/routine version, cycle slot when applicable, execution, and routine exercise item; actual values never overwrite prescribed values or the immutable exercise snapshot.
 
@@ -125,23 +128,20 @@ Keep the published prescription separate from what the student performed. Actual
 interface ExercisePerformance {
 	routineExecutionId: string;
 	cycleRoutineItemId: string;
-		sets: Array<{
-		setNumber: number;
-		completed: boolean;
-		actualRepetitions: number | null;
-		actualLoad: number | null;
-		loadUnit: 'lbs' | 'kg' | null;
-	}>;
+	completed: boolean;
+	actualRepetitions: number | null;
+	actualLoad: number | null;
+	loadUnit: 'lbs' | 'kg' | null;
 	rir: number | null;
 	rpePercent: number | null;
 }
 ```
 
-- Student records whole-number actual repetitions and load plus completion per performed set. A weighted exercise requires actual load and unit for a completed set; bodyweight sets may leave load empty. Capture one integer RIR value in the inclusive range 1-10 and one RPE value in the inclusive range 0-100% once per exercise as perceived effort, not per set. The UI uses separate slider-style bars with visible minimum, maximum, and selected value. Validate bounds in the UI/domain and enforce them at persistence; reject invalid values rather than clamping or storing them. Preserve prescribed versus actual values as separate fields.
+- Student records whole-number actual repetitions and load once for the exercise, plus one completion flag. The coach's prescribed sets and reps remain the target; do not request the same actual values per set. A weighted exercise requires actual load and unit when marked complete; a bodyweight exercise may leave load empty. Capture one integer RIR value in the inclusive range 1-10 and one RPE value in the inclusive range 0-100% once per exercise. The UI uses separate slider-style bars with visible minimum, maximum, and selected value. Validate bounds in the UI/domain and enforce them at persistence; reject invalid values rather than clamping or storing them. Preserve prescribed versus actual values as separate fields.
 - Do not infer a conversion between RIR and RPE or add unconfirmed scale semantics beyond the agreed ranges.
-- Workout session, per-exercise/set logs, timestamps, and ownership should be persisted under tenant/student/assignment. Only the assigned active student may write their own performance; the coach's read scope must remain limited to students they own.
-- Execution rows are created only when the first completed set with actual values is persisted; merely opening the routine does not consume the daily allowance. A routine can be resumed on its start date only. Execution dates and day-end closure use UTC. On a subsequent UTC date, the prior in-progress execution is closed as `CLOSED_INCOMPLETE`; its actual records remain frozen and readable.
-- Offline synchronization is still out of scope until retry, idempotency, and conflict semantics are specified. Migrations 022-025 are applied in Production and local Supabase; PR #19 contains the UI/repository integration and is awaiting Production deployment.
+- Workout session, per-exercise performance, timestamps, and ownership should be persisted under tenant/student/assignment. Only the assigned active student may write their own performance; the coach's read scope must remain limited to students they own.
+- Execution rows are created only when the first exercise is marked complete with actual values; merely opening the routine or saving an incomplete exercise does not consume the daily allowance. A routine can be resumed on its start date only. Execution dates and day-end closure use UTC. On a subsequent UTC date, the prior in-progress execution is closed as `CLOSED_INCOMPLETE`; its actual exercise records remain frozen and readable.
+- Migration 027 adds completion and actual reps/load/unit to the existing per-exercise performance row. It backfills from the latest stored set while retaining `routine_execution_sets` as historical detail; the new RPC writes one record per exercise and derives progress from completed exercises. It is applied and pgTAP-verified locally only. Production remains on migration 025 until migration 027 and the corresponding UI are released together. Offline synchronization is still out of scope until retry, idempotency, and conflict semantics are specified.
 
 ### CU-04B Coach Biometrics And Student Progress (Planned Extension)
 
@@ -228,7 +228,7 @@ Keep these separate:
 
 Keep RIR and RPE as separate measurements. Capture both once per exercise (not per set). RIR ranges from 1 to 10 and RPE from 0 to 100%; do not infer one from the other. Any scale labels or anchors beyond those ranges must not be invented.
 
-For CU-04, persist the workout session, prescribed versus actual repetitions/load, and completion per set; persist one RIR and one RPE value per exercise. For CU-04B, persist coach-authored dated biometric measurements as a separate source of progress. Derive daily, weekly, streak, cycle-progression, and profile metrics from repository-owned records, not independent mock totals. Offline event queues and conflict resolution are deferred until separately specified; do not imply offline support from localStorage.
+For CU-04, persist the workout session, prescribed sets/reps, and one actual repetitions/load/completion record per exercise; persist one RIR and one RPE value per exercise. New writes do not create per-set actual rows; legacy per-set rows remain historical only. For CU-04B, persist coach-authored dated biometric measurements as a separate source of progress. Derive daily, weekly, streak, cycle-progression, and profile metrics from repository-owned records, not independent mock totals. Offline event queues and conflict resolution are deferred until separately specified; do not imply offline support from localStorage.
 
 Biometric contract (planning only): record tenant, student, recording coach, measured-at date/time, metric key, numeric value, unit, and audit timestamps. Define the allowed metric catalogue, optionality, corrections/history, and profile visibility before implementation. The student may read their own records; writes are coach-only and scoped to the coach's active tenant and owned student.
 

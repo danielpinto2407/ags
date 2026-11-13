@@ -7,7 +7,7 @@ import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
 import type { Profile } from '@/domain/profile';
 import { exerciseEquipmentLabels, exerciseFocusLabels, exerciseMovementLabels, formatMuscleName } from '@/domain/exerciseDefinition';
 import { formatLocalDate } from '@/domain/localDate';
-import { getCompletedSetCount, validateActualExercisePerformance } from '@/domain/workoutExecution';
+import { validateActualExercisePerformance } from '@/domain/workoutExecution';
 import type { ActualExercisePerformance } from '@/domain/workoutExecution';
 import { calculateCycleExerciseTarget } from '@/domain/trainingCycle';
 
@@ -48,40 +48,33 @@ export default function StudentRoutines({ profile }: StudentRoutinesProps) {
     && (slotHistory?.attemptCount ?? 0) >= assignment.additionalCycleRepeats + 1
   );
 
-  const getPerformanceDraft = (itemId: string, prescribedSets: number): ActualExercisePerformance => (
+  const getPerformanceDraft = (itemId: string): ActualExercisePerformance => (
     drafts[itemId]
     ?? execution?.performances[itemId]
     ?? {
       routineItemId: itemId,
-      sets: Array.from({ length: prescribedSets }, (_, index) => ({
-        setNumber: index + 1,
-        completed: false,
-        actualRepetitions: null,
-        actualLoad: null,
-        loadUnit: null,
-      })),
+      completed: false,
+      actualRepetitions: null,
+      actualLoad: null,
+      loadUnit: null,
       rir: null,
       rpePercent: null,
     }
   );
 
-  const updatePerformance = (itemId: string, update: (performance: ActualExercisePerformance) => ActualExercisePerformance, prescribedSets: number) => {
+  const updatePerformance = (itemId: string, update: (performance: ActualExercisePerformance) => ActualExercisePerformance) => {
     setDrafts((current) => ({
       ...current,
-      [itemId]: update(current[itemId] ?? getPerformanceDraft(itemId, prescribedSets)),
+      [itemId]: update(current[itemId] ?? getPerformanceDraft(itemId)),
     }));
     setActionError(null);
   };
 
   const saveItemPerformance = async (item: NonNullable<typeof selectedDay>['items'][number]) => {
     if (!assignment || !selectedDay || !executionEditable || cycleSlotAttemptsExhausted || assignment.status !== 'PUBLISHED') return;
-    const performance = getPerformanceDraft(item.id, item.prescribedSets);
+    const performance = getPerformanceDraft(item.id);
     try {
-      validateActualExercisePerformance(
-        performance,
-        item.prescribedSets,
-        item.baseLoad !== null || item.targetLoad.trim() !== ''
-      );
+      validateActualExercisePerformance(performance, item.baseLoad !== null || item.targetLoad.trim() !== '');
       setSavingItemId(item.id);
       setActionError(null);
       setNotice(null);
@@ -197,7 +190,7 @@ export default function StudentRoutines({ profile }: StudentRoutinesProps) {
                   </p>
                   <p className="mt-1 text-sm font-bold text-white">{Math.round(execution.progressPercent)}%</p>
                 </div>
-                <span className="text-xs text-zinc-400">{execution.completedSets} / {execution.prescribedSets} series</span>
+                <span className="text-xs text-zinc-400">{execution.completedExercises} / {execution.prescribedExercises} ejercicios</span>
               </div>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-800">
                 <div className="h-full rounded-full bg-brand-500 transition-[width]" style={{ width: `${execution.progressPercent}%` }} />
@@ -214,8 +207,8 @@ export default function StudentRoutines({ profile }: StudentRoutinesProps) {
                 <Dumbbell size={13} /> {selectedDay?.items.length ?? 0} ejercicios
               </div>
               {selectedDay?.items.map((item, index) => {
-                const performance = getPerformanceDraft(item.id, item.prescribedSets);
-                const completedSetCount = getCompletedSetCount(performance);
+                const performance = getPerformanceDraft(item.id);
+                const canSavePerformance = performance.completed || execution?.status === 'IN_PROGRESS';
                 const progressionTarget = assignment.programMode === 'CYCLE' && item.baseRepetitions !== null
                   ? calculateCycleExerciseTarget({
                     exerciseItemId: item.id,
@@ -259,60 +252,60 @@ export default function StudentRoutines({ profile }: StudentRoutinesProps) {
                     <summary className="cursor-pointer text-[11px] font-medium text-brand-400">Instrucciones y técnica</summary>
                     <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">{item.exercise.instructions}</p>
                     {item.exercise.tips && <p className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-amber-200/70">{item.exercise.tips}</p>}
-                    <p className="mt-2 text-[10px] text-zinc-500">Descanso: {item.rest}{item.workDuration ? ` · Trabajo: ${item.workDuration}` : ''}</p>
+                    <p className="mt-2 text-[10px] text-zinc-500">Descanso: {item.rest}</p>
+                    {item.coachInstructions && <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">Instrucciones del coach: {item.coachInstructions}</p>}
                     <ExerciseVideoPreview className="mt-3" title={item.exercise.name} videoUrl={item.exercise.videoUrl} />
                   </details>
 
                   <div className="mt-4 space-y-3 border-t border-zinc-800 pt-3">
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Registro real</h4>
-                      <span className="text-[10px] text-zinc-500">{completedSetCount} / {item.prescribedSets} series completas</span>
+                      <span className="text-[10px] text-zinc-500">{performance.completed ? 'Ejercicio completo' : 'Pendiente'}</span>
                     </div>
-                    {performance.sets.map((set, setIndex) => (
-                      <div className="grid grid-cols-[auto_1fr_1fr_auto] items-end gap-2" key={set.setNumber}>
-                        <label className="flex min-h-10 items-center gap-1.5 text-[10px] text-zinc-400">
-                          <input
-                            checked={set.completed}
-                            className="h-4 w-4 accent-emerald-500"
-                            disabled={!executionEditable || savingItemId === item.id}
-                            onChange={(event) => updatePerformance(item.id, (current) => ({
-                              ...current,
-                              sets: current.sets.map((entry, entryIndex) => entryIndex === setIndex ? { ...entry, completed: event.target.checked } : entry),
-                            }), item.prescribedSets)}
-                            type="checkbox"
-                          />
-                          Serie {set.setNumber}
-                        </label>
-                        <label className="text-[9px] text-zinc-500">Reps<input aria-label={`Repeticiones reales, ${item.exercise.name}, serie ${set.setNumber}`} className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-2 text-xs text-white" disabled={!executionEditable || savingItemId === item.id} min="0" step="1" type="number" value={set.actualRepetitions ?? ''} onChange={(event) => updatePerformance(item.id, (current) => ({
-                          ...current,
-                          sets: current.sets.map((entry, entryIndex) => entryIndex === setIndex ? { ...entry, actualRepetitions: event.target.value === '' ? null : Number(event.target.value) } : entry),
-                        }), item.prescribedSets)} /></label>
-                        <label className="text-[9px] text-zinc-500">Carga<input aria-label={`Carga real, ${item.exercise.name}, serie ${set.setNumber}`} className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-2 text-xs text-white" disabled={!executionEditable || savingItemId === item.id} min="0" step="1" type="number" value={set.actualLoad ?? ''} onChange={(event) => updatePerformance(item.id, (current) => ({
-                          ...current,
-                          sets: current.sets.map((entry, entryIndex) => entryIndex === setIndex ? { ...entry, actualLoad: event.target.value === '' ? null : Number(event.target.value), loadUnit: event.target.value === '' ? null : (entry.loadUnit ?? item.loadUnit ?? 'kg') } : entry),
-                        }), item.prescribedSets)} /></label>
-                        <select aria-label={`Unidad de carga, ${item.exercise.name}, serie ${set.setNumber}`} className="min-h-9 rounded-lg border border-zinc-800 bg-zinc-950 px-2 text-xs text-zinc-300" disabled={!executionEditable || savingItemId === item.id || set.actualLoad === null} value={set.loadUnit ?? item.loadUnit ?? 'kg'} onChange={(event) => updatePerformance(item.id, (current) => ({
-                          ...current,
-                          sets: current.sets.map((entry, entryIndex) => entryIndex === setIndex ? { ...entry, loadUnit: event.target.value as 'lbs' | 'kg' } : entry),
-                        }), item.prescribedSets)}><option value="kg">kg</option><option value="lbs">lbs</option></select>
-                      </div>
-                    ))}
+                    <div className="grid grid-cols-[auto_1fr_1fr_auto] items-end gap-2">
+                      <label className="flex min-h-10 items-center gap-1.5 text-[10px] text-zinc-400">
+                        <input
+                          checked={performance.completed}
+                          className="h-4 w-4 accent-emerald-500"
+                          disabled={!executionEditable || savingItemId === item.id}
+                          onChange={(event) => updatePerformance(item.id, (current) => ({
+                            ...current,
+                            completed: event.target.checked,
+                          }))}
+                          type="checkbox"
+                        />
+                        Hecho
+                      </label>
+                      <label className="text-[9px] text-zinc-500">Reps<input aria-label={`Repeticiones reales, ${item.exercise.name}`} className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-2 text-xs text-white" disabled={!executionEditable || savingItemId === item.id} min="0" step="1" type="number" value={performance.actualRepetitions ?? ''} onChange={(event) => updatePerformance(item.id, (current) => ({
+                        ...current,
+                        actualRepetitions: event.target.value === '' ? null : Number(event.target.value),
+                      }))} /></label>
+                      <label className="text-[9px] text-zinc-500">Carga<input aria-label={`Carga real, ${item.exercise.name}`} className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-2 text-xs text-white" disabled={!executionEditable || savingItemId === item.id} min="0" step="1" type="number" value={performance.actualLoad ?? ''} onChange={(event) => updatePerformance(item.id, (current) => ({
+                        ...current,
+                        actualLoad: event.target.value === '' ? null : Number(event.target.value),
+                        loadUnit: event.target.value === '' ? null : (current.loadUnit ?? item.loadUnit ?? 'kg'),
+                      }))} /></label>
+                      <select aria-label={`Unidad de carga, ${item.exercise.name}`} className="min-h-9 rounded-lg border border-zinc-800 bg-zinc-950 px-2 text-xs text-zinc-300" disabled={!executionEditable || savingItemId === item.id || performance.actualLoad === null} value={performance.loadUnit ?? item.loadUnit ?? 'kg'} onChange={(event) => updatePerformance(item.id, (current) => ({
+                        ...current,
+                        loadUnit: event.target.value as 'lbs' | 'kg',
+                      }))}><option value="kg">kg</option><option value="lbs">lbs</option></select>
+                    </div>
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <label className="block text-[10px] text-zinc-400">
                         <span className="flex justify-between"><span>RIR</span><span>{performance.rir ?? 'Sin registrar'} · 1-10</span></span>
-                        <input aria-label={`RIR de ${item.exercise.name}`} className="mt-2 w-full accent-brand-500" disabled={!executionEditable || savingItemId === item.id} max="10" min="1" onChange={(event) => updatePerformance(item.id, (current) => ({ ...current, rir: Number(event.target.value) }), item.prescribedSets)} type="range" value={performance.rir ?? 1} />
+                        <input aria-label={`RIR de ${item.exercise.name}`} className="mt-2 w-full accent-brand-500" disabled={!executionEditable || savingItemId === item.id} max="10" min="1" onChange={(event) => updatePerformance(item.id, (current) => ({ ...current, rir: Number(event.target.value) }))} type="range" value={performance.rir ?? 1} />
                       </label>
                       <label className="block text-[10px] text-zinc-400">
                         <span className="flex justify-between"><span>RPE</span><span>{performance.rpePercent ?? 'Sin registrar'}% · 0-100%</span></span>
-                        <input aria-label={`RPE de ${item.exercise.name}`} className="mt-2 w-full accent-brand-500" disabled={!executionEditable || savingItemId === item.id} max="100" min="0" onChange={(event) => updatePerformance(item.id, (current) => ({ ...current, rpePercent: Number(event.target.value) }), item.prescribedSets)} type="range" value={performance.rpePercent ?? 0} />
+                        <input aria-label={`RPE de ${item.exercise.name}`} className="mt-2 w-full accent-brand-500" disabled={!executionEditable || savingItemId === item.id} max="100" min="0" onChange={(event) => updatePerformance(item.id, (current) => ({ ...current, rpePercent: Number(event.target.value) }))} type="range" value={performance.rpePercent ?? 0} />
                       </label>
                     </div>
 
                     {executionEditable && (
-                      <button className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-brand-600 text-xs font-bold text-white hover:bg-brand-500 disabled:opacity-50" disabled={savingItemId === item.id || completedSetCount === 0 || cycleSlotAttemptsExhausted} onClick={() => void saveItemPerformance(item)} type="button">
+                      <button className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-brand-600 text-xs font-bold text-white hover:bg-brand-500 disabled:opacity-50" disabled={savingItemId === item.id || !canSavePerformance || cycleSlotAttemptsExhausted} onClick={() => void saveItemPerformance(item)} type="button">
                         {savingItemId === item.id ? <LoaderCircle className="animate-spin" size={14} /> : <Save size={14} />}
-                        Guardar ejecución real
+                        Guardar ejercicio
                       </button>
                     )}
                   </div>

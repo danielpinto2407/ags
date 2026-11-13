@@ -16,6 +16,7 @@ import type {
   CycleSlotHistory,
   StudentRoutineExecutionSnapshot,
 } from '@/domain/workoutExecution';
+import { calculateRoutineProgress, getCompletedExerciseCount } from '@/domain/workoutExecution';
 
 const ASSIGNMENT_COLUMNS = [
   'id',
@@ -45,6 +46,7 @@ const ASSIGNMENT_ITEM_COLUMNS = [
   'prescribed_sets',
   'prescribed_reps',
   'target_load',
+  'coach_instructions',
   'work_duration',
   'rest',
   'base_repetitions',
@@ -200,17 +202,11 @@ export const routineAssignmentRepository = {
     if (executionError) throw new Error('No se pudo cargar el progreso de hoy.');
     if (!execution) return null;
 
-    const [{ data: setRows, error: setsError }, { data: effortRows, error: effortsError }] = await Promise.all([
-      client
-        .from('routine_execution_sets')
-        .select('routine_item_id, set_number, completed, actual_repetitions, actual_load, load_unit')
-        .eq('execution_id', execution.id),
-      client
-        .from('routine_execution_exercises')
-        .select('routine_item_id, rir, rpe_percent')
-        .eq('execution_id', execution.id),
-    ]);
-    if (setsError || effortsError) throw new Error('No se pudieron cargar las series registradas.');
+    const { data: performanceRows, error: performanceError } = await client
+      .from('routine_execution_exercises')
+      .select('routine_item_id, completed, actual_repetitions, actual_load, load_unit, rir, rpe_percent')
+      .eq('execution_id', execution.id);
+    if (performanceError) throw new Error('No se pudieron cargar los ejercicios registrados.');
 
     const assignment = assignments.find(({ id }) => id === execution.assignment_id);
     const day = assignment?.days.find(({ id }) => id === execution.cycle_day_id);
@@ -220,35 +216,27 @@ export const routineAssignmentRepository = {
     for (const item of day.items) {
       performances[item.id] = {
         routineItemId: item.id,
-        sets: [],
+        completed: false,
+        actualRepetitions: null,
+        actualLoad: null,
+        loadUnit: null,
         rir: null,
         rpePercent: null,
       };
     }
-    for (const row of setRows ?? []) {
+    for (const row of performanceRows ?? []) {
       const itemPerformance = performances[row.routine_item_id];
       if (!itemPerformance) continue;
-      itemPerformance.sets.push({
-        setNumber: row.set_number,
-        completed: row.completed,
-        actualRepetitions: row.actual_repetitions,
-        actualLoad: row.actual_load,
-        loadUnit: row.load_unit,
-      });
-    }
-    for (const row of effortRows ?? []) {
-      const itemPerformance = performances[row.routine_item_id];
-      if (itemPerformance) {
-        itemPerformance.rir = row.rir;
-        itemPerformance.rpePercent = row.rpe_percent;
-      }
+      itemPerformance.completed = row.completed;
+      itemPerformance.actualRepetitions = row.actual_repetitions;
+      itemPerformance.actualLoad = row.actual_load;
+      itemPerformance.loadUnit = row.load_unit;
+      itemPerformance.rir = row.rir;
+      itemPerformance.rpePercent = row.rpe_percent;
     }
 
-    const prescribedSets = day.items.reduce((total, item) => total + item.prescribedSets, 0);
-    const completedSets = Object.values(performances).reduce(
-      (total, performance) => total + performance.sets.filter((set) => set.completed).length,
-      0
-    );
+    const prescribedExercises = day.items.length;
+    const completedExercises = getCompletedExerciseCount(Object.values(performances));
 
     return {
       id: execution.id,
@@ -257,9 +245,9 @@ export const routineAssignmentRepository = {
       executionDate: execution.execution_date,
       status: execution.status,
       slotAttempt: execution.slot_attempt,
-      progressPercent: prescribedSets === 0 ? 0 : (completedSets / prescribedSets) * 100,
-      completedSets,
-      prescribedSets,
+      progressPercent: prescribedExercises === 0 ? 0 : calculateRoutineProgress(completedExercises, prescribedExercises),
+      completedExercises,
+      prescribedExercises,
       performances,
     };
   },
@@ -307,7 +295,10 @@ export const routineAssignmentRepository = {
       p_student_id: input.studentId,
       p_scheduled_for: input.scheduledFor,
       p_title: input.title,
-      p_items: input.items.map(toRoutineAssignmentItemPayload),
+      p_items: input.items.map((item) => {
+        const { coachInstructions, ...payload } = toRoutineAssignmentItemPayload(item);
+        return { ...payload, workDuration: coachInstructions };
+      }),
     });
 
     if (error) throw assignmentError(error);
@@ -329,17 +320,14 @@ export const routineAssignmentRepository = {
     cycleDayPosition: number,
     performance: ActualExercisePerformance
   ): Promise<{ executionId: string; status: string; progressPercent: number }> {
-    const { data, error } = await requireClient().rpc('save_routine_execution_performance', {
+    const { data, error } = await requireClient().rpc('save_routine_exercise_performance', {
       p_assignment_id: assignmentId,
       p_cycle_day_position: cycleDayPosition,
       p_routine_item_id: performance.routineItemId,
-      p_sets: performance.sets.map((set) => ({
-        setNumber: set.setNumber,
-        completed: set.completed,
-        actualRepetitions: set.actualRepetitions,
-        actualLoad: set.actualLoad,
-        loadUnit: set.loadUnit,
-      })),
+      p_completed: performance.completed,
+      p_actual_repetitions: performance.actualRepetitions,
+      p_actual_load: performance.actualLoad,
+      p_load_unit: performance.loadUnit,
       p_rir: performance.rir,
       p_rpe_percent: performance.rpePercent,
     });
@@ -360,12 +348,14 @@ export const routineAssignmentRepository = {
 
 function executionError(error: { message: string }): Error {
   const messages: Record<string, string> = {
-    first_completed_set_required: 'Registra al menos una serie realizada para iniciar la rutina.',
+    first_completed_exercise_required: 'Marca al menos un ejercicio completo para iniciar la rutina.',
     daily_execution_limit: 'Ya iniciaste una rutina hoy. Podrás comenzar otra mañana.',
     single_day_program_takes_precedence: 'Hoy tienes una rutina asignada para esta fecha.',
     cycle_slot_attempts_exhausted: 'Ya completaste los intentos disponibles de este día del ciclo.',
     execution_not_editable: 'Esta ejecución está cerrada y solo se puede consultar.',
-    invalid_actual_performance: 'Revisa las series y los valores de RIR/RPE.',
+    invalid_actual_performance: 'Revisa los valores registrados del ejercicio y su esfuerzo.',
+    completed_exercise_requires_repetitions: 'Captura las repeticiones realizadas para completar el ejercicio.',
+    completed_weighted_exercise_requires_load: 'Captura el peso utilizado para completar el ejercicio.',
   };
   const message = Object.entries(messages).find(([code]) => error.message.includes(code))?.[1];
   return new Error(message ?? 'No se pudo guardar tu ejecución. Inténtalo nuevamente.');

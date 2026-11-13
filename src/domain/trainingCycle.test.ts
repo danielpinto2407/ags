@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   calculateCycleExerciseTarget,
-  calculateRoutineProgress,
   getCompletedCycleSlotRuns,
   getCycleIterationCount,
   getNextCycleSlotAttempt,
@@ -93,13 +92,6 @@ describe('cycle plan domain', () => {
     expect(calculateCycleExerciseTarget(deadlift, getCompletedCycleSlotRuns(statuses))).toEqual({
       exerciseItemId: 'deadlift', repetitions: 10, load: 60, loadUnit: 'lbs',
     });
-  });
-
-  it('calculates progress from completed sets rather than exercise count', () => {
-    expect(calculateRoutineProgress(1, 5)).toBe(20);
-    expect(calculateRoutineProgress(0, 5)).toBe(0);
-    expect(calculateRoutineProgress(5, 5)).toBe(100);
-    expect(() => calculateRoutineProgress(6, 5)).toThrow('series prescritas');
   });
 
   it('supports bodyweight exercises without load progression', () => {
