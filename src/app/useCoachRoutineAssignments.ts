@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { routineAssignmentRepository } from '@/data/routineAssignmentRepository';
-import type { RoutineAssignment, SaveRoutineAssignmentDraftInput } from '@/domain/routineAssignment';
+import type {
+  RoutineAssignment,
+  SaveRoutineAssignmentDraftInput,
+  SaveTrainingProgramDraftInput,
+} from '@/domain/routineAssignment';
 
 export type CoachRoutineAssignmentsState =
   | { status: 'loading'; assignments: RoutineAssignment[] }
@@ -38,6 +42,11 @@ export function useCoachRoutineAssignments(tenantId: string, coachId: string, sc
     reload: () => setReloadKey((key) => key + 1),
     saveDraft: async (input: SaveRoutineAssignmentDraftInput) => {
       const assignmentId = await routineAssignmentRepository.saveDraft(input);
+      setReloadKey((key) => key + 1);
+      return assignmentId;
+    },
+    saveTrainingProgramDraft: async (input: SaveTrainingProgramDraftInput) => {
+      const assignmentId = await routineAssignmentRepository.saveTrainingProgramDraft(input);
       setReloadKey((key) => key + 1);
       return assignmentId;
     },
