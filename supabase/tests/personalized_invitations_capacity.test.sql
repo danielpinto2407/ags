@@ -5,7 +5,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(35);
+select extensions.plan(39);
 
 insert into public.tenants (id, name, subdomain, status, max_clients)
 values
@@ -22,7 +22,8 @@ values
   ('e1000000-0000-4000-8000-000000000005', 'paused-coach@example.test'),
   ('e1000000-0000-4000-8000-000000000006', 'available@example.test'),
   ('e1000000-0000-4000-8000-000000000007', 'wrong-email@example.test'),
-  ('e1000000-0000-4000-8000-000000000008', 'full@example.test');
+  ('e1000000-0000-4000-8000-000000000008', 'full@example.test'),
+  ('e1000000-0000-4000-8000-000000000009', 'inactive-inviter-member@example.test');
 
 insert into public.profiles (id, tenant_id, role, status, full_name)
 values
@@ -259,6 +260,50 @@ select extensions.throws_ok(
 update public.tenant_invitations
 set auth_user_id = 'e1000000-0000-4000-8000-000000000006'
 where email = 'available@example.test'
+  and status = 'PENDING';
+
+select extensions.ok(
+  public.prepare_personalized_invitation(
+    'e0000000-0000-4000-8000-000000000001',
+    'e1000000-0000-4000-8000-000000000001',
+    'inactive-inviter-member@example.test'
+  ) is not null,
+  'an active coach can create an invitation before becoming inactive'
+);
+
+select extensions.is(
+  public.link_personalized_invitation(
+    (select id from public.tenant_invitations where email = 'inactive-inviter-member@example.test' and status = 'PENDING'),
+    'e1000000-0000-4000-8000-000000000009'
+  ),
+  (select id from public.tenant_invitations where email = 'inactive-inviter-member@example.test' and status = 'PENDING'),
+  'the invitation is linked to its matching Auth identity'
+);
+
+update public.profiles
+set status = 'INACTIVE'
+where id = 'e1000000-0000-4000-8000-000000000001';
+
+select extensions.throws_ok(
+  $$select public.accept_personalized_invitation((select id from public.tenant_invitations where email = 'inactive-inviter-member@example.test' and status = 'PENDING'), 'e1000000-0000-4000-8000-000000000009', 'Invited Member')$$,
+  'P0001',
+  'inviter_not_eligible',
+  'an invitation cannot be accepted after its coach becomes inactive'
+);
+
+select extensions.is(
+  (select count(*)::integer from public.profiles where id = 'e1000000-0000-4000-8000-000000000009'),
+  0,
+  'rejected acceptance does not create the member profile'
+);
+
+update public.profiles
+set status = 'ACTIVE'
+where id = 'e1000000-0000-4000-8000-000000000001';
+
+update public.tenant_invitations
+set status = 'FAILED'
+where email = 'inactive-inviter-member@example.test'
   and status = 'PENDING';
 
 update public.tenant_invitations

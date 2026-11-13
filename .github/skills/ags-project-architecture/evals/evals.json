@@ -1,0 +1,44 @@
+{
+  "skill_name": "ags-project-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Queremos reemplazar en AGS la rutina asignada por fecha: la coach publica rutinas para un rango, la alumna inicia como máximo una al día con Play, y una rutina incompleta se cierra al final del día conservando su porcentaje. Analiza el diseño antes de implementar y dime qué partes del skill y del status consultarías, los riesgos de migración y las pruebas necesarias.",
+      "expected_output": "A scoped architecture response that distinguishes current deployed date-bound assignments from the flexible target workflow, consults canonical product/data/status/workflow references, preserves historical assignments through migration, enforces one start per day and end-of-day closure, and proposes focused validation without claiming unverified implementation.",
+      "files": [],
+      "expectations": [
+        "Identifies the existing date-bound CU-03 model as migration input rather than a parallel target workflow.",
+        "Uses the canonical product, data-contract, status, and workflow references instead of inventing a conflicting contract.",
+        "Includes tenant/student ownership and migration preservation of assignment prescriptions and snapshots.",
+        "Covers one routine start per day, same-day resume, end-of-day close with frozen progress, and next-day start eligibility.",
+        "Proposes focused tests and does not claim code, database, or Production changes were performed."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Voy a persistir los checks por ejercicio para la nueva ejecución de rutina en Supabase. Diseña el cambio de dominio/repositorio/RLS y los tests, teniendo en cuenta que el porcentaje se calcula desde checks, que la alumna no puede iniciar dos rutinas el mismo día y que CU-04 (reps/peso/RIR/RPE) se implementará después.",
+      "expected_output": "A bounded implementation design separating cycle routine prescriptions, execution checks, and later CU-04 performance; it validates ownership, atomic daily-start enforcement, derived progress, day-end closure, and migration/cutover compatibility.",
+      "files": [],
+      "expectations": [
+        "Treats progress percentage as derived from distinct exercise checks rather than independently mutable data.",
+        "Enforces the daily start limit transactionally or with an equivalent concurrency-safe server-side invariant.",
+        "Separates CU-03 completion checks from CU-04 actual sets, RIR, and RPE.",
+        "Includes RLS tests for student-own writes, coach-scoped reads, cross-tenant denial, and closed-execution immutability.",
+        "Includes regression/migration checks for existing assignment snapshots and does not create a parallel date-bound workflow."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Necesito ajustar una pantalla de alumna de AGS en React. Hay que mantener el tema de la sede, accesibilidad móvil y los estados vacíos/error, y la pantalla debe mostrar el calendario, lo completado hoy y las rutinas disponibles. ¿Qué contexto revisarías antes de editar y cómo validarías el cambio?",
+      "expected_output": "A focused frontend workflow that consults the visual-system, product-context, project-status, and quality references, respects the current design system and flexible routine rules, and proposes concrete responsive/accessibility/state validation.",
+      "files": [],
+      "expectations": [
+        "Consults the visual-system and product-context references before proposing UI changes.",
+        "Preserves tenant theme tokens and does not invent a separate visual system.",
+        "Uses the calendar as execution-date context rather than a routine-to-date assignment.",
+        "Includes mobile, accessibility, empty, loading, error, and permission-state checks.",
+        "Uses project-status to distinguish shipped behavior from planned behavior."
+      ]
+    }
+  ]
+}

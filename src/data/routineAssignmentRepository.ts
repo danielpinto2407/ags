@@ -3,15 +3,29 @@ import {
   toRoutineAssignment,
   toRoutineAssignmentItem,
   toRoutineAssignmentItemPayload,
+  toTrainingProgramPayload,
 } from '@/domain/routineAssignment';
-import type { RoutineAssignment, SaveRoutineAssignmentDraftInput } from '@/domain/routineAssignment';
+import type {
+  RoutineAssignment,
+  RoutineAssignmentDay,
+  SaveRoutineAssignmentDraftInput,
+  SaveTrainingProgramDraftInput,
+} from '@/domain/routineAssignment';
+import type {
+  ActualExercisePerformance,
+  CycleSlotHistory,
+  StudentRoutineExecutionSnapshot,
+} from '@/domain/workoutExecution';
 
 const ASSIGNMENT_COLUMNS = [
   'id',
   'tenant_id',
   'coach_id',
   'student_id',
+  'program_mode',
   'scheduled_for',
+  'additional_cycle_repeats',
+  'cycle_day_count',
   'title',
   'status',
   'published_at',
@@ -23,6 +37,7 @@ const ASSIGNMENT_ITEM_COLUMNS = [
   'id',
   'assignment_id',
   'tenant_id',
+  'cycle_day_id',
   'position',
   'catalog_exercise_id',
   'tenant_exercise_id',
@@ -32,10 +47,31 @@ const ASSIGNMENT_ITEM_COLUMNS = [
   'target_load',
   'work_duration',
   'rest',
+  'base_repetitions',
+  'repetitions_increment',
+  'base_load',
+  'load_increment',
+  'load_unit',
+].join(', ');
+
+const ASSIGNMENT_DAY_COLUMNS = [
+  'id',
+  'assignment_id',
+  'tenant_id',
+  'position',
+  'title',
 ].join(', ');
 
 interface AssignmentItemRow {
   assignment_id: string;
+  cycle_day_id: string;
+}
+
+interface AssignmentDayRow {
+  id: string;
+  assignment_id: string;
+  position: number;
+  title: string;
 }
 
 function requireClient() {
@@ -53,26 +89,45 @@ async function mapAssignments(rows: unknown[]): Promise<RoutineAssignment[]> {
     return (value as Record<string, string>).id;
   });
 
-  const { data: itemRows, error } = await client
-    .from('routine_assignment_items')
-    .select(ASSIGNMENT_ITEM_COLUMNS)
-    .in('assignment_id', ids)
-    .order('position');
+  const [{ data: dayRows, error: dayError }, { data: itemRows, error: itemError }] = await Promise.all([
+    client
+      .from('routine_assignment_days')
+      .select(ASSIGNMENT_DAY_COLUMNS)
+      .in('assignment_id', ids)
+      .order('position'),
+    client
+      .from('routine_assignment_items')
+      .select(ASSIGNMENT_ITEM_COLUMNS)
+      .in('assignment_id', ids)
+      .order('position'),
+  ]);
 
-  if (error) throw new Error('No se pudieron cargar los ejercicios programados.');
+  if (dayError || itemError) throw new Error('No se pudieron cargar los ejercicios programados.');
 
-  const itemsByAssignment = new Map<string, ReturnType<typeof toRoutineAssignmentItem>[]>();
+  const daysByAssignment = new Map<string, RoutineAssignmentDay[]>();
+  const dayPositionById = new Map<string, number>();
+  for (const row of dayRows ?? []) {
+    const day = row as unknown as AssignmentDayRow;
+    dayPositionById.set(day.id, day.position);
+    const assignmentDays = daysByAssignment.get(day.assignment_id) ?? [];
+    assignmentDays.push({ id: day.id, position: day.position, title: day.title, items: [] });
+    daysByAssignment.set(day.assignment_id, assignmentDays);
+  }
+
   for (const row of itemRows ?? []) {
-    const item = toRoutineAssignmentItem(row);
-    const assignmentId = (row as unknown as AssignmentItemRow).assignment_id;
-    const assignmentItems = itemsByAssignment.get(assignmentId) ?? [];
-    assignmentItems.push(item);
-    itemsByAssignment.set(assignmentId, assignmentItems);
+    const itemRow = row as unknown as AssignmentItemRow;
+    const assignmentDays = daysByAssignment.get(itemRow.assignment_id) ?? [];
+    const day = assignmentDays.find(({ id }) => id === itemRow.cycle_day_id);
+    if (!day) throw new Error('El ejercicio apunta a un día de programa inexistente.');
+    day.items.push(toRoutineAssignmentItem({
+      ...(row as unknown as Record<string, unknown>),
+      cycle_day_position: dayPositionById.get(itemRow.cycle_day_id),
+    }));
   }
 
   return rows.map((row) => {
     const id = (row as Record<string, string>).id;
-    return toRoutineAssignment(row, itemsByAssignment.get(id) ?? []);
+    return toRoutineAssignment(row, daysByAssignment.get(id) ?? []);
   });
 }
 
@@ -85,6 +140,10 @@ function assignmentError(error: { message: string }): Error {
     student_not_active_or_owned: 'Selecciona una alumna activa que tú hayas invitado.',
     routine_exercise_unavailable: 'Uno de los ejercicios ya no está disponible en la biblioteca.',
     invalid_assignment_input: 'Revisa la fecha, el título y los ejercicios de la rutina.',
+    invalid_training_program_input: 'Revisa el modo, la fecha y la configuración del programa.',
+    invalid_training_program_day: 'Verifica el orden y el nombre de cada día del programa.',
+    program_day_count_mismatch: 'El programa debe incluir todos sus días antes de publicarse.',
+    cycle_progression_incomplete: 'Completa repeticiones, incrementos y unidad de carga en cada ejercicio del ciclo.',
   };
   const message = Object.entries(messages).find(([code]) => error.message.includes(code))?.[1];
   return new Error(message ?? 'No se pudo guardar la programación. Inténtalo nuevamente.');
@@ -98,27 +157,148 @@ export const routineAssignmentRepository = {
       .select(ASSIGNMENT_COLUMNS)
       .eq('tenant_id', tenantId)
       .eq('coach_id', coachId)
-      .eq('scheduled_for', scheduledFor)
+      .or(`and(program_mode.eq.SINGLE_DAY,scheduled_for.eq.${scheduledFor}),program_mode.eq.CYCLE`)
       .order('created_at');
 
     if (error) throw new Error('No se pudieron cargar las rutinas de esta fecha.');
     return mapAssignments(data ?? []);
   },
 
-  async getForStudent(studentId: string, tenantId: string, scheduledFor: string): Promise<RoutineAssignment | null> {
+  async getForStudent(studentId: string, tenantId: string, scheduledFor: string): Promise<RoutineAssignment[]> {
     const client = requireClient();
+    const { error: closeError } = await client.rpc('close_expired_routine_executions');
+    if (closeError) throw new Error('No se pudo cerrar el entrenamiento del día anterior.');
+
     const { data, error } = await client
       .from('routine_assignments')
       .select(ASSIGNMENT_COLUMNS)
       .eq('tenant_id', tenantId)
       .eq('student_id', studentId)
-      .eq('scheduled_for', scheduledFor)
-      .maybeSingle();
+      .eq('status', 'PUBLISHED')
+      .or(`and(program_mode.eq.SINGLE_DAY,scheduled_for.eq.${scheduledFor}),program_mode.eq.CYCLE`)
+      .order('created_at');
 
     if (error) throw new Error('No se pudo cargar la rutina de esta fecha.');
-    if (!data) return null;
-    const [assignment] = await mapAssignments([data]);
-    return assignment ?? null;
+    return mapAssignments(data ?? []);
+  },
+
+  async getExecutionForStudent(
+    studentId: string,
+    tenantId: string,
+    executionDate: string,
+    assignments: RoutineAssignment[]
+  ): Promise<StudentRoutineExecutionSnapshot | null> {
+    const client = requireClient();
+    const { data: execution, error: executionError } = await client
+      .from('routine_executions')
+      .select('id, assignment_id, cycle_day_id, execution_date, status, slot_attempt')
+      .eq('tenant_id', tenantId)
+      .eq('student_id', studentId)
+      .eq('execution_date', executionDate)
+      .maybeSingle();
+
+    if (executionError) throw new Error('No se pudo cargar el progreso de hoy.');
+    if (!execution) return null;
+
+    const [{ data: setRows, error: setsError }, { data: effortRows, error: effortsError }] = await Promise.all([
+      client
+        .from('routine_execution_sets')
+        .select('routine_item_id, set_number, completed, actual_repetitions, actual_load, load_unit')
+        .eq('execution_id', execution.id),
+      client
+        .from('routine_execution_exercises')
+        .select('routine_item_id, rir, rpe_percent')
+        .eq('execution_id', execution.id),
+    ]);
+    if (setsError || effortsError) throw new Error('No se pudieron cargar las series registradas.');
+
+    const assignment = assignments.find(({ id }) => id === execution.assignment_id);
+    const day = assignment?.days.find(({ id }) => id === execution.cycle_day_id);
+    if (!assignment || !day) throw new Error('La ejecución apunta a un programa que ya no está disponible.');
+
+    const performances: Record<string, ActualExercisePerformance> = {};
+    for (const item of day.items) {
+      performances[item.id] = {
+        routineItemId: item.id,
+        sets: [],
+        rir: null,
+        rpePercent: null,
+      };
+    }
+    for (const row of setRows ?? []) {
+      const itemPerformance = performances[row.routine_item_id];
+      if (!itemPerformance) continue;
+      itemPerformance.sets.push({
+        setNumber: row.set_number,
+        completed: row.completed,
+        actualRepetitions: row.actual_repetitions,
+        actualLoad: row.actual_load,
+        loadUnit: row.load_unit,
+      });
+    }
+    for (const row of effortRows ?? []) {
+      const itemPerformance = performances[row.routine_item_id];
+      if (itemPerformance) {
+        itemPerformance.rir = row.rir;
+        itemPerformance.rpePercent = row.rpe_percent;
+      }
+    }
+
+    const prescribedSets = day.items.reduce((total, item) => total + item.prescribedSets, 0);
+    const completedSets = Object.values(performances).reduce(
+      (total, performance) => total + performance.sets.filter((set) => set.completed).length,
+      0
+    );
+
+    return {
+      id: execution.id,
+      assignmentId: execution.assignment_id,
+      cycleDayId: execution.cycle_day_id,
+      executionDate: execution.execution_date,
+      status: execution.status,
+      slotAttempt: execution.slot_attempt,
+      progressPercent: prescribedSets === 0 ? 0 : (completedSets / prescribedSets) * 100,
+      completedSets,
+      prescribedSets,
+      performances,
+    };
+  },
+
+  async getCycleSlotHistory(
+    studentId: string,
+    tenantId: string,
+    assignments: RoutineAssignment[]
+  ): Promise<Record<string, CycleSlotHistory>> {
+    const cycleAssignments = assignments.filter(({ programMode }) => programMode === 'CYCLE');
+    if (cycleAssignments.length === 0) return {};
+
+    const { data, error } = await requireClient()
+      .from('routine_executions')
+      .select('cycle_day_id, status, slot_attempt')
+      .eq('tenant_id', tenantId)
+      .eq('student_id', studentId)
+      .in('assignment_id', cycleAssignments.map(({ id }) => id));
+
+    if (error) throw new Error('No se pudo cargar el historial del ciclo.');
+    const history: Record<string, CycleSlotHistory> = {};
+    for (const row of data ?? []) {
+      const current = history[row.cycle_day_id] ?? { attemptCount: 0, completedRuns: 0 };
+      current.attemptCount += 1;
+      if (row.status === 'COMPLETED') current.completedRuns += 1;
+      history[row.cycle_day_id] = current;
+    }
+    return history;
+  },
+
+  async saveTrainingProgramDraft(input: SaveTrainingProgramDraftInput): Promise<string> {
+    const { data, error } = await requireClient().rpc(
+      'save_training_program_draft',
+      toTrainingProgramPayload(input)
+    );
+
+    if (error) throw assignmentError(error);
+    if (typeof data !== 'string') throw new Error('El servidor no confirmó el borrador.');
+    return data;
   },
 
   async saveDraft(input: SaveRoutineAssignmentDraftInput): Promise<string> {
@@ -136,11 +316,57 @@ export const routineAssignmentRepository = {
   },
 
   async publish(assignmentId: string): Promise<void> {
-    const { data, error } = await requireClient().rpc('publish_routine_assignment', {
+    const { data, error } = await requireClient().rpc('publish_training_program', {
       p_assignment_id: assignmentId,
     });
 
     if (error) throw assignmentError(error);
     if (data !== assignmentId) throw new Error('El servidor no confirmó la publicación.');
   },
+
+  async savePerformance(
+    assignmentId: string,
+    cycleDayPosition: number,
+    performance: ActualExercisePerformance
+  ): Promise<{ executionId: string; status: string; progressPercent: number }> {
+    const { data, error } = await requireClient().rpc('save_routine_execution_performance', {
+      p_assignment_id: assignmentId,
+      p_cycle_day_position: cycleDayPosition,
+      p_routine_item_id: performance.routineItemId,
+      p_sets: performance.sets.map((set) => ({
+        setNumber: set.setNumber,
+        completed: set.completed,
+        actualRepetitions: set.actualRepetitions,
+        actualLoad: set.actualLoad,
+        loadUnit: set.loadUnit,
+      })),
+      p_rir: performance.rir,
+      p_rpe_percent: performance.rpePercent,
+    });
+
+    if (error) throw executionError(error);
+    if (!data || typeof data !== 'object') throw new Error('El servidor no confirmó el registro.');
+    const result = data as Record<string, unknown>;
+    if (typeof result.executionId !== 'string' || typeof result.status !== 'string' || typeof result.progressPercent !== 'number') {
+      throw new Error('La respuesta del registro de entrenamiento no es válida.');
+    }
+    return {
+      executionId: result.executionId,
+      status: result.status,
+      progressPercent: result.progressPercent,
+    };
+  },
 };
+
+function executionError(error: { message: string }): Error {
+  const messages: Record<string, string> = {
+    first_completed_set_required: 'Registra al menos una serie realizada para iniciar la rutina.',
+    daily_execution_limit: 'Ya iniciaste una rutina hoy. Podrás comenzar otra mañana.',
+    single_day_program_takes_precedence: 'Hoy tienes una rutina asignada para esta fecha.',
+    cycle_slot_attempts_exhausted: 'Ya completaste los intentos disponibles de este día del ciclo.',
+    execution_not_editable: 'Esta ejecución está cerrada y solo se puede consultar.',
+    invalid_actual_performance: 'Revisa las series y los valores de RIR/RPE.',
+  };
+  const message = Object.entries(messages).find(([code]) => error.message.includes(code))?.[1];
+  return new Error(message ?? 'No se pudo guardar tu ejecución. Inténtalo nuevamente.');
+}

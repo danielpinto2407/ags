@@ -29,6 +29,128 @@ For CU-00, use `src/domain/tenant.ts` for typed payloads and validators, `src/da
 
 ## Routine Model
 
+### CU-03 Training Cycles And Progression (Production Schema Deployed; UI Pending)
+
+The deployed CU-03 model stores one student-specific assignment per calendar date; those records are migration input only. The target is one unified coach programming model with two explicit modes: a routine scheduled for one selected calendar date (`SINGLE_DAY`), or a cycle containing N ordered cycle-day slots (`CYCLE`). Cycle-day slots are ordinal plan positions, not calendar dates or weekdays. Migrate existing assignments, prescriptions, execution history, and immutable snapshots into the unified model without data loss; do not retain the old implementation as a parallel workflow after cutover.
+
+Planning contract (field names are illustrative until the schema plan is approved):
+
+```ts
+interface ProgramBase {
+	id: string;
+	tenantId: string;
+	coachId: string;
+	studentId: string;
+	status: 'DRAFT' | 'PUBLISHED';
+}
+
+interface SingleDayProgram extends ProgramBase {
+	mode: 'SINGLE_DAY';
+	scheduledDate: string;
+	routine: RoutinePlan;
+}
+
+interface TrainingCycle extends ProgramBase {
+	mode: 'CYCLE';
+	additionalCycleRepeats: number;
+	cycleDays: CycleDay[];
+}
+
+type PersonalizedProgram = SingleDayProgram | TrainingCycle;
+
+interface CycleDay {
+	id: string;
+	cycleId: string;
+	position: number;
+	routine: CycleRoutine;
+}
+
+interface RoutinePlan {
+	id: string;
+	version: number;
+	items: Array<{
+		id: string;
+		exerciseSnapshot: Exercise;
+		prescribedSets: number;
+		prescribedRepetitions: number;
+		prescribedLoad: number | null;
+	}>;
+}
+
+interface CycleRoutine extends RoutinePlan {
+	items: Array<RoutinePlan['items'][number] & {
+		progression: {
+			repetitionsIncrement: number;
+			loadIncrement: number;
+			loadUnit: 'lbs' | 'kg';
+		};
+	}>;
+}
+
+interface RoutineExecution {
+	id: string;
+	programId: string;
+	programMode: 'SINGLE_DAY' | 'CYCLE';
+	cycleIteration: number | null;
+	cycleDayId: string | null;
+	routineId: string;
+	studentId: string;
+	startedOn: string;
+	startedAt: string;
+	completedAt: string | null;
+	closedAt: string | null;
+	status: 'IN_PROGRESS' | 'COMPLETED' | 'CLOSED_INCOMPLETE';
+}
+
+interface ExerciseCompletionCheck {
+	routineExecutionId: string;
+	cycleRoutineItemId: string;
+	completedAt: string;
+}
+```
+
+-- In `SINGLE_DAY` mode, the coach selects one calendar date and programs one routine. In `CYCLE` mode, the coach chooses positive integer N and defines one routine for each ordered cycle-day slot 1..N. These slots do not correspond to weekdays or fixed calendar dates. If a published `SINGLE_DAY` program exists for the student on a calendar date, it takes precedence for that date: display its routine and do not offer or allow starting a `CYCLE` routine that day.
+- The coach sets a nonnegative whole-number `additionalCycleRepeats`; 0 means one attempt per slot, and total attempts per slot equal `1 + additionalCycleRepeats`. Each slot advances independently and may be selected out of order while it has attempts remaining. A closed-incomplete execution consumes that slot's attempt but does not advance its progression; only `COMPLETED` executions advance the count used to compound that slot's per-exercise integer rep/load increments. Preserve the explicit `lbs` or `kg` unit and never convert implicitly. An incomplete slot therefore keeps the same target in its next available attempt.
+- During cycle mode, the student calendar groups actual execution dates and history but does not select a cycle-day slot. A student may start at most one routine per actual calendar date across both modes. Pressing Play alone does not create an execution or consume the daily allowance; the first valid completed-set record creates the execution. Resume is allowed only on the start date. At day end, an incomplete execution closes as `CLOSED_INCOMPLETE`; actual records and progress freeze and remain viewable, but it cannot be resumed or edited. The closed execution does not consume the next date's allowance. A different same-day start is rejected with the documented Spanish message.
+- Routine progress is derived as `100 * completed prescribed sets / total prescribed sets`; the first recorded completed set yields progress greater than zero. Completed executions remain viewable with no Play action. Do not store a mutable percentage that can disagree with set records.
+- Generated prescriptions are deterministic and versioned. Editing a published plan must not rewrite prior iterations, executions, or snapshots. The single-day and cycle modes share the unified data/domain/repository model; the deployed date-bound schema is migrated and retired as a user workflow after backfill validation.
+
+Repetition and load prescriptions, increments, and actual logged values are whole numbers; do not round them. In cycle mode, length is N ordinal slots; each slot has at most `1 + additionalCycleRepeats` attempts. Per-slot progression advances only on a completed execution, not on an incomplete attempt.
+
+### CU-04 Actual Workout Records (Production Schema Deployed; UI Pending)
+
+Keep the published prescription separate from what the student performed. Actual performance must reference the student's published plan/routine version, cycle slot when applicable, execution, and routine exercise item; actual values never overwrite prescribed values or the immutable exercise snapshot.
+
+```ts
+interface ExercisePerformance {
+	routineExecutionId: string;
+	cycleRoutineItemId: string;
+		sets: Array<{
+		setNumber: number;
+		completed: boolean;
+		actualRepetitions: number | null;
+		actualLoad: number | null;
+		loadUnit: 'lbs' | 'kg' | null;
+	}>;
+	rir: number | null;
+	rpePercent: number | null;
+}
+```
+
+- Student records whole-number actual repetitions and load plus completion per performed set. A weighted exercise requires actual load and unit for a completed set; bodyweight sets may leave load empty. Capture one integer RIR value in the inclusive range 1-10 and one RPE value in the inclusive range 0-100% once per exercise as perceived effort, not per set. The UI uses separate slider-style bars with visible minimum, maximum, and selected value. Validate bounds in the UI/domain and enforce them at persistence; reject invalid values rather than clamping or storing them. Preserve prescribed versus actual values as separate fields.
+- Do not infer a conversion between RIR and RPE or add unconfirmed scale semantics beyond the agreed ranges.
+- Workout session, per-exercise/set logs, timestamps, and ownership should be persisted under tenant/student/assignment. Only the assigned active student may write their own performance; the coach's read scope must remain limited to students they own.
+- Execution rows are created only when the first completed set with actual values is persisted; merely opening the routine does not consume the daily allowance. A routine can be resumed on its start date only. Execution dates and day-end closure use UTC. On a subsequent UTC date, the prior in-progress execution is closed as `CLOSED_INCOMPLETE`; its actual records remain frozen and readable.
+- Offline synchronization is still out of scope until retry, idempotency, and conflict semantics are specified. Migrations 022-025 are applied in Production and local Supabase; PR #19 contains the UI/repository integration and is awaiting Production deployment.
+
+### CU-04B Coach Biometrics And Student Progress (Planned Extension)
+
+The coach records dated body measurements for a student; the student can inspect their own measurement history and progress from their profile. This is separate from workout logs and from profile identity fields.
+
+Planning contract: the biometric registration form is pending definition. A measurement record needs tenant, student, recording coach, measurement date/time, metric identifier, numeric value, and unit, with audit timestamps. The exact metric catalogue and form fields are not yet defined; do not invent required measurements or seed placeholder values. Decide whether one visit is represented by a measurement-session header plus multiple metric rows, or another versioned shape, after the client confirms the form.
+
+RLS must allow only an active owning coach to create/correct records for their student in the same active tenant, and allow the active student to read only their own measurements. Student writes are not part of this requirement. Profile progress should combine persisted workout history and coach-entered biometrics with clear labels/source dates; never display demo metrics as real records. Confirm the metrics, units, correction/audit policy, visibility, and chart/table expectations before migration design.
+
 ## Exercise Library Model (CU-02)
 
 Treat the shared catalog and gym library as separate sources with separate permissions:
@@ -57,44 +179,37 @@ interface ExerciseDefinition {
 }
 ```
 
-Treat this as a planning contract, not a demand to persist those literal enum values without review. Keep Spanish labels in the UI and stable normalized keys in storage. Prefer controlled equipment/focus options with an explicit extensibility strategy; do not make emojis the taxonomy. CU-03 prescription items own sets, reps, target load, work duration, and rest. Until CU-03 is migrated, use an explicit mapper for screens that still consume the legacy combined `Exercise` type; never persist prescription defaults as global catalog facts.
+Treat this as a planning contract, not a demand to persist those literal enum values without review. Keep Spanish labels in the UI and stable normalized keys in storage. Prefer controlled equipment/focus options with an explicit extensibility strategy; do not make emojis the taxonomy. CU-03 prescription items own sets, reps, target load, work duration, and rest. Legacy demo screens that still consume the combined `Exercise` type need an explicit mapper; never persist prescription defaults as global catalog facts.
 
 Repository operations should expose explicit source/ownership, for example list shared records, list current-tenant records, create tenant exercise, copy shared exercise, update tenant exercise, and archive tenant exercise. The browser must not provide a trusted tenant or actor identity; derive both from the authenticated profile/JWT in RLS or trusted server-side code. Do not silently merge fixtures with Supabase results. Preserve loading, empty, permission-denied, validation, and network error states.
 
 RLS/pgTAP coverage must prove: active signed-in users can read the shared catalog; clients cannot mutate shared rows; coach CRUD is limited to the caller's active tenant; one gym cannot read/update/archive another gym's exercises; members cannot perform coach writes; inactive profiles and suspended tenants cannot use tenant-owned library data; copying preserves content/provenance but isolates subsequent updates; archived records remain unavailable for new assignment selection. Add safe deterministic catalog seeds without fake Auth users or personal data.
 
-CU-02 `exercise_catalog` and `tenant_exercises` tables, RLS, and 15 shared catalog records are deployed through migrations 012-014. The coach screen uses a typed Supabase repository for catalog and tenant-owned exercises, with create/copy/edit/archive/restore operations. Routine assignments and workout logs still do not have database tables or Supabase adapters. Use `project-status.md` for current browser/deployment verification. The repository `supabase/seed.sql` is local-development setup (including development tenants); never execute it against Production.
+CU-02 `exercise_catalog` and `tenant_exercises` tables, RLS, and 15 shared catalog records are deployed through migrations 012-014. The coach screen uses a typed Supabase repository for catalog and tenant-owned exercises, with create/copy/edit/archive/restore operations. CU-03 routine assignments/items and coach/student repositories are persisted and deployed through migrations 015-016; CU-04 workout execution/session logs and CU-04B biometrics do not yet have persistence. Use `project-status.md` for current browser/deployment verification. The repository `supabase/seed.sql` is local-development setup (including development tenants); never execute it against Production.
 
 For each persisted feature, choose one explicit source and keep SDK access behind a typed repository. A database/network/permission error must remain an error and must never fall back to fixtures. Keep mocks isolated for legacy demo screens and unit tests; do not require a duplicate mock adapter for a feature already committed to Supabase-only behavior.
 
 Move data by vertical slice: add schema/constraints, grants/RLS and pgTAP allow/deny tests; add safe stable-ID catalog records through reviewed migrations; implement the Supabase repository; then verify the UI locally. Production catalog seeding is migration-backed and idempotent. `supabase/seed.sql` is local-only and also creates development tenants; never run it against Production. Do not put fake Auth users in SQL seeds: provision local coach/student identities through development-only scripts, then create user-owned assignments against those Auth IDs.
 
-Current prototype shape:
+The legacy global `RoutineMap`/day-keyed array is not a product model and has been removed. Use explicit `PersonalizedProgram` records with a discriminated `SINGLE_DAY` or `CYCLE` mode. Reusable templates remain optional; cycle routines are versioned and student executions/checks reference the exact published routine version. Editing a template or plan must not silently rewrite published prescriptions or historical executions.
 
-```ts
-type RoutineMap = Record<Day, Exercise[]>;
-```
+The deployed first CU-03 slice assigns one routine to one user and calendar date; its records are migration input, not a parallel target workflow. The unified target has two modes: `SINGLE_DAY` schedules one routine for a coach-selected date, while `CYCLE` contains N ordered cycle-day slots with one routine per slot. Cycle-day slots are ordinal program positions, never weekdays or actual calendar dates. The student calendar records actual executions/history; it does not choose the cycle slot. Every plan, cycle-day slot, routine version, execution, and exercise check must be tenant-owned and linked to the intended student. Students read only their own published plans/routines/executions; drafts remain coach-only. Migrate existing assignment snapshots/history before cutover. The old global `RoutineMap`/localStorage workflow was removed and must not be reintroduced as a parallel source.
 
-Product shape:
+Current CU-03 persistence is deployed in `routine_assignments` and `routine_assignment_items` (migrations 015-016). Each source assignment is scoped to one tenant, coach, personalized student, and calendar date; a unique constraint allows one assignment per student/date. Assignments have `DRAFT` and `PUBLISHED` states. Ordered items keep prescribed sets, reps, target load, work duration, and rest separate from the exercise definition. These tables are the migration source for the unified two-mode model and will be retired as the active routine workflow after validated cutover.
 
-```ts
-type StudentRoutineMap = Record<TenantId, Record<StudentId, RoutineMap>>;
-```
+Planned `CYCLE` contract: store plan owner/scope, N ordered `CycleDay` slots, one versioned routine per slot, per-exercise progression, a nonnegative integer count of additional cycle repetitions, and plan version/status. The authored cycle is iteration one; total generated iterations equal `1 + additionalCycleRepeats`. Each cycle-day routine item stores integer rep/load increments and unit `lbs` or `kg`; on the same slot in the next iteration, add increments to the previous iteration's target. In `SINGLE_DAY` mode, store the selected scheduled date and one routine without cycle slots. Keep both modes under one typed plan model and repository; do not maintain the current date-bound schema as a second application workflow.
 
-For real scheduling, prefer explicit assignment records with date, publication state, author, timestamps, and audit fields. Templates are reusable definitions; assignments are student-specific copies or references with per-exercise overrides. Editing a template must not silently change a published assignment.
-
-The first personalized MVP must assign directly to one user and date/day slot; reusable templates are optional and must not block this end-to-end workflow. Every assignment and item must be tenant-owned and linked to its intended student. A student may read only their own published assignments; draft assignments remain coach-only. The current global `RoutineMap` and localStorage persistence are prototype-only and must not be treated as per-student data.
-CU-03 persistence is implemented locally in `routine_assignments` and `routine_assignment_items` (migrations 015-016). Each assignment is scoped to one tenant, coach, personalized student, and calendar date; a unique constraint allows one assignment per student/date. Assignments have `DRAFT` and `PUBLISHED` states. Ordered items keep prescribed sets, reps, target load, work duration, and rest separate from the exercise definition.
+A student-started cycle execution records the cycle iteration, selected `CycleDay`/routine version, student, actual local start date/time, check-offs, and completion/closed-incomplete state. The calendar date is execution history, not the cycle slot. A student may start at most one routine per actual calendar date; resume is allowed only on that start date. Incomplete progress closes/fixes at day end and is view-only; it does not block a new routine on the next date. Derive progress from distinct checked exercises divided by the routine's exercise count, each equally weighted. The completed-cycle iteration rule is still to be confirmed for out-of-order slot selection and closed-incomplete attempts; do not advance progression until that rule is decided. Progress is derived, never independently mutable.
 
 The database generates `exercise_snapshot` from the selected active catalog or same-tenant exercise on item insert; client-supplied snapshot content is ignored, and source/snapshot fields are immutable afterward. `save_routine_assignment_draft` atomically creates or replaces items on a coach-owned draft, deriving actor/tenant from the authenticated profile. `publish_routine_assignment` atomically requires a non-empty draft, active owned student, and active coach/tenant. Published assignments cannot be edited or unpublished in this first slice; future revisions require a versioning decision.
 
-RLS exposes drafts and published assignments to their active owning coach; a personalized student can read only their own published assignment and its items. Members cannot write assignments/items. Tests cover tenant/coach/student ownership, wrong-source exercises, inactive actors, empty publication, snapshot immutability, draft invisibility, and publication visibility. These migrations and policies are validated in local Supabase only; Production remains at migration 014 pending review/approval. CU-04 completion records are not yet modeled.
+Current migrations 015-016 provide the source assignment behavior and security tests. The target unified model needs RLS/grants for coach-owned single-day/cycle plans, student-own starts/checks, and coach-scoped progress reads. Enforce the one-start-per-student/actual-date rule transactionally against concurrent Play requests; closed-incomplete and completed executions are immutable/read-only. Preserve snapshot, tenant, coach, and student ownership in backfill. CU-04 actual sets/RIR/RPE remain separate from CU-03 completion checks.
 
-The legacy global `RoutineMap` and localStorage persistence remain only in mock/prototype paths; they are not per-student data and must not be used by the persisted assignment flow.
+The former global `RoutineMap` and localStorage repository were removed as unused legacy code; do not reintroduce them as a parallel production data path. Keep any future test fixtures isolated from feature repositories.
 
 An assigned exercise must retain the full `Exercise` definition: name, series, reps, weight, work duration when present, rest, emoji, muscles, instructions, tips, difficulty, and video reference when present. Keep the exercise catalog's defaults separate from assignment-specific prescription overrides. Published assignments must not lose or silently inherit changed exercise details; preserve the published version with an immutable reference or snapshot. The current contract makes `videoUrl` optional, so show an explicit unavailable state when an exercise has no video unless product requirements later make it mandatory.
 
-Treat video as a validated media reference, not arbitrary iframe/HTML content. The storage choice (approved HTTPS provider URL versus Supabase Storage) can be decided when CU-02 is implemented; whichever is chosen must survive library reads, assignment publication, and student playback without exposing private storage credentials.
+Treat video as a validated media reference, not arbitrary iframe/HTML content. Current behavior accepts supported YouTube references for inline playback and displays other valid HTTPS URLs as external links; published assignments retain the video URL in their immutable exercise snapshot. If private media or Supabase Storage is introduced later, define its access and credential policy as a separate change without breaking library reads, assignment snapshots, or student playback.
 
 ## Progress Model
 
@@ -102,15 +217,20 @@ Keep these separate:
 
 - Target load.
 - Actual load.
+- Prescribed repetitions versus actual repetitions.
 - RPE.
+- RIR.
 - Set completion.
 - Workout session.
 - Historical record.
 - Personal record.
+- Coach-entered biometric measurement.
 
-Derive daily, weekly, streak, and progression metrics from one repository-owned source of truth. Do not hardcode separate totals in multiple screens.
+Keep RIR and RPE as separate measurements. Capture both once per exercise (not per set). RIR ranges from 1 to 10 and RPE from 0 to 100%; do not infer one from the other. Any scale labels or anchors beyond those ranges must not be invented.
 
-For the first execution flow, persist the workout session and per-exercise/set completion, including prescribed versus actual values. Offline event queues and conflict resolution are deferred until separately specified; do not imply offline support from localStorage.
+For CU-04, persist the workout session, prescribed versus actual repetitions/load, and completion per set; persist one RIR and one RPE value per exercise. For CU-04B, persist coach-authored dated biometric measurements as a separate source of progress. Derive daily, weekly, streak, cycle-progression, and profile metrics from repository-owned records, not independent mock totals. Offline event queues and conflict resolution are deferred until separately specified; do not imply offline support from localStorage.
+
+Biometric contract (planning only): record tenant, student, recording coach, measured-at date/time, metric key, numeric value, unit, and audit timestamps. Define the allowed metric catalogue, optionality, corrections/history, and profile visibility before implementation. The student may read their own records; writes are coach-only and scoped to the coach's active tenant and owned student.
 
 ## Offline Model
 
@@ -126,6 +246,6 @@ CU-01B is the trusted membership-onboarding flow: the coach UI calls `supabase/f
 
 Email sender policy: production Auth/invitation messages use one platform-controlled, domain-authenticated transactional sender across gyms; gym name and inviter identity belong in validated message content, not a coach-selected From address. Add a Reply-To only from trusted, verified contact data. Per-tenant sender domains require a separate domain-verification and credential-management feature. The Gmail SMTP helper is for local real-delivery testing only; its Gmail account is not the production sender and its App Password must not be committed or placed in Vite variables.
 
-Until CU-03/CU-04 persistence is complete, the student home/routines still show mock data. Never present those sample routines, coach details, streaks, or metrics as data assigned to a newly invited member; use a truthful empty/awaiting-programming state in the real Supabase member flow.
+Production date-bound assignments were migrated in place to `SINGLE_DAY`; migrations 020–025 preserve their exercise snapshots and add cycle/execution persistence. Read-only verification confirmed four assignment rows, four generated slots, twelve items, and no items without a slot. PR #19 contains the unified app/repository reads and writes and remains pending merge/deployment. CU-04B biometrics/profile history are not implemented. Demo fixtures must not be presented as real member data; the app must show published routines or a truthful empty/awaiting-programming state.
 
 An invitation joins a person to the gym and grants app access; it does not reserve a class. Current CU-01B provisions personalized members only: the invitation row has no service-track field and acceptance always creates `user_personalized`. Before group access is enabled, extend onboarding to select personalized, group classes, or both. Keep one Auth identity/profile per member and represent service access in a server-owned `member_service_access` (or equivalent entitlement) relation; do not add a `both` role. A dual-access member sees published coach-assigned programming as the primary home and group classes as a separate destination. Group-class schedules/bookings and personalized assignments/execution remain separate domain data and states. `tenants.max_clients` is not enforced by current personalized membership operations; do not count pending invitations against it or use it for class capacity. Any future unique-member limit needs a separate product decision and implementation. Record the responsible coach explicitly on the personalized access/assignment; `tenant_invitations.invited_by` is only the invitation audit actor.

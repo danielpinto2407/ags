@@ -18,6 +18,7 @@ function invitationErrorMessage(code: string): string {
     authentication_required: 'Inicia sesión nuevamente para enviar la invitación.',
     invalid_session: 'Tu sesión ya no es válida. Inicia sesión nuevamente.',
     coach_access_required: 'Solo un coach activo puede invitar alumnas a este gimnasio.',
+    coach_not_active: 'El coach que envió la invitación ya no está activo. Contacta al gimnasio para continuar.',
     gym_member_limit_reached: 'El gimnasio alcanzó su límite de miembros.',
     member_already_exists: 'Este correo ya pertenece a un miembro del gimnasio.',
     gym_not_active: 'No se pueden enviar invitaciones mientras el gimnasio esté suspendido.',

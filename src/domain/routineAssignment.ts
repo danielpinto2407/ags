@@ -13,6 +13,7 @@ import type {
 
 export type RoutineAssignmentStatus = 'DRAFT' | 'PUBLISHED';
 export type RoutineExerciseSource = 'catalog' | 'tenant';
+export type RoutineProgramMode = 'SINGLE_DAY' | 'CYCLE';
 
 export interface RoutineExerciseSnapshot {
   id: string;
@@ -31,6 +32,8 @@ export interface RoutineExerciseSnapshot {
 export interface RoutineAssignmentItem {
   id: string;
   position: number;
+  cycleDayId: string;
+  cycleDayPosition: number;
   source: RoutineExerciseSource;
   sourceId: string;
   exercise: RoutineExerciseSnapshot;
@@ -39,6 +42,18 @@ export interface RoutineAssignmentItem {
   targetLoad: string;
   workDuration: string | null;
   rest: string;
+  baseRepetitions: number | null;
+  repetitionsIncrement: number;
+  baseLoad: number | null;
+  loadIncrement: number;
+  loadUnit: 'lbs' | 'kg' | null;
+}
+
+export interface RoutineAssignmentDay {
+  id: string;
+  position: number;
+  title: string;
+  items: RoutineAssignmentItem[];
 }
 
 export interface RoutineAssignment {
@@ -46,12 +61,16 @@ export interface RoutineAssignment {
   tenantId: string;
   coachId: string;
   studentId: string;
-  scheduledFor: string;
+  programMode: RoutineProgramMode;
+  scheduledFor: string | null;
+  additionalCycleRepeats: number;
+  cycleDayCount: number;
   title: string;
   status: RoutineAssignmentStatus;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  days: RoutineAssignmentDay[];
   items: RoutineAssignmentItem[];
 }
 
@@ -63,6 +82,27 @@ export interface RoutineAssignmentItemInput {
   targetLoad: string;
   workDuration: string | null;
   rest: string;
+  baseRepetitions?: number | null;
+  repetitionsIncrement?: number;
+  baseLoad?: number | null;
+  loadIncrement?: number;
+  loadUnit?: 'lbs' | 'kg' | null;
+}
+
+export interface RoutineAssignmentDayInput {
+  position: number;
+  title: string;
+  items: RoutineAssignmentItemInput[];
+}
+
+export interface SaveTrainingProgramDraftInput {
+  assignmentId: string | null;
+  studentId: string;
+  programMode: RoutineProgramMode;
+  scheduledFor: string | null;
+  title: string;
+  additionalCycleRepeats: number;
+  days: RoutineAssignmentDayInput[];
 }
 
 export interface SaveRoutineAssignmentDraftInput {
@@ -129,6 +169,8 @@ export function toRoutineAssignmentItem(value: unknown): RoutineAssignmentItem {
   if (
     typeof row.id !== 'string'
     || typeof row.position !== 'number'
+    || typeof row.cycle_day_id !== 'string'
+    || typeof row.cycle_day_position !== 'number'
     || (typeof catalogId !== 'string' && typeof tenantExerciseId !== 'string')
     || (catalogId !== null && tenantExerciseId !== null)
     || typeof row.prescribed_sets !== 'number'
@@ -136,6 +178,11 @@ export function toRoutineAssignmentItem(value: unknown): RoutineAssignmentItem {
     || typeof row.target_load !== 'string'
     || (row.work_duration !== null && typeof row.work_duration !== 'string')
     || typeof row.rest !== 'string'
+    || (row.base_repetitions !== null && typeof row.base_repetitions !== 'number')
+    || typeof row.repetitions_increment !== 'number'
+    || (row.base_load !== null && typeof row.base_load !== 'number')
+    || typeof row.load_increment !== 'number'
+    || (row.load_unit !== null && row.load_unit !== 'lbs' && row.load_unit !== 'kg')
   ) {
     throw new Error('El ejercicio programado no es válido.');
   }
@@ -143,6 +190,8 @@ export function toRoutineAssignmentItem(value: unknown): RoutineAssignmentItem {
   return {
     id: row.id,
     position: row.position,
+    cycleDayId: row.cycle_day_id,
+    cycleDayPosition: row.cycle_day_position,
     source,
     sourceId: sourceId as string,
     exercise: toRoutineExerciseSnapshot(row.exercise_snapshot),
@@ -151,10 +200,15 @@ export function toRoutineAssignmentItem(value: unknown): RoutineAssignmentItem {
     targetLoad: row.target_load,
     workDuration: row.work_duration,
     rest: row.rest,
+    baseRepetitions: row.base_repetitions,
+    repetitionsIncrement: row.repetitions_increment,
+    baseLoad: row.base_load,
+    loadIncrement: row.load_increment,
+    loadUnit: row.load_unit,
   };
 }
 
-export function toRoutineAssignment(value: unknown, items: RoutineAssignmentItem[]): RoutineAssignment {
+export function toRoutineAssignment(value: unknown, days: RoutineAssignmentDay[]): RoutineAssignment {
   if (!isRecord(value)) throw new Error('La asignación de rutina recibida no es válida.');
   const row = value;
   if (
@@ -162,7 +216,10 @@ export function toRoutineAssignment(value: unknown, items: RoutineAssignmentItem
     || typeof row.tenant_id !== 'string'
     || typeof row.coach_id !== 'string'
     || typeof row.student_id !== 'string'
-    || typeof row.scheduled_for !== 'string'
+    || (row.program_mode !== 'SINGLE_DAY' && row.program_mode !== 'CYCLE')
+    || (row.scheduled_for !== null && typeof row.scheduled_for !== 'string')
+    || typeof row.additional_cycle_repeats !== 'number'
+    || typeof row.cycle_day_count !== 'number'
     || typeof row.title !== 'string'
     || (row.status !== 'DRAFT' && row.status !== 'PUBLISHED')
     || (row.published_at !== null && typeof row.published_at !== 'string')
@@ -177,13 +234,19 @@ export function toRoutineAssignment(value: unknown, items: RoutineAssignmentItem
     tenantId: row.tenant_id,
     coachId: row.coach_id,
     studentId: row.student_id,
+    programMode: row.program_mode,
     scheduledFor: row.scheduled_for,
+    additionalCycleRepeats: row.additional_cycle_repeats,
+    cycleDayCount: row.cycle_day_count,
     title: row.title,
     status: row.status,
     publishedAt: row.published_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    items: [...items].sort((first, second) => first.position - second.position),
+    days: [...days].sort((first, second) => first.position - second.position),
+    items: days.flatMap((day) => day.items).sort((first, second) => (
+      first.cycleDayPosition - second.cycleDayPosition || first.position - second.position
+    )),
   };
 }
 
@@ -196,5 +259,26 @@ export function toRoutineAssignmentItemPayload(item: RoutineAssignmentItemInput)
     targetLoad: item.targetLoad,
     workDuration: item.workDuration,
     rest: item.rest,
+    baseRepetitions: item.baseRepetitions ?? null,
+    repetitionsIncrement: item.repetitionsIncrement ?? 0,
+    baseLoad: item.baseLoad ?? null,
+    loadIncrement: item.loadIncrement ?? 0,
+    loadUnit: item.loadUnit ?? null,
+  };
+}
+
+export function toTrainingProgramPayload(input: SaveTrainingProgramDraftInput) {
+  return {
+    p_assignment_id: input.assignmentId,
+    p_student_id: input.studentId,
+    p_program_mode: input.programMode,
+    p_scheduled_for: input.scheduledFor,
+    p_title: input.title,
+    p_additional_cycle_repeats: input.additionalCycleRepeats,
+    p_cycle_days: input.days.map((day) => ({
+      position: day.position,
+      title: day.title,
+      items: day.items.map(toRoutineAssignmentItemPayload),
+    })),
   };
 }
