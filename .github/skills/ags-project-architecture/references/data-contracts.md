@@ -29,7 +29,7 @@ For CU-00, use `src/domain/tenant.ts` for typed payloads and validators, `src/da
 
 ## Routine Model
 
-### CU-03 Training Cycles And Progression (Implemented Locally; Production Deployment Pending)
+### CU-03 Training Cycles And Progression (Production Schema Deployed; UI Pending)
 
 The deployed CU-03 model stores one student-specific assignment per calendar date; those records are migration input only. The target is one unified coach programming model with two explicit modes: a routine scheduled for one selected calendar date (`SINGLE_DAY`), or a cycle containing N ordered cycle-day slots (`CYCLE`). Cycle-day slots are ordinal plan positions, not calendar dates or weekdays. Migrate existing assignments, prescriptions, execution history, and immutable snapshots into the unified model without data loss; do not retain the old implementation as a parallel workflow after cutover.
 
@@ -117,7 +117,7 @@ interface ExerciseCompletionCheck {
 
 Repetition and load prescriptions, increments, and actual logged values are whole numbers; do not round them. In cycle mode, length is N ordinal slots; each slot has at most `1 + additionalCycleRepeats` attempts. Per-slot progression advances only on a completed execution, not on an incomplete attempt.
 
-### CU-04 Actual Workout Records (Implemented Locally; Production Deployment Pending)
+### CU-04 Actual Workout Records (Production Schema Deployed; UI Pending)
 
 Keep the published prescription separate from what the student performed. Actual performance must reference the student's published plan/routine version, cycle slot when applicable, execution, and routine exercise item; actual values never overwrite prescribed values or the immutable exercise snapshot.
 
@@ -141,7 +141,7 @@ interface ExercisePerformance {
 - Do not infer a conversion between RIR and RPE or add unconfirmed scale semantics beyond the agreed ranges.
 - Workout session, per-exercise/set logs, timestamps, and ownership should be persisted under tenant/student/assignment. Only the assigned active student may write their own performance; the coach's read scope must remain limited to students they own.
 - Execution rows are created only when the first completed set with actual values is persisted; merely opening the routine does not consume the daily allowance. A routine can be resumed on its start date only. Execution dates and day-end closure use UTC. On a subsequent UTC date, the prior in-progress execution is closed as `CLOSED_INCOMPLETE`; its actual records remain frozen and readable.
-- Offline synchronization is still out of scope until retry, idempotency, and conflict semantics are specified. The current implementation is validated on local Supabase; Production migration/deployment remains pending.
+- Offline synchronization is still out of scope until retry, idempotency, and conflict semantics are specified. Migrations 022-025 are applied in Production and local Supabase; PR #19 contains the UI/repository integration and is awaiting Production deployment.
 
 ### CU-04B Coach Biometrics And Student Progress (Planned Extension)
 
@@ -246,6 +246,6 @@ CU-01B is the trusted membership-onboarding flow: the coach UI calls `supabase/f
 
 Email sender policy: production Auth/invitation messages use one platform-controlled, domain-authenticated transactional sender across gyms; gym name and inviter identity belong in validated message content, not a coach-selected From address. Add a Reply-To only from trusted, verified contact data. Per-tenant sender domains require a separate domain-verification and credential-management feature. The Gmail SMTP helper is for local real-delivery testing only; its Gmail account is not the production sender and its App Password must not be committed or placed in Vite variables.
 
-Production CU-03 date-bound assignments remain the migration source; migrations 020–025 evolve them in place and preserve their exercise snapshots. The local app reads/writes unified programs and persists student cycle executions and actual performance; the Production cutover remains pending. CU-04B biometrics/profile history are not implemented. Demo fixtures must not be presented as real member data; the app must show published routines or a truthful empty/awaiting-programming state.
+Production date-bound assignments were migrated in place to `SINGLE_DAY`; migrations 020–025 preserve their exercise snapshots and add cycle/execution persistence. Read-only verification confirmed four assignment rows, four generated slots, twelve items, and no items without a slot. PR #19 contains the unified app/repository reads and writes and remains pending merge/deployment. CU-04B biometrics/profile history are not implemented. Demo fixtures must not be presented as real member data; the app must show published routines or a truthful empty/awaiting-programming state.
 
 An invitation joins a person to the gym and grants app access; it does not reserve a class. Current CU-01B provisions personalized members only: the invitation row has no service-track field and acceptance always creates `user_personalized`. Before group access is enabled, extend onboarding to select personalized, group classes, or both. Keep one Auth identity/profile per member and represent service access in a server-owned `member_service_access` (or equivalent entitlement) relation; do not add a `both` role. A dual-access member sees published coach-assigned programming as the primary home and group classes as a separate destination. Group-class schedules/bookings and personalized assignments/execution remain separate domain data and states. `tenants.max_clients` is not enforced by current personalized membership operations; do not count pending invitations against it or use it for class capacity. Any future unique-member limit needs a separate product decision and implementation. Record the responsible coach explicitly on the personalized access/assignment; `tenant_invitations.invited_by` is only the invitation audit actor.
