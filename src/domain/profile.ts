@@ -10,6 +10,7 @@ export interface Profile {
   role: ProfileRole;
   status: ProfileStatus;
   full_name: string;
+  avatar_path: string | null;
 }
 
 export type ProfileAccessResult =
@@ -20,11 +21,16 @@ export function isProfile(value: unknown): value is Profile {
   if (!value || typeof value !== 'object') return false;
 
   const profile = value as Partial<Profile>;
+  const validAvatarPath = profile.avatar_path === null
+    || (typeof profile.avatar_path === 'string'
+      && profile.avatar_path.startsWith(`avatars/${profile.id}/`)
+      && /^avatars\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(jpg|png|webp)$/.test(profile.avatar_path));
   return typeof profile.id === 'string'
     && (typeof profile.tenant_id === 'string' || profile.tenant_id === null)
     && ['super_admin', 'coach_admin', 'user_personalized', 'user_general'].includes(profile.role ?? '')
     && (profile.status === 'ACTIVE' || profile.status === 'INACTIVE')
-    && typeof profile.full_name === 'string';
+    && typeof profile.full_name === 'string'
+    && validAvatarPath;
 }
 
 export function resolveProfileAccess(

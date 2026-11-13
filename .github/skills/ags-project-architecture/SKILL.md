@@ -13,7 +13,7 @@ Use this skill as the canonical project context before changing code. Keep the a
 
 - React 18, Vite 5, TypeScript strict mode, Tailwind CSS 3.
 - Lucide React and ESLint 9 with TypeScript/React Hooks rules.
-- Business data is persisted incrementally through feature-owned Supabase repositories: invitations/memberships, exercise library, and unified CU-03/CU-04 schema are deployed to Supabase Production. PR #19 contains the matching cycle-programming and student-execution UI and is pending merge/deployment. CU-04B biometrics remain planned. Consult `references/project-status.md` for verified deployment state.
+- Business data is persisted incrementally through feature-owned Supabase repositories: invitations/memberships, exercise library, and unified CU-03/CU-04 schema are deployed to Supabase Production. PRs #19-20 are merged; verify Vercel deployment and consult `references/project-status.md` for the currently deployed schema before making rollout claims. Profile-media migration 028 is local-only; CU-04B biometrics remain planned.
 - `@supabase/supabase-js` supports local and hosted tenant resolution, password Auth/session/profile validation, invitation onboarding, member status, and the exercise library. Keep secrets server-side and use the status reference for current deployment details.
 
 ## Current Structure
