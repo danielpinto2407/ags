@@ -4,6 +4,8 @@ export interface CoachMember {
   id: string;
   fullName: string;
   email: string | null;
+  avatarPath: string | null;
+  avatarUrl: string | null;
   status: CoachMemberStatus;
   createdAt: string;
 }
@@ -20,6 +22,7 @@ export function toCoachMember(value: unknown): CoachMember {
     || (row.member_status !== 'ACTIVE' && row.member_status !== 'INACTIVE')
     || typeof row.created_at !== 'string'
     || (row.email !== null && typeof row.email !== 'string')
+    || (row.avatar_path !== null && typeof row.avatar_path !== 'string')
   ) {
     throw new Error('El perfil de alumna recibido no es válido.');
   }
@@ -28,6 +31,8 @@ export function toCoachMember(value: unknown): CoachMember {
     id: row.member_id,
     fullName: row.full_name,
     email: row.email,
+    avatarPath: row.avatar_path as string | null,
+    avatarUrl: null,
     status: row.member_status,
     createdAt: row.created_at,
   };

@@ -1,4 +1,5 @@
 import { ArrowLeft, CalendarDays, UserRound } from 'lucide-react';
+import ProfileMediaImage from '@/components/ProfileMediaImage';
 import type { CoachMember } from '@/domain/coachMember';
 
 interface StudentDetailProps {
@@ -19,9 +20,12 @@ export default function StudentDetail({ member, onBack }: StudentDetailProps) {
 
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-zinc-800 text-zinc-300">
-            <UserRound size={24} />
-          </div>
+          <ProfileMediaImage
+            alt=""
+            className="h-14 w-14 rounded-full bg-zinc-800 text-zinc-300"
+            fallback={<UserRound size={24} />}
+            src={member.avatarUrl}
+          />
           <div className="min-w-0 flex-1">
             <h2 className="truncate font-display text-lg font-bold text-white">{member.fullName}</h2>
             <p className="mt-1 text-xs text-zinc-400">{statusLabel}</p>

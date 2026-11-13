@@ -58,7 +58,7 @@ export const authRepository = {
     const client = requireSupabaseClient();
     const { data, error } = await client
       .from('profiles')
-      .select('id, tenant_id, role, status, full_name')
+      .select('id, tenant_id, role, status, full_name, avatar_path')
       .eq('id', userId)
       .maybeSingle();
 

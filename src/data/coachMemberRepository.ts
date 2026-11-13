@@ -4,15 +4,22 @@ import type { CoachMember } from '@/domain/coachMember';
 
 export const coachMemberRepository = {
   async listInvitedByCoach(): Promise<CoachMember[]> {
-    if (!supabaseClient) throw new Error('Supabase no está configurado.');
+    const client = supabaseClient;
+    if (!client) throw new Error('Supabase no está configurado.');
 
-    const { data, error } = await supabaseClient.rpc('list_coach_personalized_members');
+    const { data, error } = await client.rpc('list_coach_personalized_members');
 
     if (error) {
       throw new Error('No se pudieron cargar las alumnas invitadas. Inténtalo nuevamente.');
     }
 
-    return (data ?? []).map(toCoachMember);
+    return ((data ?? []) as unknown[]).map((row) => {
+      const member = toCoachMember(row);
+      return {
+        ...member,
+        avatarUrl: member.avatarPath ? client.storage.from('profile-media').getPublicUrl(member.avatarPath).data.publicUrl : null,
+      };
+    });
   },
 
   async setInvitedMemberStatus(memberId: string, status: 'ACTIVE' | 'INACTIVE'): Promise<void> {

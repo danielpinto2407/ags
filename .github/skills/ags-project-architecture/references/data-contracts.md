@@ -27,9 +27,13 @@ For CU-00, use `src/domain/tenant.ts` for typed payloads and validators, `src/da
 - Expose loading and error results through feature hooks when reads become asynchronous.
 - Keep integration details inside a small adapter or service.
 
+## Profile Media
+
+Migration 028 adds the public `profile-media` Storage bucket for images intentionally displayed in authenticated gym interfaces. Allow only JPEG, PNG, and WebP files up to 5 MB. Student photos use `avatars/{auth.uid()}/{uuid}.{jpg|png|webp}` and persist only the object path in `profiles.avatar_path`; the student-only `set_own_profile_avatar()` RPC verifies the uploaded object and derives the owner from `auth.uid()`. Coach logos use `logos/{tenant_id}/{uuid}.{jpg|png|webp}` and update only the active coach's tenant `theme.logoUrl` through `set_own_tenant_logo()`. Storage insert/delete RLS enforces those path and role boundaries. The coach-scoped roster RPC may return invited students' public avatar paths; never broaden profile-row RLS for this feature. UI must show a person/gym icon when no image exists or an image URL fails. Migration 028 is local-only until reviewed and deployed.
+
 ## Routine Model
 
-### CU-03 Training Cycles And Progression (Production Schema Deployed; UI Pending)
+### CU-03 Training Cycles And Progression (Schema Deployed; UI Merged, Deployment Unverified)
 
 The deployed CU-03 model stores one student-specific assignment per calendar date; those records are migration input only. The target is one unified coach programming model with two explicit modes: a routine scheduled for one selected calendar date (`SINGLE_DAY`), or a cycle containing N ordered cycle-day slots (`CYCLE`). Cycle-day slots are ordinal plan positions, not calendar dates or weekdays. Migrate existing assignments, prescriptions, execution history, and immutable snapshots into the unified model without data loss; do not retain the old implementation as a parallel workflow after cutover.
 
@@ -120,7 +124,7 @@ Repetition and load prescriptions, increments, and actual logged values are whol
 
 For `CYCLE` items, base repetitions/load and progression increments are the source of truth; do not collect duplicate target reps/load fields. Coach notes are stored in `coach_instructions` (up to 2000 characters), distinct from exercise-definition instructions and rest time. Migration 026 backfills historical `work_duration` text into `coach_instructions` while retaining the legacy column during rollout. Student profile coach identity is resolved only through the no-argument authenticated RPC `get_own_coach_name()`, which derives the student from `auth.uid()`; do not broaden profile-row RLS or accept caller-supplied profile IDs.
 
-### CU-04 Actual Workout Records (Exercise-Level Model Validated Locally; Production Migration/UI Pending)
+### CU-04 Actual Workout Records (Exercise-Level UI Merged; Production Migrations Pending)
 
 Keep the published prescription separate from what the student performed. Actual performance must reference the student's published plan/routine version, cycle slot when applicable, execution, and routine exercise item; actual values never overwrite prescribed values or the immutable exercise snapshot.
 
@@ -209,7 +213,7 @@ The former global `RoutineMap` and localStorage repository were removed as unuse
 
 An assigned exercise must retain the full `Exercise` definition: name, series, reps, weight, work duration when present, rest, emoji, muscles, instructions, tips, difficulty, and video reference when present. Keep the exercise catalog's defaults separate from assignment-specific prescription overrides. Published assignments must not lose or silently inherit changed exercise details; preserve the published version with an immutable reference or snapshot. The current contract makes `videoUrl` optional, so show an explicit unavailable state when an exercise has no video unless product requirements later make it mandatory.
 
-Treat video as a validated media reference, not arbitrary iframe/HTML content. Current behavior accepts supported YouTube references for inline playback and displays other valid HTTPS URLs as external links; published assignments retain the video URL in their immutable exercise snapshot. If private media or Supabase Storage is introduced later, define its access and credential policy as a separate change without breaking library reads, assignment snapshots, or student playback.
+Treat exercise video as a validated media reference, not arbitrary iframe/HTML content. Current behavior accepts supported YouTube references for inline playback and displays other valid HTTPS URLs as external links; published assignments retain the video URL in their immutable exercise snapshot. Profile avatars and gym logos use the separate public `profile-media` bucket described above. Any private exercise media or additional Storage bucket requires its own access and credential policy without breaking library reads, assignment snapshots, or student playback.
 
 ## Progress Model
 

@@ -1,4 +1,6 @@
-import { Bell } from 'lucide-react';
+import { Bell, Dumbbell } from 'lucide-react';
+import { useTenantContext } from '@/app/tenant/tenantContext';
+import ProfileMediaImage from '@/components/ProfileMediaImage';
 
 interface HeaderProps {
   title: string;
@@ -9,13 +11,25 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle, showLogo = true, showBell = true, onBellClick }: HeaderProps) {
+  const { state: tenantState } = useTenantContext();
+  const tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
+
   return (
     <div className="flex justify-between items-start mb-5">
       <div>
         {showLogo && (
-          <span className="font-display font-extrabold tracking-[0.15em] text-[10px] text-brand-400 uppercase block mb-0.5" style={{ textShadow: '0 0 8px color-mix(in srgb, var(--tenant-accent) 28%, transparent)' }}>
-            AGS Glutehouse
-          </span>
+          <div className="mb-1 flex h-7 items-center gap-2">
+            <ProfileMediaImage
+              alt={tenant?.name ?? 'Gimnasio'}
+              className="h-7 w-7 rounded-lg bg-brand-950/30 text-brand-300"
+              fallback={<Dumbbell size={15} />}
+              imageClassName="h-full w-full object-contain p-0.5"
+              src={tenant?.theme.logoUrl ?? null}
+            />
+            <span className="font-display font-extrabold tracking-[0.15em] text-[10px] text-brand-400 uppercase" style={{ textShadow: '0 0 8px color-mix(in srgb, var(--tenant-accent) 28%, transparent)' }}>
+              {tenant?.name ?? 'AGS Glutehouse'}
+            </span>
+          </div>
         )}
         <h1 className="text-2xl font-display font-bold text-white leading-tight">{title}</h1>
         {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}

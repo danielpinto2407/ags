@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { LogOut, Heart } from 'lucide-react';
+import { LogOut, Heart, UserRound } from 'lucide-react';
 import Header from '@/components/Header';
 import { profileRepository } from '@/data/profileRepository';
+import ProfileImagePicker from '@/components/ProfileImagePicker';
 import type { Profile } from '@/domain/profile';
 
 interface StudentProfileProps {
@@ -12,6 +13,17 @@ interface StudentProfileProps {
 export default function StudentProfile({ profile, onLogout }: StudentProfileProps) {
   const [coachName, setCoachName] = useState<string | null>(null);
   const [coachInfoStatus, setCoachInfoStatus] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [avatarUrl, setAvatarUrl] = useState(() => profileRepository.getPublicMediaUrl(profile.avatar_path));
+
+  useEffect(() => {
+    setAvatarUrl(profileRepository.getPublicMediaUrl(profile.avatar_path));
+  }, [profile.avatar_path]);
+
+  const uploadStudentPhoto = async (file: File) => {
+    const nextAvatarUrl = await profileRepository.uploadStudentAvatar(file, profile);
+    setAvatarUrl(nextAvatarUrl);
+    return nextAvatarUrl;
+  };
   useEffect(() => {
     let cancelled = false;
     if (profile.role !== 'user_personalized') {
@@ -39,9 +51,14 @@ export default function StudentProfile({ profile, onLogout }: StudentProfileProp
 
       <section className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-950 p-4">
         <div className="mb-3 flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-brand-800/50 bg-brand-600/20 text-2xl">
-            👩
-          </div>
+          <ProfileImagePicker
+            alt={`Foto de ${profile.full_name}`}
+            fallback={<UserRound aria-hidden="true" size={22} />}
+            imageUrl={avatarUrl}
+            label="Subir foto"
+            onUpload={uploadStudentPhoto}
+            shape="circle"
+          />
           <div className="min-w-0">
             <h2 className="truncate text-base font-display font-bold text-white">{profile.full_name}</h2>
             <span className="mt-1 inline-block rounded-full border border-brand-900/50 bg-brand-950/50 px-2 py-0.5 text-[10px] font-semibold text-brand-400">

@@ -24,12 +24,18 @@ const profile = (overrides: Partial<Profile> = {}): Profile => ({
   role: 'user_personalized',
   status: 'ACTIVE',
   full_name: 'Laura Gomez',
+  avatar_path: null,
   ...overrides,
 });
 
 describe('profile access rules', () => {
   it('validates a profile payload', () => {
     expect(isProfile(profile())).toBe(true);
+    expect(isProfile(profile({
+      id: '00000000-0000-4000-8000-000000000001',
+      avatar_path: 'avatars/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002.png',
+    }))).toBe(true);
+    expect(isProfile(profile({ avatar_path: 'https://example.test/avatar.png' }))).toBe(false);
     expect(isProfile({ ...profile(), role: 'owner' })).toBe(false);
     expect(isProfile({ ...profile(), tenant_id: 42 })).toBe(false);
   });

@@ -9,10 +9,13 @@ describe('coach member profiles', () => {
       member_status: 'ACTIVE',
       created_at: '2026-11-10T12:00:00.000Z',
       email: 'alumna@example.test',
+      avatar_path: null,
     })).toEqual({
       id: 'member-id',
       fullName: 'Alumna Invitada',
       email: 'alumna@example.test',
+      avatarPath: null,
+      avatarUrl: null,
       status: 'ACTIVE',
       createdAt: '2026-11-10T12:00:00.000Z',
     });
@@ -26,6 +29,18 @@ describe('coach member profiles', () => {
       member_status: 'PENDING',
       created_at: '2026-11-10T12:00:00.000Z',
       email: null,
+      avatar_path: null,
     })).toThrow('no es válido');
+  });
+
+  it('preserves the student avatar storage path returned by the coach roster RPC', () => {
+    expect(toCoachMember({
+      member_id: 'member-id',
+      full_name: 'Alumna Invitada',
+      member_status: 'ACTIVE',
+      created_at: '2026-11-10T12:00:00.000Z',
+      email: 'alumna@example.test',
+      avatar_path: 'avatars/member-id/avatar.webp',
+    })).toMatchObject({ avatarPath: 'avatars/member-id/avatar.webp', avatarUrl: null });
   });
 });
