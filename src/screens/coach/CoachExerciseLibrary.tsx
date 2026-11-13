@@ -233,7 +233,6 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
                 <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">{exercise.instructions}</p>
                 {exercise.tips && <p className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-amber-200/70">{exercise.tips}</p>}
                 <ExerciseVideoPreview className="mt-3" title={exercise.name} videoUrl={exercise.videoUrl} />
-                {!exercise.videoUrl && <p className="mt-2 text-[10px] text-zinc-600">Sin video disponible</p>}
               </details>
 
               <div className="mt-3 flex items-center justify-between gap-2">

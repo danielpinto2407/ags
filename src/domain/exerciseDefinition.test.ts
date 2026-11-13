@@ -61,6 +61,8 @@ describe('exercise definition mapping', () => {
 
   it('formats seeded muscle identifiers with Spanish labels', () => {
     expect(formatMuscleName('gluteus maximus')).toBe('Glúteo mayor');
+    expect(formatMuscleName('deltoid')).toBe('Deltoides');
+    expect(formatMuscleName('upper trapezius')).toBe('Trapecio superior');
     expect(formatMuscleName('unknown muscle')).toBe('unknown muscle');
   });
 });

@@ -37,7 +37,9 @@ export default function CoachMemberCard({ member, onSelect, onStatusChange }: Co
               {active ? 'Activa' : 'Inactiva'}
             </span>
             <span aria-hidden="true" className="text-zinc-500">·</span>
-            <span className="truncate text-zinc-500">Sin programación activa</span>
+            <span className="truncate text-zinc-500">
+              {member.hasActiveProgramming ? 'Con programación activa' : 'Sin programación activa'}
+            </span>
           </span>
         </span>
       </button>

@@ -6,6 +6,7 @@ export interface CoachMember {
   email: string | null;
   avatarPath: string | null;
   avatarUrl: string | null;
+  hasActiveProgramming: boolean;
   status: CoachMemberStatus;
   createdAt: string;
 }
@@ -23,6 +24,7 @@ export function toCoachMember(value: unknown): CoachMember {
     || typeof row.created_at !== 'string'
     || (row.email !== null && typeof row.email !== 'string')
     || (row.avatar_path !== null && typeof row.avatar_path !== 'string')
+    || typeof row.has_active_programming !== 'boolean'
   ) {
     throw new Error('El perfil de alumna recibido no es válido.');
   }
@@ -33,6 +35,7 @@ export function toCoachMember(value: unknown): CoachMember {
     email: row.email,
     avatarPath: row.avatar_path as string | null,
     avatarUrl: null,
+    hasActiveProgramming: row.has_active_programming,
     status: row.member_status,
     createdAt: row.created_at,
   };

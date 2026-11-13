@@ -38,8 +38,17 @@ export default function StudentDetail({ member, onBack }: StudentDetailProps) {
       </div>
 
       <div className="rounded-2xl border border-dashed border-zinc-800 p-5 text-center">
-        <p className="text-sm font-semibold text-zinc-300">Aún no hay una rutina personalizada asignada</p>
-        <p className="mt-1 text-xs text-zinc-500">Cuando la programación se guarde por alumna, aparecerá aquí.</p>
+        {member.hasActiveProgramming ? (
+          <>
+            <p className="text-sm font-semibold text-zinc-300">Tiene programación activa</p>
+            <p className="mt-1 text-xs text-zinc-500">La alumna puede consultar sus fechas y ciclos disponibles en Mis Rutinas.</p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-semibold text-zinc-300">Aún no hay una rutina personalizada asignada</p>
+            <p className="mt-1 text-xs text-zinc-500">Cuando publiques una rutina o ciclo para esta alumna, aparecerá en Mis Rutinas.</p>
+          </>
+        )}
       </div>
     </div>
   );
