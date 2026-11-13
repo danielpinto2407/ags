@@ -189,6 +189,7 @@ export const exerciseDifficultyLabels: Record<ExerciseDefinitionDifficulty, stri
 
 const muscleLabels: Record<string, string> = {
   'anterior deltoid': 'Deltoides anterior',
+  deltoid: 'Deltoides',
   biceps: 'Bíceps',
   calves: 'Pantorrillas',
   core: 'Core',
@@ -204,6 +205,7 @@ const muscleLabels: Record<string, string> = {
   'pectoralis major': 'Pectoral mayor',
   quadriceps: 'Cuádriceps',
   'middle trapezius': 'Trapecio medio',
+  'upper trapezius': 'Trapecio superior',
   triceps: 'Tríceps',
 };
 
