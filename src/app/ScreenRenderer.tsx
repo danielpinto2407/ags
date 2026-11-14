@@ -29,7 +29,7 @@ export default function ScreenRenderer({ navigation, profile, onLogout }: Screen
       case 'routines':
         return <StudentRoutines profile={profile} />;
       case 'progress':
-        return <StudentProgress />;
+        return <StudentProgress profile={profile} onNavigate={handleNavigate} />;
       case 'profile':
         return <StudentProfile profile={profile} onLogout={onLogout} />;
       default:

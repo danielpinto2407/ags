@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { X, Check, Dumbbell } from 'lucide-react';
 import SelectModalField from '@/components/SelectModalField';
 import {
@@ -50,6 +50,35 @@ export default function CreateExerciseModal({ onClose, onSave, exercise }: Creat
   const [secondaryMuscles, setSecondaryMuscles] = useState(form.secondaryMuscles.join(', '));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.querySelector<HTMLElement>('input:not([disabled]), select:not([disabled]), textarea:not([disabled])')?.focus();
+    return () => previousFocus?.focus();
+  }, []);
+
+  const handleDialogKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+    if (event.key === 'Escape' && !saving) {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+    if (event.key !== 'Tab' || !dialogRef.current) return;
+    const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter((element) => element.offsetParent !== null);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && (document.activeElement === first || !dialogRef.current.contains(document.activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current.contains(document.activeElement))) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   const update = <K extends keyof ExerciseDefinitionInput>(key: K, value: ExerciseDefinitionInput[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -104,17 +133,18 @@ export default function CreateExerciseModal({ onClose, onSave, exercise }: Creat
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
-      <form onSubmit={(event) => void handleSubmit(event)} className="max-h-[92vh] w-full max-w-[520px] overflow-y-auto rounded-t-[28px] border border-zinc-800 bg-zinc-900 p-5 animate-slide-up no-scrollbar sm:mb-6 sm:rounded-2xl">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fade-in" role="presentation">
+      <form aria-labelledby="exercise-modal-title" aria-modal="true" onKeyDown={handleDialogKeyDown} onSubmit={(event) => void handleSubmit(event)} className="max-h-[92vh] w-full max-w-[520px] overflow-y-auto rounded-t-[28px] border border-zinc-800 bg-zinc-900 p-5 animate-slide-up no-scrollbar sm:mb-6 sm:rounded-2xl" ref={dialogRef} role="dialog">
         {/* Header */}
         <div className="flex justify-between items-center mb-5">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-brand-600/20 flex items-center justify-center">
               <Dumbbell size={18} className="text-brand-400" />
             </div>
-            <h3 className="font-display font-bold text-lg text-white">{exercise ? 'Editar ejercicio' : 'Nuevo ejercicio'}</h3>
+            <h3 className="font-display font-bold text-lg text-white" id="exercise-modal-title">{exercise ? 'Editar ejercicio' : 'Nuevo ejercicio'}</h3>
           </div>
           <button
+            aria-label="Cerrar formulario de ejercicio"
             onClick={onClose}
             type="button"
             className="text-zinc-400 hover:text-white bg-zinc-800 w-8 h-8 rounded-full flex items-center justify-center transition-colors"

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Settings, ChevronRight, LogOut, Heart, Users, Dumbbell } from 'lucide-react';
+import { LogOut, Heart, Users, Dumbbell } from 'lucide-react';
 import Header from '@/components/Header';
 import ProfileImagePicker from '@/components/ProfileImagePicker';
 import { profileRepository } from '@/data/profileRepository';
@@ -48,9 +48,6 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
           <div className="min-w-0">
             <h2 className="truncate text-lg font-display font-bold text-white">{profile.full_name}</h2>
             <p className="truncate text-xs text-zinc-500">{tenant?.name ?? 'Perfil del gimnasio'}</p>
-            <span className="inline-block mt-1 text-[10px] bg-brand-950/50 text-brand-400 px-2 py-0.5 rounded-full font-semibold border border-brand-900/50">
-              Coach Certificada
-            </span>
           </div>
         </div>
 
@@ -64,12 +61,6 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
           </div>
         </div>
       </div>
-
-      <button className="w-full flex items-center gap-3 p-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl text-left text-zinc-400" disabled type="button">
-        <Settings size={18} className="flex-shrink-0" />
-        <span className="flex-1 text-sm">Configuración</span>
-        <ChevronRight size={16} className="text-zinc-700" />
-      </button>
 
       {/* Logout */}
       <button onClick={onLogout} className="w-full flex items-center justify-center gap-2 p-3.5 bg-zinc-900 border border-zinc-800 rounded-2xl text-brand-400 hover:bg-brand-950/30 transition-colors text-sm font-semibold">

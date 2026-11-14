@@ -4,7 +4,7 @@ This is a React 18 + Vite 5 + TypeScript + Tailwind CSS application.
 
 Before changing architecture or adding a feature, read `.github/skills/ags-project-architecture/SKILL.md`.
 Read the relevant skill reference when the task touches product cases, data/state, visual design, implementation workflow, or quality review.
-Read `.github/skills/ags-project-architecture/references/project-status.md` before planning or implementing work; it is the current implementation snapshot, not a replacement for the detailed references.
+Read `.github/skills/ags-project-architecture/references/project-status.md` before planning or implementing work; it is a concise handoff for current focus and verified release state, not a duplicate implementation catalog.
 
 ## Mandatory rules
 
@@ -33,11 +33,12 @@ Read `.github/skills/ags-project-architecture/references/project-status.md` befo
 - Keep one source of truth for business data, validation, constants, and derived metrics; do not duplicate logic between screens.
 - Give each module one clear responsibility and each async workflow explicit loading, empty, success, and error states.
 - Preserve the existing visual system: reuse `Sora`, `Inter`, Tailwind `brand-*` tokens, zinc/status colors, spacing, radii, borders, shadows, and responsive patterns.
+- Before implementing or materially changing UI, read `.github/skills/ags-project-architecture/references/ux-ui-practice.md`; evaluate the user task, pattern alternatives, state coverage, relevant official/accessibility guidance, and browser validation. Keep the design rationale proportional to the change; do not create a separate design document unless needed.
 - New components must reference existing visual tokens or add named shared tokens; do not scatter arbitrary colors, fonts, shadows, or styles through screens.
 - Tenant branding from Supabase must use the typed and validated theme contract mapped to controlled CSS variables; never inject arbitrary CSS or pass raw tenant records into components.
 - Preserve the existing Spanish UI and responsive phone/full preview behavior.
 - Prefer small, reversible changes. Do not refactor unrelated code.
-- Required closeout task: after every code, SQL, test, configuration, or documentation change, review and update `references/project-status.md` in the same work item. Keep case statuses, verified validation, next dependency, and committed/uncommitted state accurate; if there is no status delta, explicitly confirm it remains current without a noise-only edit.
+- Required closeout task: update `references/project-status.md` only when the active objective, next step/blocker, verified release state, or material validation evidence changes. Do not edit it for routine code/docs changes with no project-level status delta. Keep product requirements in `product-context.md`, schema/security contracts in `data-contracts.md`, and use GitHub/Supabase/Vercel as authority for their live state. Record dated manual evidence separately from automated checks.
 - After edits, run `npm run lint`, `npm run typecheck`, and `npm run build`.
 - When changing SQL migrations, grants, RLS, or database functions, also add/update pgTAP tests and run `npx supabase test db` against the local stack.
 - When changing CU-01 auth/session/profile behavior, run `scripts/smoke-cu01-local.ps1`; it must use local Supabase only, verify signup stays disabled, and clean up its temporary user/profile.

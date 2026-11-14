@@ -30,6 +30,19 @@ export interface CycleSlotHistory {
   completedRuns: number;
 }
 
+export interface StudentRoutineHistoryEntry {
+  id: string;
+  title: string;
+  programMode: 'SINGLE_DAY' | 'CYCLE';
+  executionDate: string;
+  cycleDayTitle: string | null;
+  slotAttempt: number | null;
+  status: RoutineExecutionStatus;
+  completedExercises: number;
+  prescribedExercises: number;
+  progressPercent: number;
+}
+
 export function validateActualExercisePerformance(
   performance: ActualExercisePerformance,
   requiresLoad: boolean

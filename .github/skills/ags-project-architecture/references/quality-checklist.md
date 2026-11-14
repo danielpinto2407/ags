@@ -38,6 +38,11 @@
 
 ## UI and Visuals
 
+- Is the user/goal/current context clear, and was the existing flow inspected before choosing a UI pattern?
+- Is the chosen interaction pattern justified by the task and consistent with product/data constraints, rather than selected only for implementation convenience?
+- Are primary path, decisions, validation, loading, empty, error, success, and permission states explicitly considered? Does empty-state copy reflect actual data?
+- Were the relevant official accessibility/platform references checked for new or complex interactions, and are semantics, keyboard/focus, accessible names, and feedback correct?
+- Was the changed task exercised in a browser at phone and desktop widths without unsafe Production writes?
 - Does the feature reuse `Sora`, `Inter`, Tailwind `brand-*`, zinc/status colors, spacing, radii, borders, shadows, and responsive patterns?
 - Are visual tokens centralized rather than duplicated in screens?
 - Are loading, empty, error, success, offline, and permission states represented?

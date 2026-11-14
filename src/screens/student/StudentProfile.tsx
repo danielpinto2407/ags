@@ -67,14 +67,13 @@ export default function StudentProfile({ profile, onLogout }: StudentProfileProp
           </div>
         </div>
 
-        <p className="border-t border-zinc-800 pt-3 text-[11px] leading-relaxed text-zinc-500">
-            Tu progreso y medidas aparecerán aquí cuando haya registros disponibles.
-        </p>
         <div className="mt-3 flex items-center gap-2.5 border-t border-zinc-800 pt-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600/20 text-lg">💪</div>
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-600/20 text-brand-300">
+            <UserRound aria-hidden="true" size={17} />
+          </div>
           <div className="min-w-0">
-            <p className="text-[10px] text-zinc-500">Tu coach</p>
-            <p className="truncate text-sm font-bold text-white" aria-live="polite">
+            <p className="text-[10px] text-zinc-500">Coach asignada</p>
+            <p className="truncate text-sm font-bold text-white" aria-live="polite" role={coachInfoStatus === 'error' ? 'alert' : 'status'}>
               {coachInfoStatus === 'loading'
                 ? 'Cargando…'
                 : coachInfoStatus === 'error'

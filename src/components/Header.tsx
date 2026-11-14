@@ -10,7 +10,7 @@ interface HeaderProps {
   onBellClick?: () => void;
 }
 
-export default function Header({ title, subtitle, showLogo = true, showBell = true, onBellClick }: HeaderProps) {
+export default function Header({ title, subtitle, showLogo = true, showBell = false, onBellClick }: HeaderProps) {
   const { state: tenantState } = useTenantContext();
   const tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
 
@@ -34,8 +34,9 @@ export default function Header({ title, subtitle, showLogo = true, showBell = tr
         <h1 className="text-2xl font-display font-bold text-white leading-tight">{title}</h1>
         {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
       </div>
-      {showBell && (
+      {showBell && onBellClick && (
         <button
+          aria-label="Notificaciones"
           onClick={onBellClick}
           className="relative w-9 h-9 rounded-full bg-zinc-900 border border-brand-500/30 flex items-center justify-center hover:bg-zinc-800 transition-colors"
         >

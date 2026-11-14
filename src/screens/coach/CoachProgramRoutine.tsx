@@ -140,6 +140,10 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
   const editable = !isPublished && !saving;
   const activeDay = days.find((day) => day.position === selectedDayPosition) ?? days[0];
   const items = activeDay?.items ?? [];
+  const incompleteCycleDays = programMode === 'CYCLE'
+    ? days.filter((day) => day.items.length === 0)
+    : [];
+  const canPublish = items.length > 0 && incompleteCycleDays.length === 0;
   const updateItems = (update: (current: DraftItem[]) => DraftItem[]) => {
     setDays((currentDays) => currentDays.map((day) => (
       day.position === selectedDayPosition ? { ...day, items: update(day.items) } : day
@@ -147,6 +151,13 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
   };
   const setCycleDayCount = (count: number) => {
     const safeCount = Math.min(20, Math.max(1, count));
+    const removedDaysWithExercises = days.filter((day) => day.position > safeCount && day.items.length > 0);
+    if (removedDaysWithExercises.length > 0 && !window.confirm(
+      `Reducir el ciclo a ${safeCount} ${safeCount === 1 ? 'día' : 'días'} eliminará los ejercicios de ${removedDaysWithExercises.length === 1 ? 'un día' : `${removedDaysWithExercises.length} días`}. ¿Deseas continuar?`
+    )) {
+      setCycleDayCountDraft(String(days.length));
+      return;
+    }
     setCycleDayCountDraft(String(safeCount));
     setDays((current) => Array.from({ length: safeCount }, (_, index) => {
       const position = index + 1;
@@ -256,7 +267,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
         programMode,
         scheduledFor: programMode === 'SINGLE_DAY' ? selectedDate : null,
         title,
-          additionalCycleRepeats: programMode === 'CYCLE' ? additionalCycleRepeats : 0,
+        additionalCycleRepeats: programMode === 'CYCLE' ? additionalCycleRepeats : 0,
         days: (programMode === 'SINGLE_DAY' ? [activeDay] : days).map((day, index) => ({
           position: index + 1,
           title: day.title,
@@ -389,6 +400,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
               <div aria-label="Día del ciclo" className="flex gap-2 overflow-x-auto pb-1" role="tablist">
                 {days.map((day) => (
                   <button
+                    aria-label={`Día ${day.position}, ${day.title}, ${day.items.length} ${day.items.length === 1 ? 'ejercicio' : 'ejercicios'}${day.items.length === 0 ? ', pendiente' : ', con ejercicios'}`}
                     aria-selected={selectedDayPosition === day.position}
                     className={`min-h-10 shrink-0 rounded-lg border px-3 text-xs font-semibold ${selectedDayPosition === day.position ? 'border-brand-600 bg-brand-950/40 text-brand-300' : 'border-zinc-800 bg-zinc-900 text-zinc-400'}`}
                     key={day.position}
@@ -396,10 +408,18 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
                     role="tab"
                     type="button"
                   >
-                    {day.position}. {day.title}
+                    <span>{day.position}. {day.title}</span>
+                    <span aria-hidden="true" className={`ml-2 text-[10px] ${day.items.length === 0 ? 'text-amber-300' : 'text-emerald-300'}`}>
+                      {day.items.length}
+                    </span>
                   </button>
                 ))}
               </div>
+              {incompleteCycleDays.length > 0 && (
+                <p className="text-xs text-amber-300" role="status">
+                  Completa los días {incompleteCycleDays.map(({ position }) => position).join(', ')} antes de publicar.
+                </p>
+              )}
               {activeDay && (
                 <label className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
                   Nombre del día
@@ -524,7 +544,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
               </button>
               <button
                 className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 text-sm font-bold text-white hover:bg-brand-500 disabled:cursor-wait disabled:opacity-50"
-                disabled={saving || assignmentsQuery.state.status !== 'loaded' || items.length === 0}
+                disabled={saving || assignmentsQuery.state.status !== 'loaded' || !canPublish}
                 onClick={() => void saveDraft(true)}
                 type="button"
               >
