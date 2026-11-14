@@ -14,6 +14,7 @@ import type {
 import type {
   ActualExercisePerformance,
   CycleSlotHistory,
+  StudentRoutineHistoryEntry,
   StudentRoutineExecutionSnapshot,
 } from '@/domain/workoutExecution';
 import { calculateRoutineProgress, getCompletedExerciseCount } from '@/domain/workoutExecution';
@@ -138,7 +139,7 @@ function assignmentError(error: { message: string }): Error {
     assignment_date_taken: 'Ya existe una rutina para esta alumna en esa fecha.',
     assignment_not_draft: 'Esta rutina ya fue publicada y no se puede editar.',
     assignment_not_owned: 'No puedes modificar una rutina que no asignaste.',
-    assignment_has_no_exercises: 'Agrega al menos un ejercicio antes de publicar.',
+    assignment_has_no_exercises: 'Completa cada día con al menos un ejercicio antes de publicar.',
     student_not_active_or_owned: 'Selecciona una alumna activa que tú hayas invitado.',
     routine_exercise_unavailable: 'Uno de los ejercicios ya no está disponible en la biblioteca.',
     invalid_assignment_input: 'Revisa la fecha, el título y los ejercicios de la rutina.',
@@ -252,6 +253,25 @@ export const routineAssignmentRepository = {
     };
   },
 
+  async getExecutionDatesForStudent(
+    studentId: string,
+    tenantId: string,
+    firstDate: string,
+    lastDate: string
+  ): Promise<string[]> {
+    const { data, error } = await requireClient()
+      .from('routine_executions')
+      .select('execution_date')
+      .eq('tenant_id', tenantId)
+      .eq('student_id', studentId)
+      .gte('execution_date', firstDate)
+      .lte('execution_date', lastDate)
+      .order('execution_date');
+
+    if (error) throw new Error('No se pudo cargar el calendario de entrenamientos.');
+    return [...new Set((data ?? []).map(({ execution_date }) => execution_date))];
+  },
+
   async getCycleSlotHistory(
     studentId: string,
     tenantId: string,
@@ -276,6 +296,91 @@ export const routineAssignmentRepository = {
       history[row.cycle_day_id] = current;
     }
     return history;
+  },
+
+  async listRecentHistory(studentId: string, tenantId: string, limit = 30): Promise<StudentRoutineHistoryEntry[]> {
+    const client = requireClient();
+    const safeLimit = Math.max(1, Math.min(50, Math.trunc(limit)));
+    const { data: executionRows, error: executionError } = await client
+      .from('routine_executions')
+      .select('id, assignment_id, cycle_day_id, execution_date, slot_attempt, status')
+      .eq('tenant_id', tenantId)
+      .eq('student_id', studentId)
+      .order('execution_date', { ascending: false })
+      .limit(safeLimit);
+
+    if (executionError) throw new Error('No se pudo cargar tu historial de entrenamientos.');
+    if (!executionRows?.length) return [];
+
+    const assignmentIds = [...new Set(executionRows.map(({ assignment_id }) => assignment_id))];
+    const cycleDayIds = [...new Set(executionRows.map(({ cycle_day_id }) => cycle_day_id))];
+    const executionIds = executionRows.map(({ id }) => id);
+    const [assignmentResult, dayResult, itemResult, performanceResult] = await Promise.all([
+      client
+        .from('routine_assignments')
+        .select('id, title, program_mode')
+        .eq('tenant_id', tenantId)
+        .eq('student_id', studentId)
+        .in('id', assignmentIds),
+      client
+        .from('routine_assignment_days')
+        .select('id, title')
+        .eq('tenant_id', tenantId)
+        .in('id', cycleDayIds),
+      client
+        .from('routine_assignment_items')
+        .select('id, cycle_day_id')
+        .eq('tenant_id', tenantId)
+        .in('cycle_day_id', cycleDayIds),
+      client
+        .from('routine_execution_exercises')
+        .select('execution_id, completed')
+        .eq('tenant_id', tenantId)
+        .in('execution_id', executionIds),
+    ]);
+
+    if (assignmentResult.error || dayResult.error || itemResult.error || performanceResult.error) {
+      throw new Error('No se pudo cargar tu historial de entrenamientos.');
+    }
+
+    const assignmentsById = new Map((assignmentResult.data ?? []).map((assignment) => [assignment.id, assignment]));
+    const daysById = new Map((dayResult.data ?? []).map((day) => [day.id, day]));
+    const itemCountsByDay = new Map<string, number>();
+    for (const item of itemResult.data ?? []) {
+      itemCountsByDay.set(item.cycle_day_id, (itemCountsByDay.get(item.cycle_day_id) ?? 0) + 1);
+    }
+    const completedCountsByExecution = new Map<string, number>();
+    for (const performance of performanceResult.data ?? []) {
+      if (performance.completed) {
+        completedCountsByExecution.set(
+          performance.execution_id,
+          (completedCountsByExecution.get(performance.execution_id) ?? 0) + 1
+        );
+      }
+    }
+
+    return executionRows.map((execution) => {
+      const assignment = assignmentsById.get(execution.assignment_id);
+      const cycleDay = daysById.get(execution.cycle_day_id);
+      if (!assignment || !cycleDay) throw new Error('Una sesión de tu historial ya no está disponible.');
+
+      const prescribedExercises = itemCountsByDay.get(execution.cycle_day_id) ?? 0;
+      const completedExercises = completedCountsByExecution.get(execution.id) ?? 0;
+      return {
+        id: execution.id,
+        title: assignment.title,
+        programMode: assignment.program_mode,
+        executionDate: execution.execution_date,
+        cycleDayTitle: assignment.program_mode === 'CYCLE' ? cycleDay.title : null,
+        slotAttempt: execution.slot_attempt,
+        status: execution.status,
+        completedExercises,
+        prescribedExercises,
+        progressPercent: prescribedExercises > 0
+          ? calculateRoutineProgress(completedExercises, prescribedExercises)
+          : 0,
+      };
+    });
   },
 
   async saveTrainingProgramDraft(input: SaveTrainingProgramDraftInput): Promise<string> {

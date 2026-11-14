@@ -2,7 +2,7 @@
 
 ## Product
 
-AGS GluteHouse is a multi-tenant fitness SaaS under active development. The React/Vite application and Supabase-backed tenant, authentication, exercise-library, and date-bound routine-assignment slices are deployed. Supabase Production now has the unified `SINGLE_DAY`/`CYCLE` and workout-execution schema (migrations 001-025); the four existing assignments and twelve items were verified in the `SINGLE_DAY` backfill. The matching UI is in PR #19 and has not yet been promoted to Production. CU-04B biometric/profile progress remains planned. Use cases define intended behavior, while `project-status.md` records verified implementation and deployment state.
+AGS GluteHouse is a multi-tenant fitness SaaS under active development. This reference defines intended behavior, actors, priorities, and product decisions. `project-status.md` is a concise handoff for current focus and verified release evidence; GitHub, Supabase, and Vercel remain the sources of truth for live implementation/deployment state. CU-04B biometric/profile progress remains planned.
 
 ## Actors
 
@@ -14,22 +14,22 @@ AGS GluteHouse is a multi-tenant fitness SaaS under active development. The Reac
 
 ## Use-Case Map And Priority
 
-| Case | Behavior | Status |
-|---|---|---|
-| CU-00 | Detect tenant by subdomain, load theme, handle unknown/suspended tenant | tenant resolver and AGS theme are deployed; production custom domain/DNS pending |
-| CU-01 | Authenticate, validate profile/tenant, redirect by role | password sign-in/session/profile flow is deployed and Production login is verified; PR #17/#18 session-continuity and contextual-navigation fixes are integrated |
-| CU-01B | Coach invites one member to the gym by email; current onboarding grants personalized access | invite/acceptance and active/inactive lifecycle are implemented; coach roster programming indicator is backed by migration 029 and merged PR #22. Group entitlements are deferred. Personalized membership operations do not enforce `tenants.max_clients` |
-| CU-02 | Browse the shared immutable exercise catalog and create/manage a gym-owned exercise library; coaches may copy a shared exercise as the starting point for an independently editable gym exercise | schema/RLS, 15-record shared catalog, and coach CRUD UI are deployed in Production and browser-checked; see project status for exact verification scope |
-| CU-02B | Create reusable routine templates and reorder items | planned; optional after direct personalized assignment works |
-| CU-03 | Coach programs a dated routine or a cycle of N ordinal slots; student chooses cycle slots on actual dates | Unified schema and existing-record backfill are deployed and verified in Production; PR #19 is merged; verify Vercel deployment |
-| CU-04 | Student records exercise completion and actual reps/load plus RIR/RPE | Exercise-level schema/RPCs through migration 029 are deployed; PRs #20-22 are merged and the Vercel alias serves the updated UI; offline sync deferred |
-| CU-04B | Coach records dated body measurements; student sees longitudinal training and biometric progress in their profile | Workout execution history is implemented locally. Coach-entered biometric measurements and profile history views remain planned; biometric form and metric catalogue are pending definition |
-| CU-05 | Exercise detail, inline video, rest timer, sound/vibration alert | Exercise detail and supported inline YouTube playback are deployed; timer is client-side; sound/vibration and expanded provider support remain future work |
-| CU-06 | Direct WhatsApp contact with coach | placeholder; supporting experience |
-| CU-07 | Super-admin gym, plan, member limit, theme, and subscription management | planned |
-| CU-08 | Feature flags by gym and plan | planned |
-| CU-09 | Suspend/reactivate gym access | planned |
-| CU-10 (proposed) | Group classes: schedules, per-class capacity, booking, attendance, and `user_general` access | deferred until after the personalized-training MVP |
+| Case | Intended behavior |
+|---|---|
+| CU-00 | Detect tenant by subdomain, load theme, handle unknown/suspended tenant |
+| CU-01 | Authenticate, validate profile/tenant, and route by role |
+| CU-01B | Coach invites a member to the gym; onboarding grants personalized access. Personalized membership does not enforce `tenants.max_clients`. |
+| CU-02 | Browse the shared immutable exercise catalog and manage an independent gym-owned exercise library. |
+| CU-02B | Create reusable routine templates and reorder items. |
+| CU-03 | Coach programs a dated routine or a cycle of N ordinal slots; student chooses cycle slots on actual dates. |
+| CU-04 | Student records exercise completion and actual reps/load plus RIR/RPE; offline sync is deferred. |
+| CU-04B | Coach records dated body measurements; student sees longitudinal training and biometric progress. Define the metric catalogue/units before implementation. |
+| CU-05 | Exercise detail, inline video, rest timer, sound/vibration alert. |
+| CU-06 | Direct contact with coach. |
+| CU-07 | Super-admin gym, plan, theme, subscription, and membership administration. |
+| CU-08 | Feature flags by gym and plan. |
+| CU-09 | Suspend/reactivate gym access. |
+| CU-10 (proposed) | Group-class schedules, per-class capacity, booking, attendance, and `user_general` access; deferred after the personalized-training MVP. |
 
 ### Personalized-Training MVP Order
 
@@ -40,15 +40,7 @@ AGS GluteHouse is a multi-tenant fitness SaaS under active development. The Reac
 4. Extend CU-04 from published-routine reading to execution records: student logs whole-number actual reps/load and one completion flag per exercise, regardless of the number of prescribed sets, plus one RIR value (1-10) and one RPE value (0-100%) per exercise. Present RIR and RPE as separate slider-style bars with visible minimum/maximum and current value; constrain selection to each range and reject out-of-range values. Preserve prescription and actual values separately. Offline synchronization remains deferred and must be specified separately.
 5. Add CU-04B coach-authored dated biometric records and student-only history/profile visualization alongside persisted workout progress. The biometric form and metric catalogue are pending client definition; do not invent the measurement list or display mock data as recorded values.
 
-The target personalized acceptance path is invite email -> account activation -> coach plans/publishes a cycle -> student records performed training -> coach records biometrics -> student reviews progress in profile. Production schema migrations for both programming modes and workout execution are applied; PR #19 contains the matching UI and remains to be merged/deployed. CU-04B biometrics and profile history remain planned. Each step must preserve tenant, coach, and student ownership. Do not start group-class scheduling, booking, or attendance as part of this MVP.
-
-### New Client Requirements (Planning Baseline)
-
-- CU-03 has two coach programming modes in one target model: `SINGLE_DAY` schedules one routine on a selected calendar date; `CYCLE` contains N ordinal cycle-day slots with one routine and independent per-exercise rep/load progression per slot. Each slot has `1 + additional repeats` attempts and can be selected out of order. An incomplete close consumes that slot's attempt but does not advance its target; only completed executions progress it. A published single-day routine takes precedence on that date. Execution begins and consumes the one-start-per-day limit only when the first exercise is marked complete with actual reps/load, not on Play; progress is completed exercises / prescribed exercises. Same-day resume is allowed, day-end closure freezes data, and the next day permits a new start. Existing date-bound records must be migrated into the unified model.
-- CU-04 records what the student actually performed, not only the prescription: one actual repetitions/load value and completion flag per exercise, regardless of the number of prescribed sets. RIR (1-10) and RPE (0-100%) are also captured once per exercise as perceived effort. Show each metric in its own slider-style bar with visible bounds and selected value; selection must stay within the inclusive range. Repetitions and loads are whole numbers; no rounding is applied. Store actual and prescribed values separately and preserve the `lbs`/`kg` unit.
-- CU-04B adds coach-authored, dated biometric measurement records for a student and student-readable history in that student's profile. The biometric registration form and exact metric catalogue/units are pending definition. Records must be scoped to tenant/student, attributable to the coach, and auditable by date; do not invent measurement fields or present mock values as real.
-- In `CYCLE`, coaches enter only base reps/load and progression increments; separate target-reps/target-load fields are not shown. Exercise-specific notes are labeled “Instrucciones del coach” and stored separately from exercise-definition instructions and rest time. The student profile shows the coach linked by the invitation flow through a self-scoped RPC.
-- These requirements replace the deployed date-bound CU-03 workflow. Migrations 020–025 evolve the existing assignment rows in place as `SINGLE_DAY`, create ordinal slots for their exercise snapshots, and add cycle execution records. They are applied to Production and local Supabase; Production backfill verification confirmed four assignments and twelve items were preserved. The UI cutover remains pending PR #19. Keep group classes deferred.
+The target personalized acceptance path is invite email -> account activation -> coach plans/publishes a cycle -> student records performed training -> coach records biometrics -> student reviews progress in profile. Each step must preserve tenant, coach, and student ownership. Do not start group-class scheduling, booking, or attendance as part of this MVP.
 
 ### Decisions To Close Before Schema/Implementation
 
@@ -90,7 +82,7 @@ CU-02 acceptance behavior:
 - A deleted/archived exercise cannot be newly selected for a routine, while existing assignment snapshots/history continue rendering intact.
 - Database, permission, and validation failures remain visible; never disguise them with demo records.
 
-Mocks remain for isolated tests or an explicitly designed demo flow only; persisted features use their typed repository as the single source and never merge or fall back to fixtures. CU-02 and the unified CU-03/CU-04 schemas through migration 029 are Supabase-backed in Production. PRs #19-22 are merged; the Vercel alias serves the updated UI, while custom-domain DNS remains pending. PR #21's profile-media UI and updated invitation templates are merged and hosted. CU-04B biometric/profile history remains planned. Student-facing progress must remain an empty state until backed by real records.
+Mocks remain for isolated tests or an explicitly designed demo flow only; persisted features use their typed repository as the single source and never merge or fall back to fixtures. Student-facing progress must remain an empty state until backed by real records. Consult `project-status.md` for current release evidence.
 
 Exercise catalog records are original AGS-authored content with stable IDs. Production catalog entries are added through reviewed idempotent migrations. `supabase/seed.sql` is local-only and also creates development tenants; never execute it against Production. Do not seed fake `auth.users` or personal data; create local test accounts through development-only scripts.
 
@@ -102,7 +94,7 @@ Exercise catalog records are original AGS-authored content with stable IDs. Prod
 
 ## Local Authentication Note
 
-With the current local configuration, `localhost` resolves to the default tenant (`VITE_DEFAULT_TENANT_SUBDOMAIN=ags`). A tenant-less `super_admin` session therefore cannot be exercised there; validate its platform placeholder only in a platform-host context that resolves no tenant. Production domain/DNS and auth configuration remain pending.
+With the current local configuration, `localhost` resolves to the default tenant (`VITE_DEFAULT_TENANT_SUBDOMAIN=ags`). A tenant-less `super_admin` session therefore cannot be exercised there; validate its platform placeholder only in a platform-host context that resolves no tenant. Consult `project-status.md` for current production domain/DNS state.
 
 For temporary Vercel Preview testing before a custom domain exists, `VITE_PREVIEW_TENANT_HOSTNAME` may map one exact preview hostname (currently `ags-roan-iota.vercel.app`) to the configured default tenant. Set it only in Vercel's Preview environment. Production tenant routing remains subdomain-based (`ags.tugimnasioapp.com`) and must not use a broad `vercel.app` wildcard.
 

@@ -51,10 +51,11 @@ export default function LoginScreen({
 
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-3">
         <div>
-          <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
+          <label htmlFor="login-email" className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
             Correo electrónico
           </label>
           <input
+            id="login-email"
             type="email"
             autoComplete="username"
             required
@@ -65,11 +66,12 @@ export default function LoginScreen({
           />
         </div>
         <div>
-          <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
+          <label htmlFor="login-password" className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
             Contraseña
           </label>
           <div className="relative">
             <input
+              id="login-password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               required

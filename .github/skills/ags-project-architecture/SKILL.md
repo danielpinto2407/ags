@@ -38,6 +38,7 @@ AGS GluteHouse is a multi-tenant fitness SaaS. The product specification defines
 
 - Intended behavior, actors, acceptance criteria, and product decisions: [references/product-context.md](references/product-context.md).
 - Persisted entities, ownership, validation, and data lifecycle: [references/data-contracts.md](references/data-contracts.md).
+- UX/UI task analysis, pattern evaluation, official guidance, accessibility, and interaction verification: [references/ux-ui-practice.md](references/ux-ui-practice.md). Read this before implementing or materially changing any user-facing flow.
 - What is actually implemented/deployed and the next milestone: [references/project-status.md](references/project-status.md). Treat deployed/current behavior separately from the target plan.
 - Implementation sequence and validation approach: [references/feature-workflow.md](references/feature-workflow.md).
 - UI tokens and visual conventions: [references/visual-system.md](references/visual-system.md).
@@ -45,7 +46,7 @@ AGS GluteHouse is a multi-tenant fitness SaaS. The product specification defines
 
 If references conflict, do not silently blend them: follow the product decision for intended behavior, the status for verified implementation, and flag the discrepancy for correction. Keep detailed product rules in their owning reference instead of copying them into this summary.
 
-The project-status reference is a living record: review it before planning and update it at closeout for every code, schema, test, configuration, or documentation change. Keep it evidence-based and distinguish committed state from local changes.
+The project-status reference is a concise handoff: review it before planning, but update it only when project-level focus, blockers, verified release state, or material validation evidence changes. Product behavior belongs in `product-context.md`; persisted contracts belong in `data-contracts.md`. GitHub, Supabase, and Vercel remain authoritative for their live state. Avoid copying detailed histories or case tables into the handoff.
 
 ## Layer Boundaries
 

@@ -6,19 +6,20 @@ import type {
   CycleSlotHistory,
   StudentRoutineExecutionSnapshot,
 } from '@/domain/workoutExecution';
+import { utcWeekInputValues } from '@/domain/localDate';
 
 export type StudentRoutineAssignmentState =
-  | { status: 'loading'; assignment: RoutineAssignment | null; assignments: RoutineAssignment[]; execution: StudentRoutineExecutionSnapshot | null; cycleSlotHistory: Record<string, CycleSlotHistory> }
-  | { status: 'error'; assignment: RoutineAssignment | null; assignments: RoutineAssignment[]; execution: StudentRoutineExecutionSnapshot | null; cycleSlotHistory: Record<string, CycleSlotHistory>; message: string }
-  | { status: 'loaded'; assignment: RoutineAssignment | null; assignments: RoutineAssignment[]; execution: StudentRoutineExecutionSnapshot | null; cycleSlotHistory: Record<string, CycleSlotHistory> };
+  | { status: 'loading'; assignment: RoutineAssignment | null; assignments: RoutineAssignment[]; execution: StudentRoutineExecutionSnapshot | null; cycleSlotHistory: Record<string, CycleSlotHistory>; executionDates: string[] }
+  | { status: 'error'; assignment: RoutineAssignment | null; assignments: RoutineAssignment[]; execution: StudentRoutineExecutionSnapshot | null; cycleSlotHistory: Record<string, CycleSlotHistory>; executionDates: string[]; message: string }
+  | { status: 'loaded'; assignment: RoutineAssignment | null; assignments: RoutineAssignment[]; execution: StudentRoutineExecutionSnapshot | null; cycleSlotHistory: Record<string, CycleSlotHistory>; executionDates: string[] };
 
 export function useStudentRoutineAssignment(studentId: string, tenantId: string, scheduledFor: string) {
-  const [state, setState] = useState<StudentRoutineAssignmentState>({ status: 'loading', assignment: null, assignments: [], execution: null, cycleSlotHistory: {} });
+  const [state, setState] = useState<StudentRoutineAssignmentState>({ status: 'loading', assignment: null, assignments: [], execution: null, cycleSlotHistory: {}, executionDates: [] });
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    setState((current) => ({ status: 'loading', assignment: current.assignment, assignments: current.assignments, execution: current.execution, cycleSlotHistory: current.cycleSlotHistory }));
+    setState((current) => ({ status: 'loading', assignment: current.assignment, assignments: current.assignments, execution: current.execution, cycleSlotHistory: current.cycleSlotHistory, executionDates: current.executionDates }));
 
     routineAssignmentRepository.getForStudent(studentId, tenantId, scheduledFor)
       .then(async (assignments) => {
@@ -26,11 +27,13 @@ export function useStudentRoutineAssignment(studentId: string, tenantId: string,
         const assignment = assignments.find(({ programMode }) => programMode === 'SINGLE_DAY')
           ?? assignments.find(({ programMode }) => programMode === 'CYCLE')
           ?? null;
-        const [execution, cycleSlotHistory] = await Promise.all([
+        const weekDates = utcWeekInputValues(scheduledFor);
+        const [execution, cycleSlotHistory, executionDates] = await Promise.all([
           routineAssignmentRepository.getExecutionForStudent(studentId, tenantId, scheduledFor, assignments),
           routineAssignmentRepository.getCycleSlotHistory(studentId, tenantId, assignments),
+          routineAssignmentRepository.getExecutionDatesForStudent(studentId, tenantId, weekDates[0], weekDates[6]),
         ]);
-        if (!cancelled) setState({ status: 'loaded', assignment, assignments, execution, cycleSlotHistory });
+        if (!cancelled) setState({ status: 'loaded', assignment, assignments, execution, cycleSlotHistory, executionDates });
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -40,6 +43,7 @@ export function useStudentRoutineAssignment(studentId: string, tenantId: string,
           assignments: current.assignments,
           execution: current.execution,
           cycleSlotHistory: current.cycleSlotHistory,
+          executionDates: current.executionDates,
           message: error instanceof Error ? error.message : 'No se pudo cargar tu programación.',
         }));
       });

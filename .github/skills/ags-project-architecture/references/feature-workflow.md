@@ -8,6 +8,7 @@
 4. Search existing components, hooks, domain functions, repository methods, types, and styles before creating anything.
 5. State one local hypothesis about the controlling code path and one focused validation check.
 6. Read `project-status.md` to understand implemented versus planned behavior before defining scope.
+7. For user-facing work, read `ux-ui-practice.md`; identify the task flow, relevant empty/error/loading/permission states, chosen interaction pattern, and a task-based UI check before composing the screen.
 
 ## Implementation Order
 
@@ -17,8 +18,8 @@
 4. Add a hook for shared state, subscriptions, or async workflow.
 5. Compose the feature screen.
 6. Add loading, success, empty, error, offline, and permission states.
-7. Wire navigation and feature flags after the feature works independently.
-8. Reuse existing components and visual tokens.
+8. Wire navigation and feature flags after the feature works independently.
+9. Reuse existing components and visual tokens, then validate the role flow and responsive/accessibility states described in `ux-ui-practice.md`.
 
 When a feature is being migrated from mocks to Supabase, retain an explicit mock adapter and add a Supabase adapter behind the same repository contract. Select exactly one source per run, preserve typed loading/error behavior, and test the use case against local Supabase before removing its mock path. Never hide a Supabase failure by returning mock data.
 
@@ -85,4 +86,4 @@ For Production database changes: finish local migration and pgTAP validation fir
 
 ## Required Closeout Task
 
-For every code, schema, test, configuration, or documentation change, review and update `project-status.md` in the same work item. Record only verified state and validation; update the next step when dependencies change. If the work does not change project status, explicitly confirm the snapshot remains current rather than making a noise-only edit.
+Update `project-status.md` only when a work item changes the active objective, next step/blocker, verified release state, or material validation evidence. Do not rewrite it after routine edits. Keep use-case requirements in `product-context.md` and data/security contracts in `data-contracts.md`; verify PR, migration, and deployment state from GitHub, Supabase, and Vercel rather than treating copied prose as authoritative. Preserve useful dated manual evidence, and label it as manual rather than automated.
