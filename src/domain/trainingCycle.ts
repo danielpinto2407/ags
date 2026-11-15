@@ -58,6 +58,29 @@ export function getNextCycleSlotAttempt(
   return previousAttemptCount === totalAttempts ? null : previousAttemptCount + 1;
 }
 
+export function getCurrentCycleIteration(terminalAttempts: readonly number[]): number {
+  if (terminalAttempts.length === 0) return 1;
+  if (terminalAttempts.some((attempts) => !Number.isSafeInteger(attempts) || attempts < 0)) {
+    throw new Error('Los resultados de las vueltas deben ser enteros iguales o mayores que cero.');
+  }
+  return Math.min(...terminalAttempts) + 1;
+}
+
+export function isCycleSlotAvailable(
+  additionalCycleRepeats: number,
+  attemptCount: number,
+  terminalAttemptCount: number,
+  currentIteration: number
+): boolean {
+  const maxAttempts = getCycleIterationCount(additionalCycleRepeats);
+  if (!Number.isSafeInteger(terminalAttemptCount) || terminalAttemptCount < 0) {
+    throw new Error('Los resultados de las vueltas deben ser enteros iguales o mayores que cero.');
+  }
+  return currentIteration <= maxAttempts
+    && terminalAttemptCount < currentIteration
+    && getNextCycleSlotAttempt(additionalCycleRepeats, attemptCount) !== null;
+}
+
 export function getCompletedCycleSlotRuns(attempts: readonly CycleSlotAttemptStatus[]): number {
   return attempts.filter((status) => status === 'COMPLETED').length;
 }

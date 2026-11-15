@@ -34,6 +34,7 @@ Read `.github/skills/ags-project-architecture/references/project-status.md` befo
 - Give each module one clear responsibility and each async workflow explicit loading, empty, success, and error states.
 - Preserve the existing visual system: reuse `Sora`, `Inter`, Tailwind `brand-*` tokens, zinc/status colors, spacing, radii, borders, shadows, and responsive patterns.
 - Before implementing or materially changing UI, read `.github/skills/ags-project-architecture/references/ux-ui-practice.md`; evaluate the user task, pattern alternatives, state coverage, relevant official/accessibility guidance, and browser validation. Keep the design rationale proportional to the change; do not create a separate design document unless needed.
+- Treat user-supplied screenshots/layout descriptions as acceptance criteria. Before closing UI work, audit rendered Spanish copy and status colors as a user: never leak implementation terms such as UTC/RLS/RPC/“solo lectura”, and ensure labels describe the actual action rather than an internal state transition.
 - New components must reference existing visual tokens or add named shared tokens; do not scatter arbitrary colors, fonts, shadows, or styles through screens.
 - Tenant branding from Supabase must use the typed and validated theme contract mapped to controlled CSS variables; never inject arbitrary CSS or pass raw tenant records into components.
 - Preserve the existing Spanish UI and responsive phone/full preview behavior.

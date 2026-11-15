@@ -3,6 +3,8 @@ import {
   calculateCycleExerciseTarget,
   getCompletedCycleSlotRuns,
   getCycleIterationCount,
+  getCurrentCycleIteration,
+  isCycleSlotAvailable,
   getNextCycleSlotAttempt,
   validateCycleProgram,
   type CycleExerciseProgression,
@@ -49,6 +51,16 @@ describe('cycle plan domain', () => {
     expect(getNextCycleSlotAttempt(2, 0)).toBe(1);
     expect(getNextCycleSlotAttempt(2, 2)).toBe(3);
     expect(getNextCycleSlotAttempt(2, 3)).toBeNull();
+  });
+
+  it('offers slots in global rounds and excludes exhausted slots without blocking others', () => {
+    const currentIteration = getCurrentCycleIteration([1, 1, 1]);
+    expect(currentIteration).toBe(2);
+    expect(isCycleSlotAvailable(2, 1, 1, currentIteration)).toBe(true);
+    expect(isCycleSlotAvailable(2, 2, 2, currentIteration)).toBe(false);
+    expect(isCycleSlotAvailable(2, 3, 3, currentIteration)).toBe(false);
+    expect(getCurrentCycleIteration([2, 1, 1])).toBe(2);
+    expect(() => getCurrentCycleIteration([-1])).toThrow('enteros');
   });
 
   it('accepts a cycle with N ordinal routine slots and no calendar-date binding', () => {

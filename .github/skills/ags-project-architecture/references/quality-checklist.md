@@ -39,6 +39,11 @@
 ## UI and Visuals
 
 - Is the user/goal/current context clear, and was the existing flow inspected before choosing a UI pattern?
+- Does all visible copy describe the user's situation/action in familiar Spanish rather than expose backend or state terminology such as UTC, RLS, RPC, or “solo lectura”?
+- Are stored timestamps/timezones kept separate from calendar presentation? Does the displayed day match the product's user-facing calendar contract without leaking storage implementation details?
+- Do action labels describe the actual effect (open, start, save, complete)? Is the persisted start/completion event distinct from merely opening or expanding a form?
+- If a screenshot or visual proposal was supplied, does the rendered interaction match its content order, grouping, expansion behavior, and mobile hierarchy at a comparable viewport?
+- Were all visible labels and status colors reviewed in normal, completed, in-progress, incomplete, and historical states against the active tenant palette, with non-color status cues?
 - Is the chosen interaction pattern justified by the task and consistent with product/data constraints, rather than selected only for implementation convenience?
 - Are primary path, decisions, validation, loading, empty, error, success, and permission states explicitly considered? Does empty-state copy reflect actual data?
 - Were the relevant official accessibility/platform references checked for new or complex interactions, and are semantics, keyboard/focus, accessible names, and feedback correct?

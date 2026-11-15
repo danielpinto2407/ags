@@ -4,6 +4,7 @@ import StudentHome from '@/screens/student/StudentHome';
 import StudentRoutines from '@/screens/student/StudentRoutines';
 import StudentProgress from '@/screens/student/StudentProgress';
 import StudentProfile from '@/screens/student/StudentProfile';
+import StudentTrainingScreen from '@/screens/student/StudentTrainingScreen';
 import CoachDashboard from '@/screens/coach/CoachDashboard';
 import CoachStudents from '@/screens/coach/CoachStudents';
 import StudentDetail from '@/screens/coach/StudentDetail';
@@ -18,7 +19,7 @@ interface ScreenRendererProps {
 }
 
 export default function ScreenRenderer({ navigation, profile, onLogout }: ScreenRendererProps) {
-  const { role, screen, selectedMember, handleNavigate, handleStudentSelect, handleStudentBack } = navigation;
+  const { role, screen, selectedMember, selectedRoutine, handleNavigate, handleOpenTraining, handleTrainingBack, handleStudentSelect, handleStudentBack } = navigation;
 
   if (!role) return null;
 
@@ -27,7 +28,11 @@ export default function ScreenRenderer({ navigation, profile, onLogout }: Screen
       case 'home':
         return <StudentHome profile={profile} onNavigate={handleNavigate} />;
       case 'routines':
-        return <StudentRoutines profile={profile} />;
+        return <StudentRoutines profile={profile} initialDate={selectedRoutine?.executionDate} onStartTraining={handleOpenTraining} />;
+      case 'training':
+        return selectedRoutine
+          ? <StudentTrainingScreen profile={profile} target={selectedRoutine} onBack={handleTrainingBack} />
+          : <StudentRoutines profile={profile} onStartTraining={handleOpenTraining} />;
       case 'progress':
         return <StudentProgress profile={profile} onNavigate={handleNavigate} />;
       case 'profile':

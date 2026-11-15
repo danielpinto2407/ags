@@ -27,6 +27,7 @@ export interface StudentRoutineExecutionSnapshot {
 
 export interface CycleSlotHistory {
   attemptCount: number;
+  terminalAttemptCount: number;
   completedRuns: number;
 }
 

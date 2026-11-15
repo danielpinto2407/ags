@@ -1,7 +1,7 @@
-begin;
+﻿begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(31);
+select extensions.plan(35);
 
 insert into public.tenants (id, name, subdomain, status)
 values ('e0000000-0000-4000-8000-000000000001', 'Execution Gym', 'execution-gym', 'ACTIVE');
@@ -201,19 +201,28 @@ select extensions.is(
   'CLOSED_INCOMPLETE',
   'closed incomplete execution remains in history'
 );
-select extensions.is(
-  public.save_routine_exercise_performance(
+select extensions.throws_ok(
+  $$select public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Ciclo B'), 1,
     (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and day.position = 1 limit 1),
     true, 8, 40, 'kg', null, null
+  )$$,
+  'P0001', 'cycle_iteration_not_ready',
+  'incomplete slot cannot repeat until every slot has a terminal result in the current iteration'
+);
+select extensions.is(
+  public.save_routine_exercise_performance(
+    (select id from public.routine_assignments where title = 'Ciclo B'), 2,
+    (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and day.position = 2 limit 1),
+    true, 10, 30, 'lbs', null, null
   ) ->> 'slotAttempt',
-  '2',
-  'incomplete attempt consumes its slot attempt but next cycle iteration is available'
+  '1',
+  'another slot remains available in the current global iteration'
 );
 select extensions.throws_ok(
   $$select public.save_routine_exercise_performance(
-    (select id from public.routine_assignments where title = 'Ciclo B'), 2,
-    (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and day.position = 2 limit 1),
+    (select id from public.routine_assignments where title = 'Ciclo B'), 1,
+    (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and day.position = 1 limit 1),
     true, 10, 30, 'lbs', null, null
   )$$,
   'P0001', 'daily_execution_limit',
@@ -223,17 +232,39 @@ select extensions.throws_ok(
 reset role;
 set local role service_role;
 update public.routine_executions
+set execution_date = (pg_catalog.timezone('UTC', pg_catalog.now()))::date - 3
+where student_id = 'e1000000-0000-4000-8000-000000000003'
+  and slot_attempt = 1
+  and cycle_day_id = (select id from public.routine_assignment_days where assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and position = 1);
+update public.routine_executions
 set execution_date = (pg_catalog.timezone('UTC', pg_catalog.now()))::date - 2
 where student_id = 'e1000000-0000-4000-8000-000000000003'
-  and slot_attempt = 1;
-update public.routine_executions
-set execution_date = (pg_catalog.timezone('UTC', pg_catalog.now()))::date - 1
-where student_id = 'e1000000-0000-4000-8000-000000000003'
-  and slot_attempt = 2;
+  and slot_attempt = 1
+  and cycle_day_id = (select id from public.routine_assignment_days where assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and position = 2);
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000003', true);
-select extensions.is(public.close_expired_routine_executions(), 1, 'second incomplete attempt closes after its UTC date');
+select extensions.is(public.close_expired_routine_executions(), 1, 'second slot incomplete execution closes after its UTC date');
+select extensions.is(
+  public.save_routine_exercise_performance(
+    (select id from public.routine_assignments where title = 'Ciclo B'), 1,
+    (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and day.position = 1 limit 1),
+    true, 8, 40, 'kg', null, null
+  ) ->> 'slotAttempt',
+  '2',
+  'next global iteration becomes available after every slot has a terminal result'
+);
+reset role;
+set local role service_role;
+update public.routine_executions
+set execution_date = (pg_catalog.timezone('UTC', pg_catalog.now()))::date - 1
+where student_id = 'e1000000-0000-4000-8000-000000000003'
+  and slot_attempt = 2
+  and cycle_day_id = (select id from public.routine_assignment_days where assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and position = 1);
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000003', true);
+select extensions.is(public.close_expired_routine_executions(), 1, 'incomplete second-round attempt closes after its day');
 select extensions.throws_ok(
   $$select public.save_routine_exercise_performance(
     (select id from public.routine_assignments where title = 'Ciclo B'), 1,
@@ -244,8 +275,17 @@ select extensions.throws_ok(
   'slot cannot be attempted more than the authored cycle plus additional repeats'
 );
 select extensions.is(
+  public.save_routine_exercise_performance(
+    (select id from public.routine_assignments where title = 'Ciclo B'), 2,
+    (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Ciclo B') and day.position = 2 limit 1),
+    true, 10, 30, 'lbs', null, null
+  ) ->> 'slotAttempt',
+  '2',
+  'a non-exhausted slot remains available after another slot exhausts its attempts'
+);
+select extensions.is(
   (select count(*)::integer from public.routine_executions),
-  2,
+  4,
   'student can read only their own execution history'
 );
 

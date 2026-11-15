@@ -290,8 +290,9 @@ export const routineAssignmentRepository = {
     if (error) throw new Error('No se pudo cargar el historial del ciclo.');
     const history: Record<string, CycleSlotHistory> = {};
     for (const row of data ?? []) {
-      const current = history[row.cycle_day_id] ?? { attemptCount: 0, completedRuns: 0 };
+      const current = history[row.cycle_day_id] ?? { attemptCount: 0, terminalAttemptCount: 0, completedRuns: 0 };
       current.attemptCount += 1;
+      if (row.status !== 'IN_PROGRESS') current.terminalAttemptCount += 1;
       if (row.status === 'COMPLETED') current.completedRuns += 1;
       history[row.cycle_day_id] = current;
     }
@@ -453,14 +454,15 @@ export const routineAssignmentRepository = {
 
 function executionError(error: { message: string }): Error {
   const messages: Record<string, string> = {
-    first_completed_exercise_required: 'Marca al menos un ejercicio completo para iniciar la rutina.',
-    daily_execution_limit: 'Ya iniciaste una rutina hoy. Podrás comenzar otra mañana.',
-    single_day_program_takes_precedence: 'Hoy tienes una rutina asignada para esta fecha.',
-    cycle_slot_attempts_exhausted: 'Ya completaste los intentos disponibles de este día del ciclo.',
-    execution_not_editable: 'Esta ejecución está cerrada y solo se puede consultar.',
-    invalid_actual_performance: 'Revisa los valores registrados del ejercicio y su esfuerzo.',
-    completed_exercise_requires_repetitions: 'Captura las repeticiones realizadas para completar el ejercicio.',
-    completed_weighted_exercise_requires_load: 'Captura el peso utilizado para completar el ejercicio.',
+    first_completed_exercise_required: 'Registra el ejercicio para comenzar tu entrenamiento.',
+    daily_execution_limit: 'Ya registraste un entrenamiento hoy. Podrás iniciar otro mañana.',
+    single_day_program_takes_precedence: 'Ya tienes un entrenamiento asignado para este día.',
+    cycle_slot_attempts_exhausted: 'Ya completaste las veces disponibles para este día.',
+    cycle_iteration_not_ready: 'Este día estará disponible cuando termines los demás entrenamientos de esta vuelta.',
+    execution_not_editable: 'Este entrenamiento ya terminó y tus resultados se conservan.',
+    invalid_actual_performance: 'Revisa las repeticiones, carga y esfuerzo que registraste.',
+    completed_exercise_requires_repetitions: 'Registra las repeticiones realizadas para completar el ejercicio.',
+    completed_weighted_exercise_requires_load: 'Registra la carga utilizada para completar el ejercicio.',
   };
   const message = Object.entries(messages).find(([code]) => error.message.includes(code))?.[1];
   return new Error(message ?? 'No se pudo guardar tu ejecución. Inténtalo nuevamente.');
