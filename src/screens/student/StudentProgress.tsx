@@ -77,10 +77,10 @@ export default function StudentProgress({ profile, onNavigate }: StudentProgress
           <ChartNoAxesColumnIncreasing aria-hidden="true" className="mx-auto mb-3 text-zinc-600" size={27} />
           <p className="text-sm font-semibold text-zinc-300">Aún no tienes entrenamientos registrados</p>
           <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-zinc-500">
-            Cuando marques tu primer ejercicio como completado, tus sesiones aparecerán aquí.
+            Cuando registres tu primer ejercicio, tus entrenamientos aparecerán aquí.
           </p>
           <button className="mx-auto mt-4 flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 text-xs font-bold text-white hover:bg-brand-500" onClick={() => onNavigate('routines')} type="button">
-            Ir a mis rutinas <ArrowRight aria-hidden="true" size={14} />
+            Ir a entrenar <ArrowRight aria-hidden="true" size={14} />
           </button>
         </div>
       )}
@@ -99,7 +99,7 @@ export default function StudentProgress({ profile, onNavigate }: StudentProgress
                       {formatLocalDate(entry.executionDate)}
                     </time>
                     <h2 className="mt-1 text-sm font-bold text-white">{entry.title}</h2>
-                    {entry.cycleDayTitle && <p className="mt-0.5 text-xs text-zinc-400">{entry.cycleDayTitle} · Intento {entry.slotAttempt}</p>}
+                    {entry.cycleDayTitle && entry.slotAttempt !== null && <p className="mt-0.5 text-xs text-zinc-400">{entry.cycleDayTitle} · Vuelta {entry.slotAttempt}</p>}
                   </div>
                   <span className="shrink-0 rounded-full border border-zinc-700 px-2 py-1 text-[9px] font-semibold text-zinc-300">
                     {executionStatusLabels[entry.status]}

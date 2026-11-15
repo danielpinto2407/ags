@@ -129,9 +129,9 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
   if (!tenantId) {
     return (
       <div className="space-y-4">
-        <Header title="Programar Rutina" subtitle="Acceso de gimnasio no disponible" />
+        <Header title="Programar Rutina" subtitle="No pudimos abrir tu espacio de entrenamiento" />
         <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-4 text-sm text-rose-300" role="alert">
-          Esta cuenta no tiene un gimnasio asociado.
+          Vuelve a iniciar sesión para cargar el espacio de tu gimnasio.
         </p>
       </div>
     );
@@ -387,7 +387,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
 
           {isPublished && (
             <p className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-3 text-xs text-emerald-300" role="status">
-              Esta rutina está publicada y no se puede editar. Para cambiarla en esta fecha se definirá un flujo de revisión/versionado.
+              Esta rutina ya está publicada y no se puede cambiar. Si necesitas modificarla, crea una nueva programación.
             </p>
           )}
 

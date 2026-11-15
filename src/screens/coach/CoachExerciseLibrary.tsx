@@ -91,9 +91,9 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
   if (!tenantId) {
     return (
       <div className="space-y-4">
-        <Header title="Biblioteca" subtitle="Acceso de gimnasio no disponible" />
+        <Header title="Biblioteca" subtitle="No pudimos abrir la biblioteca de tu gimnasio" />
         <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-4 text-sm text-rose-300" role="alert">
-          Esta cuenta no tiene un gimnasio asociado para consultar la biblioteca.
+          Vuelve a iniciar sesión para consultar los ejercicios de tu gimnasio.
         </p>
       </div>
     );

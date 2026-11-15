@@ -10,7 +10,7 @@ interface BottomNavProps {
 export default function BottomNav({ role, activeScreen, onNavigate }: BottomNavProps) {
   const studentTabs: { screen: Screen; label: string; icon: typeof Home }[] = [
     { screen: 'home', label: 'Inicio', icon: Home },
-    { screen: 'routines', label: 'Rutinas', icon: Calendar },
+    { screen: 'routines', label: 'Entrenar', icon: Dumbbell },
     { screen: 'progress', label: 'Progreso', icon: TrendingUp },
     { screen: 'profile', label: 'Perfil', icon: User },
   ];

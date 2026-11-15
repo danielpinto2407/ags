@@ -69,7 +69,7 @@ export default function CoachDashboard({ profile, onNavigate, onStudentSelect }:
           {members.slice(0, 3).map((member) => (
             <CoachMemberCard key={member.id} member={member} onSelect={onStudentSelect} onStatusChange={setMemberStatus} />
           ))}
-          {state.status === 'error' && <p className="text-xs text-rose-400">No se pudo cargar el roster de alumnas.</p>}
+          {state.status === 'error' && <p className="text-xs text-rose-400">No se pudieron cargar las alumnas.</p>}
           {state.status === 'loaded' && members.length === 0 && (
             <p className="rounded-xl border border-dashed border-zinc-800 p-4 text-xs text-zinc-500">
               Las alumnas aparecerán aquí cuando acepten tu invitación.

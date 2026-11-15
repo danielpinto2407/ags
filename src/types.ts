@@ -3,9 +3,16 @@ export type { Tenant, TenantFeatures, TenantStatus, TenantTheme } from '@/domain
 
 export type Role = 'student' | 'coach';
 
+export interface StudentRoutineTarget {
+  assignmentId: string;
+  cycleDayPosition: number;
+  executionDate: string;
+}
+
 export type Screen =
   | 'home'
   | 'routines'
+  | 'training'
   | 'progress'
   | 'profile'
   | 'students'
