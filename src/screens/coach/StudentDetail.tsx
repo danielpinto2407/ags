@@ -1,13 +1,16 @@
 import { ArrowLeft, CalendarDays, UserRound } from 'lucide-react';
 import ProfileMediaImage from '@/components/ProfileMediaImage';
 import type { CoachMember } from '@/domain/coachMember';
+import CoachStudentWorkoutHistory from '@/screens/coach/CoachStudentWorkoutHistory';
 
 interface StudentDetailProps {
   member: CoachMember;
+  coachId: string;
+  tenantId: string | null;
   onBack: () => void;
 }
 
-export default function StudentDetail({ member, onBack }: StudentDetailProps) {
+export default function StudentDetail({ member, coachId, tenantId, onBack }: StudentDetailProps) {
   const statusLabel = member.status === 'ACTIVE' ? 'Activa' : 'Inactiva';
   return (
     <div className="space-y-5">
@@ -50,6 +53,8 @@ export default function StudentDetail({ member, onBack }: StudentDetailProps) {
           </>
         )}
       </div>
+
+      <CoachStudentWorkoutHistory coachId={coachId} member={member} tenantId={tenantId} />
     </div>
   );
 }

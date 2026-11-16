@@ -187,7 +187,7 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
       {readOnlyMessage && <p className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-zinc-300">{readOnlyMessage}</p>}
 
       <section aria-label="Ejercicios del entrenamiento" className="space-y-3">
-        {day.items.map((item, index) => {
+        {day.items.map((item) => {
           const performance = getPerformance(item.id);
           const itemCompleted = execution?.performances[item.id]?.completed ?? false;
           const progressionTarget = assignment.programMode === 'CYCLE' && item.baseRepetitions !== null
@@ -210,7 +210,6 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
             <article className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4" key={item.id}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Ejercicio {index + 1} de {day.items.length}</p>
                   <h2 className="mt-1 text-lg font-bold text-white">{item.exercise.name}</h2>
                   <p className="mt-1 text-xs text-zinc-400">{item.exercise.primaryMuscles.map(formatMuscleName).join(', ')}</p>
                   <p className="mt-2 text-sm font-semibold text-brand-200">
@@ -265,11 +264,11 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
                 </div>
 
                 <label className="block text-sm text-zinc-300">
-                  <span className="flex justify-between gap-2"><span>RIR</span><span>{performance.rir ?? 'Selecciona'} · 1-10</span></span>
+                  <span className="flex justify-between gap-2"><span>RIR</span><span>{performance.rir ?? 'Selecciona'}</span></span>
                   <input aria-label={`RIR para ${item.exercise.name}`} className="mt-3 min-h-8 w-full accent-brand-500" disabled={!canRegister || savingItemId === item.id} max="10" min="1" onChange={(event) => updatePerformance(item.id, (current) => ({ ...current, rir: Number(event.target.value) }))} type="range" value={performance.rir ?? 1} />
                 </label>
                 <label className="block text-sm text-zinc-300">
-                  <span className="flex justify-between gap-2"><span>RPE</span><span>{performance.rpePercent === null ? 'Selecciona' : `${performance.rpePercent}%`} · 0-100%</span></span>
+                  <span className="flex justify-between gap-2"><span>RPE</span><span>{performance.rpePercent === null ? 'Selecciona' : `${performance.rpePercent}%`}</span></span>
                   <input aria-label={`RPE para ${item.exercise.name}`} className="mt-3 min-h-8 w-full accent-brand-500" disabled={!canRegister || savingItemId === item.id} max="100" min="0" onChange={(event) => updatePerformance(item.id, (current) => ({ ...current, rpePercent: Number(event.target.value) }))} type="range" value={performance.rpePercent ?? 0} />
                 </label>
 

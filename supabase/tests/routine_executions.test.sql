@@ -1,7 +1,7 @@
 ﻿begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(35);
+select extensions.plan(41);
 
 insert into public.tenants (id, name, subdomain, status)
 values ('e0000000-0000-4000-8000-000000000001', 'Execution Gym', 'execution-gym', 'ACTIVE');
@@ -11,14 +11,16 @@ values
   ('e1000000-0000-4000-8000-000000000001', 'execution-coach@example.test'),
   ('e1000000-0000-4000-8000-000000000002', 'execution-student-a@example.test'),
   ('e1000000-0000-4000-8000-000000000003', 'execution-student-b@example.test'),
-  ('e1000000-0000-4000-8000-000000000004', 'execution-student-c@example.test');
+  ('e1000000-0000-4000-8000-000000000004', 'execution-student-c@example.test'),
+  ('e1000000-0000-4000-8000-000000000005', 'execution-coach-b@example.test');
 
 insert into public.profiles (id, tenant_id, role, status, full_name, coach_id)
 values
   ('e1000000-0000-4000-8000-000000000001', 'e0000000-0000-4000-8000-000000000001', 'coach_admin', 'ACTIVE', 'Execution Coach', null),
   ('e1000000-0000-4000-8000-000000000002', 'e0000000-0000-4000-8000-000000000001', 'user_personalized', 'ACTIVE', 'Execution Student A', 'e1000000-0000-4000-8000-000000000001'),
   ('e1000000-0000-4000-8000-000000000003', 'e0000000-0000-4000-8000-000000000001', 'user_personalized', 'ACTIVE', 'Execution Student B', 'e1000000-0000-4000-8000-000000000001'),
-  ('e1000000-0000-4000-8000-000000000004', 'e0000000-0000-4000-8000-000000000001', 'user_personalized', 'ACTIVE', 'Execution Student C', 'e1000000-0000-4000-8000-000000000001');
+  ('e1000000-0000-4000-8000-000000000004', 'e0000000-0000-4000-8000-000000000001', 'user_personalized', 'ACTIVE', 'Execution Student C', 'e1000000-0000-4000-8000-000000000001'),
+  ('e1000000-0000-4000-8000-000000000005', 'e0000000-0000-4000-8000-000000000001', 'coach_admin', 'ACTIVE', 'Execution Coach B', null);
 
 select extensions.ok(
   (select relrowsecurity from pg_catalog.pg_class where oid = 'public.routine_executions'::pg_catalog.regclass),
@@ -299,6 +301,58 @@ select extensions.is(
   (select count(*)::integer from public.routine_execution_sets),
   0,
   'another student cannot read actual set records'
+);
+
+select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000001', true);
+select extensions.is(
+  (select count(*)::integer from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000003'),
+  4,
+  'assigned coach can read executions from the assignment they authored'
+);
+select extensions.is(
+  (select count(*)::integer from public.routine_execution_exercises where execution_id in (select id from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000003')),
+  4,
+  'assigned coach can read exercise performance for their authored assignment'
+);
+
+reset role;
+set local role service_role;
+update public.profiles
+set coach_id = 'e1000000-0000-4000-8000-000000000005'
+where id = 'e1000000-0000-4000-8000-000000000003';
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000001', true);
+select extensions.is(
+  (select count(*)::integer from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000003'),
+  0,
+  'previous coach loses access when they no longer own the student relationship'
+);
+select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000005', true);
+select extensions.is(
+  (select count(*)::integer from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000003'),
+  0,
+  'new coach cannot read an assignment authored by another coach'
+);
+
+reset role;
+set local role service_role;
+update public.routine_assignments
+set coach_id = 'e1000000-0000-4000-8000-000000000005'
+where title = 'Ciclo B';
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000005', true);
+select extensions.is(
+  (select count(*)::integer from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000003'),
+  4,
+  'new coach can read historical executions after student and assignment ownership match'
+);
+select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000001', true);
+select extensions.is(
+  (select count(*)::integer from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000003'),
+  0,
+  'former assignment coach cannot read after both ownership links change'
 );
 
 select * from extensions.finish();

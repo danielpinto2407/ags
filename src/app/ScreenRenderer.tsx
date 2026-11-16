@@ -49,7 +49,7 @@ export default function ScreenRenderer({ navigation, profile, onLogout }: Screen
       return <CoachStudents coachId={profile.id} onStudentSelect={handleStudentSelect} />;
     case 'studentDetail':
       return selectedMember ? (
-        <StudentDetail member={selectedMember} onBack={handleStudentBack} />
+        <StudentDetail member={selectedMember} coachId={profile.id} tenantId={profile.tenant_id} onBack={handleStudentBack} />
       ) : (
         <CoachStudents coachId={profile.id} onStudentSelect={handleStudentSelect} />
       );
