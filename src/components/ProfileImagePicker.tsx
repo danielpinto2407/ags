@@ -57,9 +57,9 @@ export default function ProfileImagePicker({
     <div className="flex flex-col items-center gap-2">
       <ProfileMediaImage
         alt={alt}
-        className={`border border-zinc-700 bg-zinc-800 text-zinc-300 ${isCircle ? 'h-20 w-20 rounded-full' : 'h-20 w-36 rounded-xl'}`}
+        className={`text-zinc-300 ${isCircle ? 'h-20 w-20 rounded-full border border-zinc-700 bg-zinc-800' : 'h-24 w-44 rounded-xl border border-dashed border-zinc-700 bg-transparent'}`}
         fallback={fallback}
-        imageClassName={`h-full w-full ${isCircle ? 'object-cover' : 'object-contain p-2'}`}
+        imageClassName={`h-full w-full ${isCircle ? 'object-cover' : 'object-contain p-1.5'}`}
         src={imageUrl}
       />
       <input

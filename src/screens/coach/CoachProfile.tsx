@@ -32,7 +32,7 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
 
   return (
     <div className="space-y-5">
-      <Header title="Mi Perfil" showBell={false} />
+      <Header title="Mi Perfil" showBell={false} showLogo={false} />
 
       {/* Profile Card */}
       <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl p-5">

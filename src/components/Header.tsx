@@ -18,12 +18,12 @@ export default function Header({ title, subtitle, showLogo = true, showBell = fa
     <div className="flex justify-between items-start mb-5">
       <div>
         {showLogo && (
-          <div className="mb-1 flex h-7 items-center gap-2">
+          <div className="mb-1 flex h-10 items-center gap-2.5">
             <ProfileMediaImage
               alt={tenant?.name ?? 'Gimnasio'}
-              className="h-7 w-7 rounded-lg bg-brand-950/30 text-brand-300"
-              fallback={<Dumbbell size={15} />}
-              imageClassName="h-full w-full object-contain p-0.5"
+              className="h-10 w-10 text-brand-500"
+              fallback={<Dumbbell aria-hidden="true" size={20} />}
+              imageClassName="h-full w-full object-contain"
               src={tenant?.theme.logoUrl ?? null}
             />
             <span className="font-display font-extrabold tracking-[0.15em] text-[10px] text-brand-400 uppercase" style={{ textShadow: '0 0 8px color-mix(in srgb, var(--tenant-accent) 28%, transparent)' }}>
