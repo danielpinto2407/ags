@@ -44,6 +44,27 @@ export interface StudentRoutineHistoryEntry {
   progressPercent: number;
 }
 
+export type CoachRoutineExecutionSummary = StudentRoutineHistoryEntry;
+
+export interface CoachRoutineExerciseReview {
+  id: string;
+  position: number;
+  name: string;
+  prescribedSets: number;
+  prescribedRepetitions: string;
+  prescribedLoad: string | null;
+  actualRepetitions: number | null;
+  actualLoad: number | null;
+  loadUnit: TrainingLoadUnit | null;
+  completed: boolean;
+  rir: number | null;
+  rpePercent: number | null;
+}
+
+export interface CoachRoutineExecutionReview extends CoachRoutineExecutionSummary {
+  exercises: CoachRoutineExerciseReview[];
+}
+
 export function validateActualExercisePerformance(
   performance: ActualExercisePerformance,
   requiresLoad: boolean

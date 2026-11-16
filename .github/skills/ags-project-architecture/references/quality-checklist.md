@@ -24,6 +24,10 @@
 - Are cycle slots ordered and complete (N slots, one routine each), with per-exercise progression and a nonnegative additional-repeat count yielding `1 + additional` total iterations?
 - Does the student log actual reps/load/completion once per exercise, independent of prescribed set count, with progress derived from completed exercises / prescribed exercises rather than per-set records?
 - Does the student log actual reps/load and completion once per exercise, independent of prescribed set count, while the coach's prescribed sets/reps remain visible as the target? Is progress derived from completed exercises / prescribed exercises rather than per-set logs?
+- Can only the active coach who owns the student and authored the published assignment read that assignment's executions? Are same-tenant non-owner and cross-tenant reads denied, and are coach views read-only?
+- Can a coach edit only published training without executions, while any started/completed/closed workout stays immutable? Are untouched cycle slots editable independently, cycle-wide settings locked after first start, and edit/start races serialized server-side?
+- Can the coach inspect dated execution status, derived exercise-completion percentage, and each exercise's prescription beside actual reps/load/unit, RIR, RPE, and completion without duplicating or mutating student records?
+- Is the student clearly told that the coach assigned to the published routine can review the workout progress and actual exercise records?
 - Are student executions tied to the selected plan/routine/slot and actual execution date, with one start per student/calendar day, same-day-only resume, day-end close/frozen progress, next-day eligibility, and concurrency-safe enforcement?
 - Are drafts hidden from students and published plans/routines visible only to their owner? Does the migration preserve tenant/coach/student ownership, prescriptions, and immutable snapshots before retiring date-bound routes?
 - Does invitation provisioning happen server-side, with role/tenant assigned by trusted code?
@@ -44,6 +48,7 @@
 - Do action labels describe the actual effect (open, start, save, complete)? Is the persisted start/completion event distinct from merely opening or expanding a form?
 - If a screenshot or visual proposal was supplied, does the rendered interaction match its content order, grouping, expansion behavior, and mobile hierarchy at a comparable viewport?
 - Were all visible labels and status colors reviewed in normal, completed, in-progress, incomplete, and historical states against the active tenant palette, with non-color status cues?
+- Does the coach's progress view make the student, routine/date, completion status, and prescribed-versus-actual values clear, with distinct empty, in-progress, completed, and closed-incomplete states?
 - Is the chosen interaction pattern justified by the task and consistent with product/data constraints, rather than selected only for implementation convenience?
 - Are primary path, decisions, validation, loading, empty, error, success, and permission states explicitly considered? Does empty-state copy reflect actual data?
 - Were the relevant official accessibility/platform references checked for new or complex interactions, and are semantics, keyboard/focus, accessible names, and feedback correct?
