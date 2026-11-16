@@ -29,16 +29,16 @@ export default function LoginScreen({
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center gap-10 px-6 py-10 sm:gap-12">
       <div className="flex w-full max-w-md flex-col items-center">
-        <div className="mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-brand-400 to-brand-700 shadow-neon">
+        <div className="mb-5 flex h-28 w-full max-w-64 items-center justify-center overflow-hidden sm:h-32">
           {logoUrl && !logoFailed ? (
             <img
               src={logoUrl}
               alt={`Logo de ${tenantName}`}
               onError={() => setLogoFailed(true)}
-              className="h-full w-full object-contain"
+              className="max-h-full max-w-full object-contain"
             />
           ) : (
-            <Dumbbell size={36} className="text-white" />
+            <Dumbbell aria-hidden="true" size={48} className="text-brand-500" />
           )}
         </div>
         <span className="font-display font-extrabold tracking-[0.2em] text-[11px] text-brand-500 uppercase mb-1" style={{ textShadow: '0 0 8px color-mix(in srgb, var(--tenant-primary) 30%, transparent)' }}>
