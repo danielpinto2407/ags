@@ -148,7 +148,7 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
           : attemptsExhausted
             ? 'Ya completaste las veces disponibles para este día del ciclo.'
             : !cycleSlotAvailable
-              ? 'Este entrenamiento estará disponible cuando termines los demás de esta vuelta.'
+              ? 'Este entrenamiento estará disponible cuando termines los demás de este ciclo.'
             : null;
 
   return (

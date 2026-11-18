@@ -1,6 +1,6 @@
 # AGS Project Handoff
 
-Last verified: 2026-11-16
+Last verified: 2026-11-17
 
 This is a continuity note for current focus and verified release evidence, not a feature catalog or deployment authority. Product goals and acceptance behavior live in `product-context.md`; schema/security contracts live in `data-contracts.md`; implementation workflow lives in `feature-workflow.md`. Check GitHub for PR state, Supabase for migrations/functions, and Vercel for deployments. Update this handoff only when the focus, next step, blocker, or verified evidence materially changes.
 
@@ -10,17 +10,18 @@ Complete and validate the personalized-training path: coach invitation -> member
 
 ## Current Focus
 
-- **Current work:** CU-04C coach review of assigned-student workout executions is implemented on `feat/coach-workout-progress`; PR #25 is open with a Ready Vercel Preview. Migration 033 is applied to Production; the web release is pending PR merge.
-- **Next step:** merge PR #25, confirm Vercel Production deployment, then verify the coach read-only history/detail and student-visible disclosure without creating or changing Production workout data.
+- **Current work:** tenant-configurable login description, per-series workout tracking/corrections, coach series review, and student empty-state/contrast updates are merged in PR #27 (`ddb724b`).
+- **Release state:** Supabase Production is at migrations 001-035; Vercel Production deployment for the merge is successful. The old performance RPC remains available for rollout compatibility.
+- **Next step:** monitor Production and validate the new flows using a dedicated approved test tenant/account; do not create or alter real member workouts without explicit confirmation.
 - Do not create, publish, or complete Production training data for testing without explicit confirmation.
 - CU-04B biometrics remain pending the coach form, metric catalogue, and units definition. Other deferred scope is listed in `product-context.md`.
 
 ## Verified Release Snapshot
 
-- **GitHub:** PR #24 is merged to `main`; PR #25 contains CU-04C and is open from `feat/coach-workout-progress` at commit `13cf04b`.
-- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-033. Remote migration list confirms 033; a post-deploy dry-run reports no pending migrations.
+- **GitHub:** PR #27 is merged to `main` at `ddb724b`.
+- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-035. Remote migration list confirms 035; no migrations are pending.
 - **Auth email:** revised Invite/Recovery templates are deployed; `invite-personalized-member` is active at version 4 with `verify_jwt=true`. The user manually confirmed the new invitation template applies.
-- **Web:** `ags-roan-iota.vercel.app` serves the updated roster bundle. The custom domain `ags.tugimnasioapp.com` still has unresolved DNS.
+- **Web:** `ags-roan-iota.vercel.app` serves the PR #27 bundle; Vercel Production deployment for merge SHA `ddb724bb23e8a82bda3c9fc29dd8857322c2a5ce` completed successfully. The custom domain `ags.tugimnasioapp.com` still has unresolved DNS.
 - **Branding/media:** the user validated image upload. Production browser loaded the gym logo and Wilson's photo from Storage without broken images.
 
 ## Recent Evidence
@@ -28,6 +29,7 @@ Complete and validate the personalized-training path: coach invitation -> member
 - **Coach browser sweep:** dashboard showed 4 members (3 active, 1 inactive); roster search/filters worked; shared and gym exercise libraries loaded (15 shared, 2 gym-owned); routine editor opened in single-date and cycle modes; profile/logo loaded. The invite dialog was checked and closed without sending an invite.
 - **Student browser sweep:** home, routines, progress, and profile loaded for Wilson. Routines/progress showed empty states; logo/photo loaded. No workout was started or modified.
 - **Automated local checks for CU-04C:** lint, typecheck, Vitest 80/80, build, and pgTAP 254/254 pass with migration 033 applied locally. Known non-blocking warnings: TypeScript 5.6.3 is beyond the declared typescript-eslint range; Browserslist and esbuild options need maintenance.
+- **PR #27 validation:** typecheck, lint, Vitest 82/82, build, and pgTAP 261/261 passed. Supabase migrations 034/035 were applied before frontend merge; remote checks confirm the tenant description column, versioned per-set RPC, and preserved legacy RPC. Public Vercel bundle contains the per-set UI, student empty-state copy, coach `Programado` label, and tenant description form.
 
 ## Preservation And Safety
 
