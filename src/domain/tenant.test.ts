@@ -35,11 +35,15 @@ describe('tenant payload validation', () => {
     expect(isTenantTheme({ ...DEFAULT_TENANT_THEME, backgroundColor: 'url(javascript:alert(1))' })).toBe(false);
   });
 
-  it('allows only HTTPS or same-origin path logo URLs', () => {
+  it('allows only HTTPS or same-origin path URLs for tenant media', () => {
     expect(isTenantTheme({ ...DEFAULT_TENANT_THEME, logoUrl: 'https://cdn.example.com/logo.png' })).toBe(true);
     expect(isTenantTheme({ ...DEFAULT_TENANT_THEME, logoUrl: '/logos/ags.png' })).toBe(true);
+    expect(isTenantTheme({ ...DEFAULT_TENANT_THEME, loadingIconUrl: 'https://cdn.example.com/loading.webp' })).toBe(true);
+    expect(isTenantTheme({ ...DEFAULT_TENANT_THEME, loadingIconUrl: '/loading-icons/ags.png' })).toBe(true);
     expect(isTenantTheme({ ...DEFAULT_TENANT_THEME, logoUrl: '//evil.example/logo.png' })).toBe(false);
     expect(isTenantTheme({ ...DEFAULT_TENANT_THEME, logoUrl: 'javascript:alert(1)' })).toBe(false);
+    expect(isTenantTheme({ ...DEFAULT_TENANT_THEME, loadingIconUrl: '//evil.example/loading.png' })).toBe(false);
+    expect(isTenantTheme({ ...DEFAULT_TENANT_THEME, loadingIconUrl: 'javascript:alert(1)' })).toBe(false);
   });
 
   it('accepts only boolean feature flags', () => {
@@ -97,6 +101,7 @@ describe('tenant payload validation', () => {
     });
 
     expect(tenant?.theme.surfaceColor).toBe(DEFAULT_TENANT_THEME.surfaceColor);
+    expect(tenant?.theme.loadingIconUrl).toBeNull();
     expect(tenant?.theme.primaryColor).toBe('#ff0a78');
   });
 

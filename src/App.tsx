@@ -3,6 +3,7 @@ import LoginScreen from '@/screens/LoginScreen';
 import AppShell from '@/app/AppShell';
 import ScreenRenderer from '@/app/ScreenRenderer';
 import InvitationAcceptanceScreen from '@/screens/InvitationAcceptanceScreen';
+import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { useTenantContext } from '@/app/tenant/tenantContext';
 import { useAppNavigation } from '@/app/useAppNavigation';
 import { useAuth } from '@/app/session/authContext';
@@ -23,10 +24,11 @@ const tenantThemeStyle = (theme: typeof DEFAULT_TENANT_THEME): CSSProperties => 
   '--tenant-display-font': `"${theme.displayFont}"`,
 } as CSSProperties);
 
-function TenantMessage({ title, message, action }: { title: string; message: string; action?: ReactNode }) {
+function TenantMessage({ title, message, action, loading = false }: { title: string; message: string; action?: ReactNode; loading?: boolean }) {
   return (
     <main className="tenant-app min-h-screen w-full flex items-center justify-center px-6 py-12 text-center">
       <section className="max-w-md space-y-3">
+        {loading && <TenantLoadingIndicator className="mx-auto" size={28} />}
         <p className="font-display text-xl font-bold text-zinc-900">{title}</p>
         <p className="text-sm leading-relaxed text-zinc-400">{message}</p>
         {action}
@@ -62,7 +64,7 @@ export default function App() {
   }, [fontTheme.bodyFont, fontTheme.displayFont]);
 
   if (tenantState.status === 'loading') {
-    return <TenantMessage title="Cargando gimnasio" message="Estamos preparando tu espacio de entrenamiento." />;
+    return <TenantMessage loading title="Cargando gimnasio" message="Estamos preparando tu espacio de entrenamiento." />;
   }
 
   if (tenantState.status === 'error') {
@@ -100,7 +102,7 @@ export default function App() {
   }
 
   if (authState.status === 'loading' || authState.status === 'profile-loading') {
-    return <TenantMessage title="Verificando sesión" message="Estamos validando tu cuenta y el acceso a este gimnasio." />;
+    return <TenantMessage loading title="Verificando sesión" message="Estamos validando tu cuenta y el acceso a este gimnasio." />;
   }
 
   if (authState.status === 'error') {

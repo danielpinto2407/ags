@@ -1,6 +1,7 @@
-import { CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Eye, LoaderCircle, Play } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Eye, Play } from 'lucide-react';
 import { useState } from 'react';
 import Header from '@/components/Header';
+import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
 import { formatLocalDate, shiftUtcDate, utcDateInputValue, utcWeekInputValues } from '@/domain/localDate';
 import { getCurrentCycleIteration, getCycleIterationCount, isCycleSlotAvailable } from '@/domain/trainingCycle';
@@ -130,7 +131,7 @@ export default function StudentRoutines({ profile, initialDate, onStartTraining 
 
       {state.status === 'loading' && (
         <p className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-400" role="status">
-          <LoaderCircle aria-hidden="true" className="animate-spin" size={17} /> Cargando entrenamientos…
+          <TenantLoadingIndicator size={17} /> Cargando entrenamientos…
         </p>
       )}
 

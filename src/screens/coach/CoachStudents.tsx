@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search, Plus, RefreshCw, Users } from 'lucide-react';
 import Header from '@/components/Header';
+import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import InviteMemberModal from '@/components/InviteMemberModal';
 import CoachMemberCard from '@/components/CoachMemberCard';
 import { useCoachMembers } from '@/app/useCoachMembers';
@@ -74,7 +75,7 @@ export default function CoachStudents({ coachId, onStudentSelect }: CoachStudent
       {/* Student List */}
       <div className="space-y-2">
           {state.status === 'loading' && members.length === 0 && (
-            <p className="py-8 text-center text-sm text-zinc-500" role="status">Cargando alumnas invitadas…</p>
+            <p className="flex items-center justify-center gap-2 py-8 text-center text-sm text-zinc-500" role="status"><TenantLoadingIndicator size={16} /> Cargando alumnas invitadas…</p>
           )}
           {state.status === 'loaded' && members.length === 0 && (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-5 py-10 text-center">

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Archive, Check, Copy, Dumbbell, LoaderCircle, Pencil, Plus, RefreshCw, Search, Undo2 } from 'lucide-react';
+import { Archive, Check, Copy, Dumbbell, Pencil, Plus, RefreshCw, Search, Undo2 } from 'lucide-react';
 import Header from '@/components/Header';
+import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import CreateExerciseModal from '@/components/CreateExerciseModal';
 import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
 import SelectModalField from '@/components/SelectModalField';
@@ -202,7 +203,7 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
 
       {loading && exercises.length === 0 && !loadError && (
         <p className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-500" role="status">
-          <LoaderCircle className="animate-spin" size={17} /> Cargando biblioteca…
+          <TenantLoadingIndicator size={17} /> Cargando biblioteca…
         </p>
       )}
 
