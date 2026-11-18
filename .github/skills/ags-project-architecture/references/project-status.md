@@ -10,9 +10,9 @@ Complete and validate the personalized-training path: coach invitation -> member
 
 ## Current Focus
 
-- **Current work:** compact, N-driven coach cycle carousel on the production cycle-card UI; the existing business limit remains 20 routines per cycle.
+- **Current work:** PR #30 proposes a compact, N-driven coach cycle carousel; its Vercel Preview is ready, and Production promotion is pending merge.
 - **Release state:** Supabase Production is at migrations 001-036; Vercel Production deployment for merge SHA `ec624d10e876fe76271534afde71c71c04c90d8c` completed successfully. The old performance RPC remains available for rollout compatibility.
-- **Next step:** publish the cycle-carousel refinement through a feature PR and Vercel Preview. Tenants continue using the default LoaderCircle until a coach uploads a custom loading icon in Profile. Do not create or alter real member workouts for testing without explicit confirmation.
+- **Next step:** merge PR #30 to promote the cycle-carousel refinement to Production. No database migration is required. Tenants continue using the default LoaderCircle until a coach uploads a custom loading icon in Profile. Do not create or alter real member workouts for testing without explicit confirmation.
 - Do not create, publish, or complete Production training data for testing without explicit confirmation.
 - CU-04B biometrics remain pending the coach form, metric catalogue, and units definition. Other deferred scope is listed in `product-context.md`.
 
@@ -34,7 +34,7 @@ Complete and validate the personalized-training path: coach invitation -> member
 - **Cycle-card UI update:** `CoachProgramRoutine` now selects cycle slots through responsive cards; student cycle copy describes routines rather than calendar days. Local browser login confirmed the coach can select multiple routine cards and the existing editor follows the selected slot; student home shows routine-based copy and student selection cards remain unchanged. Typecheck, lint, 82 Vitest tests, and build pass. No DB or production data was changed.
 - **Tenant loading icon / PR #29:** migration 036 adds the tenant-scoped `loading-icons/` Storage path and `set_own_tenant_loading_icon`; pgTAP passes 272 assertions. The tenant theme validates nullable `loadingIconUrl`, coach profile exposes upload/reset, and content loading indicators use the custom image or default LoaderCircle. Production migration and deployment are verified; no custom icon has been uploaded to Production.
 - **PR #29 validation:** typecheck, lint, Vitest 82/82, build, and pgTAP 272/272 passed before merge. The public Production bundle contains the upload/reset controls and loading-icon behavior.
-- **Cycle carousel refinement:** coach cycle slots use a horizontal scroll-snap rail with compact cards and previous/next controls; 20 slots were exercised in the local browser at mobile width, confirming horizontal navigation and compact height. Selection/editor behavior is unchanged; no data was saved. Typecheck, lint, Vitest 82/82, and build pass. The current product rule still limits cycle length to 20.
+- **Cycle carousel refinement / PR #30:** coach cycle slots use a horizontal scroll-snap rail with compact cards and previous/next controls; 20 slots were exercised in the local browser at mobile width, confirming horizontal navigation and compact height. Selection/editor behavior is unchanged; no data was saved. Typecheck, lint, Vitest 82/82, build, and the Vercel Preview pass. The PR is clean and awaiting authenticated merge; the current product rule still limits cycle length to 20.
 
 ## Preservation And Safety
 
