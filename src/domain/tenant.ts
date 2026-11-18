@@ -2,6 +2,7 @@ export type TenantStatus = 'ACTIVE' | 'SUSPENDED';
 
 export interface TenantTheme {
   logoUrl: string | null;
+  loadingIconUrl: string | null;
   primaryColor: string;
   secondaryColor: string;
   backgroundColor: string;
@@ -30,6 +31,7 @@ export interface Tenant {
 
 export const DEFAULT_TENANT_THEME: TenantTheme = {
   logoUrl: null,
+  loadingIconUrl: null,
   primaryColor: '#7b2545',
   secondaryColor: '#572239',
   backgroundColor: '#f4eae3',
@@ -89,8 +91,13 @@ export function isTenantTheme(value: unknown): value is TenantTheme {
     || (typeof theme.logoUrl === 'string'
       && (theme.logoUrl.startsWith('/') && !theme.logoUrl.startsWith('//')
         || /^https:\/\//i.test(theme.logoUrl)));
+  const validLoadingIcon = theme.loadingIconUrl === null
+    || (typeof theme.loadingIconUrl === 'string'
+      && (theme.loadingIconUrl.startsWith('/') && !theme.loadingIconUrl.startsWith('//')
+        || /^https:\/\//i.test(theme.loadingIconUrl)));
 
   return validLogo
+    && validLoadingIcon
     && typeof theme.primaryColor === 'string' && HEX_COLOR_PATTERN.test(theme.primaryColor)
     && typeof theme.secondaryColor === 'string' && HEX_COLOR_PATTERN.test(theme.secondaryColor)
     && typeof theme.backgroundColor === 'string' && HEX_COLOR_PATTERN.test(theme.backgroundColor)

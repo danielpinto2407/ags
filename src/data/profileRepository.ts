@@ -75,6 +75,51 @@ export const profileRepository = {
     return logoUrl;
   },
 
+  async uploadTenantLoadingIcon(file: File, tenantId: string, previousLoadingIconUrl: string | null): Promise<string> {
+    const client = requireClient();
+    const path = `loading-icons/${tenantId}/${crypto.randomUUID()}.${requireImageExtension(file)}`;
+    const { error: uploadError } = await client.storage.from('profile-media').upload(path, file, {
+      cacheControl: '3600',
+      contentType: file.type,
+      upsert: false,
+    });
+    if (uploadError) throw new Error('No se pudo subir el icono de carga. Inténtalo nuevamente.');
+
+    const loadingIconUrl = client.storage.from('profile-media').getPublicUrl(path).data.publicUrl;
+    const { data, error: saveError } = await client.rpc('set_own_tenant_loading_icon', {
+      p_loading_icon_url: loadingIconUrl,
+    });
+    if (saveError || data !== loadingIconUrl) {
+      await client.storage.from('profile-media').remove([path]);
+      throw new Error('No se pudo guardar el icono de carga. Inténtalo nuevamente.');
+    }
+
+    if (previousLoadingIconUrl) {
+      const marker = '/storage/v1/object/public/profile-media/';
+      const oldPath = previousLoadingIconUrl.split(marker)[1];
+      if (oldPath?.startsWith(`loading-icons/${tenantId}/`)) {
+        await client.storage.from('profile-media').remove([decodeURIComponent(oldPath)]);
+      }
+    }
+    return loadingIconUrl;
+  },
+
+  async clearTenantLoadingIcon(tenantId: string, previousLoadingIconUrl: string | null): Promise<void> {
+    const client = requireClient();
+    const { error } = await client.rpc('set_own_tenant_loading_icon', {
+      p_loading_icon_url: null,
+    });
+    if (error) throw new Error('No se pudo restaurar el icono predeterminado. Inténtalo nuevamente.');
+
+    if (previousLoadingIconUrl) {
+      const marker = '/storage/v1/object/public/profile-media/';
+      const oldPath = previousLoadingIconUrl.split(marker)[1];
+      if (oldPath?.startsWith(`loading-icons/${tenantId}/`)) {
+        await client.storage.from('profile-media').remove([decodeURIComponent(oldPath)]);
+      }
+    }
+  },
+
   async setTenantDescription(description: string): Promise<string> {
     const client = requireClient();
     const { data, error } = await client.rpc('set_own_tenant_description', {

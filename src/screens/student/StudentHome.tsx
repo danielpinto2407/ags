@@ -1,5 +1,6 @@
-import { ChevronRight, Clock3, Dumbbell, LoaderCircle } from 'lucide-react';
+import { ChevronRight, Clock3, Dumbbell } from 'lucide-react';
 import Header from '@/components/Header';
+import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
 import type { Screen } from '@/types';
 import type { Profile } from '@/domain/profile';
@@ -23,7 +24,7 @@ export default function StudentHome({ onNavigate, profile }: StudentHomeProps) {
 
       {state.status === 'loading' && (
         <p className="flex items-center justify-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-sm text-zinc-500" role="status">
-          <LoaderCircle className="animate-spin" size={17} /> Cargando programación de hoy…
+          <TenantLoadingIndicator size={17} /> Cargando programación de hoy…
         </p>
       )}
 
@@ -37,20 +38,20 @@ export default function StudentHome({ onNavigate, profile }: StudentHomeProps) {
       {state.status === 'loaded' && (
         <section className="workout-card overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
           <div className="workout-cover flex min-h-44 flex-col justify-end px-5 py-5 sm:min-h-52 sm:px-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/85">{assignment?.programMode === 'CYCLE' ? `Ciclo · ${assignment.cycleDayCount} entrenamientos` : `Rutina asignada · ${formatLocalDate(assignment?.scheduledFor ?? today)}`}</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/85">{assignment?.programMode === 'CYCLE' ? `Ciclo · ${assignment.cycleDayCount} rutinas` : `Rutina asignada · ${formatLocalDate(assignment?.scheduledFor ?? today)}`}</p>
             <h2 className="mt-2 max-w-lg font-display text-2xl font-bold leading-tight text-white sm:text-3xl">
               {assignment?.title ?? 'Un día para recuperar energía'}
             </h2>
-            <p className="mt-2 text-xs text-white/85">{assignment?.programMode === 'CYCLE' ? 'Puedes elegir cualquiera de los días del ciclo.' : assignment ? 'Tu entrenamiento personalizado' : 'Tu coach puede asignarte una rutina cuando esté lista.'}</p>
+            <p className="mt-2 text-xs text-white/85">{assignment?.programMode === 'CYCLE' ? 'Puedes elegir cualquiera de las rutinas del ciclo.' : assignment ? 'Tu entrenamiento personalizado' : 'Tu coach puede asignarte una rutina cuando esté lista.'}</p>
           </div>
           <div className="p-4 sm:p-5">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-zinc-500">
-              <span className="inline-flex items-center gap-1.5"><Dumbbell size={14} className="text-brand-500" /> <strong className="text-zinc-900">{assignment?.programMode === 'CYCLE' ? assignment.cycleDayCount : previewItems.length}</strong> {assignment?.programMode === 'CYCLE' ? 'días disponibles' : 'ejercicios'}</span>
+              <span className="inline-flex items-center gap-1.5"><Dumbbell size={14} className="text-brand-500" /> <strong className="text-zinc-900">{assignment?.programMode === 'CYCLE' ? assignment.cycleDayCount : previewItems.length}</strong> {assignment?.programMode === 'CYCLE' ? 'rutinas disponibles' : 'ejercicios'}</span>
               <span className="inline-flex items-center gap-1.5"><Clock3 size={14} className="text-brand-500" /> Entrena a tu ritmo</span>
             </div>
             {assignment?.programMode === 'CYCLE' ? (
               <div className="mt-4 rounded-lg bg-zinc-950 px-3 py-3 text-xs leading-relaxed text-zinc-400">
-                Selecciona el entrenamiento que quieras realizar. El orden de los días es libre.
+                Elige cualquiera de las rutinas disponibles. Puedes realizar una por día.
               </div>
             ) : assignment && assignment.items.length > 0 ? (
               <ul className="mt-4 divide-y divide-zinc-800 border-y border-zinc-800">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, LoaderCircle, Save } from 'lucide-react';
 import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
+import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
 import { exerciseEquipmentLabels, exerciseFocusLabels, exerciseMovementLabels } from '@/domain/exerciseDefinition';
 import { formatLocalDate, utcDateInputValue } from '@/domain/localDate';
@@ -119,7 +120,7 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
   if (state.status === 'loading' && !assignment) {
     return (
       <div className="flex min-h-[55vh] items-center justify-center text-sm text-zinc-400" role="status">
-        <LoaderCircle aria-hidden="true" className="mr-2 animate-spin" size={17} /> Cargando entrenamiento…
+        <TenantLoadingIndicator className="mr-2" size={17} /> Cargando entrenamiento…
       </div>
     );
   }

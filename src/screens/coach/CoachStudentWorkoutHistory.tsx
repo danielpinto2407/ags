@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, LoaderCircle, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
+import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { routineAssignmentRepository } from '@/data/routineAssignmentRepository';
 import { formatLocalDate } from '@/domain/localDate';
 import type { CoachMember } from '@/domain/coachMember';
@@ -117,7 +118,7 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
         </p>
       ) : historyState.status === 'loading' && historyState.entries.length === 0 ? (
         <p className="flex items-center justify-center gap-2 py-6 text-sm text-zinc-400" role="status">
-          <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> Cargando entrenamientos…
+          <TenantLoadingIndicator size={16} /> Cargando entrenamientos…
         </p>
       ) : historyState.status === 'error' ? (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-900/60 bg-rose-950/20 p-3" role="alert">
@@ -184,7 +185,7 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
                   <div className="border-t border-zinc-700 bg-zinc-800 p-3 text-zinc-100" hidden={!isSelected} id={`coach-workout-review-${entry.id}`}>
                     {isSelected && reviewState.status === 'loading' && (
                       <p className="flex items-center justify-center gap-2 py-5 text-sm text-zinc-400" role="status">
-                        <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> Cargando detalle…
+                        <TenantLoadingIndicator size={16} /> Cargando detalle…
                       </p>
                     )}
                     {isSelected && reviewState.status === 'error' && (

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Dumbbell, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
+import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import DateField from '@/components/DateField';
 import SelectModalField from '@/components/SelectModalField';
 import { useCoachMembers } from '@/app/useCoachMembers';
@@ -153,7 +154,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
     const safeCount = Math.min(20, Math.max(1, count));
     const removedDaysWithExercises = days.filter((day) => day.position > safeCount && day.items.length > 0);
     if (removedDaysWithExercises.length > 0 && !window.confirm(
-      `Reducir el ciclo a ${safeCount} ${safeCount === 1 ? 'día' : 'días'} eliminará los ejercicios de ${removedDaysWithExercises.length === 1 ? 'un día' : `${removedDaysWithExercises.length} días`}. ¿Deseas continuar?`
+      `Reducir el ciclo a ${safeCount} ${safeCount === 1 ? 'rutina' : 'rutinas'} eliminará los ejercicios de ${removedDaysWithExercises.length === 1 ? 'una rutina' : `${removedDaysWithExercises.length} rutinas`}. ¿Deseas continuar?`
     )) {
       setCycleDayCountDraft(String(days.length));
       return;
@@ -163,7 +164,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
       const position = index + 1;
       return current.find((day) => day.position === position) ?? {
         position,
-        title: `Día ${position}`,
+        title: `Rutina ${position}`,
         items: [],
       };
     }));
@@ -236,7 +237,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
       !Number.isSafeInteger(cycleDayCount) || cycleDayCount < 1 || cycleDayCount > 20
       || !Number.isSafeInteger(additionalCycleRepeats) || additionalCycleRepeats < 0 || additionalCycleRepeats > 20
     )) {
-      setActionError('Los días del ciclo deben estar entre 1 y 20, y los ciclos adicionales entre 0 y 20.');
+      setActionError('Las rutinas del ciclo deben estar entre 1 y 20, y los ciclos adicionales entre 0 y 20.');
       return;
     }
     if ((programMode === 'SINGLE_DAY' && !selectedDate) || !title.trim()) {
@@ -351,7 +352,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
         ) : (
           <div className="grid grid-cols-2 gap-2">
             <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-              Días del ciclo
+              Rutinas del ciclo
               <input className={`${fieldClass} mt-1.5`} disabled={!editable} type="number" min="1" max="20" value={cycleDayCountDraft} onChange={(event) => {
                 const rawValue = event.target.value;
                 setCycleDayCountDraft(rawValue);
@@ -381,7 +382,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
         <>
           {assignmentsQuery.state.status === 'loading' && (
             <p className="flex items-center justify-center gap-2 py-4 text-xs text-zinc-500" role="status">
-              <LoaderCircle className="animate-spin" size={15} /> Cargando programación…
+              <TenantLoadingIndicator size={15} /> Cargando programación…
             </p>
           )}
 
@@ -397,32 +398,36 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
                 Nombre del ciclo
                 <input className={`${fieldClass} mt-1.5`} maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} disabled={!editable} />
               </label>
-              <div aria-label="Día del ciclo" className="flex gap-2 overflow-x-auto pb-1" role="tablist">
+              <div aria-label="Rutinas del ciclo" className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="group">
                 {days.map((day) => (
                   <button
-                    aria-label={`Día ${day.position}, ${day.title}, ${day.items.length} ${day.items.length === 1 ? 'ejercicio' : 'ejercicios'}${day.items.length === 0 ? ', pendiente' : ', con ejercicios'}`}
-                    aria-selected={selectedDayPosition === day.position}
-                    className={`min-h-10 shrink-0 rounded-lg border px-3 text-xs font-semibold ${selectedDayPosition === day.position ? 'border-brand-600 bg-brand-950/40 text-brand-300' : 'border-zinc-800 bg-zinc-900 text-zinc-400'}`}
+                    aria-label={`Seleccionar rutina ${day.position}: ${day.title}, ${day.items.length} ${day.items.length === 1 ? 'ejercicio' : 'ejercicios'}`}
+                    aria-pressed={selectedDayPosition === day.position}
+                    className={`flex min-h-[68px] items-center gap-3 rounded-xl border p-3 text-left transition-colors ${selectedDayPosition === day.position ? 'border-brand-700 bg-brand-950/30' : 'border-zinc-800 bg-zinc-900 hover:bg-zinc-800/60'}`}
                     key={day.position}
                     onClick={() => setSelectedDayPosition(day.position)}
-                    role="tab"
                     type="button"
                   >
-                    <span>{day.position}. {day.title}</span>
-                    <span aria-hidden="true" className={`ml-2 text-[10px] ${day.items.length === 0 ? 'text-amber-300' : 'text-emerald-300'}`}>
-                      {day.items.length}
+                    <span aria-hidden="true" className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${selectedDayPosition === day.position ? 'bg-brand-900 text-brand-100' : 'bg-zinc-800 text-zinc-300'}`}>
+                      <Dumbbell size={16} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-bold text-white">{day.title}</span>
+                      <span className="mt-0.5 block text-[11px] text-zinc-400">
+                        {day.items.length} {day.items.length === 1 ? 'ejercicio' : 'ejercicios'}
+                      </span>
                     </span>
                   </button>
                 ))}
               </div>
               {incompleteCycleDays.length > 0 && (
                 <p className="text-xs text-amber-300" role="status">
-                  Completa los días {incompleteCycleDays.map(({ position }) => position).join(', ')} antes de publicar.
+                  Completa las rutinas {incompleteCycleDays.map(({ position }) => position).join(', ')} antes de publicar.
                 </p>
               )}
               {activeDay && (
                 <label className="block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                  Nombre del día
+                  Nombre de la rutina
                   <input className={`${fieldClass} mt-1.5`} maxLength={120} value={activeDay.title} onChange={(event) => updateDay(activeDay.position, (day) => ({ ...day, title: event.target.value }))} disabled={!editable} />
                 </label>
               )}
@@ -439,7 +444,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
           <section className="space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                {programMode === 'CYCLE' ? `Ejercicios · Día ${selectedDayPosition}` : `Ejercicios · ${formatLocalDate(selectedDate, { weekday: 'long', day: 'numeric', month: 'long' })}`}
+                {programMode === 'CYCLE' ? `Ejercicios · Rutina ${selectedDayPosition}` : `Ejercicios · ${formatLocalDate(selectedDate, { weekday: 'long', day: 'numeric', month: 'long' })}`}
               </h2>
               <span className="text-[10px] text-zinc-600">{items.length} en la rutina</span>
             </div>
@@ -465,9 +470,14 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
                           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                             <label className="text-[9px] text-zinc-500">Reps base<input aria-label={`Repeticiones base de ${item.exercise.name}`} className={`${fieldClass} mt-1`} min="1" step="1" type="number" value={item.baseRepetitions ?? ''} onChange={(event) => updateItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, baseRepetitions: event.target.value === '' ? null : Number(event.target.value), prescribedReps: event.target.value } : entry))} /></label>
                             <label className="text-[9px] text-zinc-500">+ reps<input aria-label={`Incremento de repeticiones de ${item.exercise.name}`} className={`${fieldClass} mt-1`} min="0" step="1" type="number" value={item.repetitionsIncrement ?? ''} onChange={(event) => updateItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, repetitionsIncrement: event.target.value === '' ? null : Number(event.target.value) } : entry))} /></label>
-                            <label className="text-[9px] text-zinc-500">Peso base<input aria-label={`Peso base de ${item.exercise.name}`} className={`${fieldClass} mt-1`} min="0" step="1" type="number" value={item.baseLoad ?? ''} onChange={(event) => updateItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, baseLoad: event.target.value === '' ? null : Number(event.target.value), targetLoad: event.target.value === '' ? '' : `${event.target.value} ${entry.loadUnit ?? 'kg'}`, loadUnit: event.target.value === '' ? null : (entry.loadUnit ?? 'kg') } : entry))} /></label>
+                            <fieldset className="min-w-0">
+                              <legend className="text-[9px] text-zinc-500">Peso base</legend>
+                              <div className="mt-1 flex min-w-0 gap-1">
+                                <input aria-label={`Peso base de ${item.exercise.name}`} className={`${fieldClass} mt-0 min-w-0 flex-1`} min="0" step="1" type="number" value={item.baseLoad ?? ''} onChange={(event) => updateItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, baseLoad: event.target.value === '' ? null : Number(event.target.value), targetLoad: event.target.value === '' ? '' : `${event.target.value} ${entry.loadUnit ?? 'kg'}`, loadUnit: event.target.value === '' ? null : (entry.loadUnit ?? 'kg') } : entry))} />
+                                <select aria-label={`Unidad de peso de ${item.exercise.name}`} className="w-20 shrink-0 rounded-xl border border-zinc-800 bg-zinc-950 px-2 py-2.5 text-xs text-zinc-200 focus:border-brand-500 focus:outline-none disabled:opacity-60" value={item.loadUnit ?? 'kg'} disabled={item.baseLoad == null} onChange={(event) => updateItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, loadUnit: event.target.value as 'lbs' | 'kg', targetLoad: entry.baseLoad === null ? '' : `${entry.baseLoad} ${event.target.value}` } : entry))}><option value="kg">kg</option><option value="lbs">lbs</option></select>
+                              </div>
+                            </fieldset>
                             <label className="text-[9px] text-zinc-500">+ peso<input aria-label={`Incremento de peso de ${item.exercise.name}`} className={`${fieldClass} mt-1`} min="0" step="1" type="number" value={item.loadIncrement ?? ''} disabled={item.baseLoad == null} onChange={(event) => updateItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, loadIncrement: event.target.value === '' ? null : Number(event.target.value) } : entry))} /></label>
-                            <label className="text-[9px] text-zinc-500">Unidad<select aria-label={`Unidad de peso de ${item.exercise.name}`} className={`${fieldClass} mt-1`} value={item.loadUnit ?? 'kg'} disabled={item.baseLoad == null} onChange={(event) => updateItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, loadUnit: event.target.value as 'lbs' | 'kg', targetLoad: entry.baseLoad === null ? '' : `${entry.baseLoad} ${event.target.value}` } : entry))}><option value="kg">kg</option><option value="lbs">lbs</option></select></label>
                           </div>
                         )}
                       </div>
@@ -516,9 +526,14 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     <label className="text-[10px] text-zinc-500">Reps base<input className={`${fieldClass} mt-1`} min="1" step="1" type="number" value={baseRepetitionsDraft} onChange={(event) => setBaseRepetitionsDraft(event.target.value)} /></label>
                     <label className="text-[10px] text-zinc-500">+ reps<input aria-label="Incremento reps" className={`${fieldClass} mt-1`} min="0" step="1" type="number" value={repetitionsIncrementDraft} onChange={(event) => setRepetitionsIncrementDraft(event.target.value)} /></label>
-                    <label className="text-[10px] text-zinc-500">Peso base<input aria-label="Peso base" className={`${fieldClass} mt-1`} min="0" step="1" type="number" value={baseLoadDraft} onChange={(event) => setBaseLoadDraft(event.target.value)} placeholder="Peso corporal" /></label>
+                    <fieldset className="min-w-0">
+                      <legend className="text-[10px] text-zinc-500">Peso base</legend>
+                      <div className="mt-1 flex min-w-0 gap-1">
+                        <input aria-label="Peso base" className={`${fieldClass} mt-0 min-w-0 flex-1`} min="0" step="1" type="number" value={baseLoadDraft} onChange={(event) => setBaseLoadDraft(event.target.value)} placeholder="Peso corporal" />
+                        <select aria-label="Unidad de peso base" className="w-20 shrink-0 rounded-xl border border-zinc-800 bg-zinc-950 px-2 py-2.5 text-xs text-zinc-200 focus:border-brand-500 focus:outline-none disabled:opacity-60" value={loadUnitDraft} disabled={baseLoadDraft === ''} onChange={(event) => setLoadUnitDraft(event.target.value as 'lbs' | 'kg')}><option value="kg">kg</option><option value="lbs">lbs</option></select>
+                      </div>
+                    </fieldset>
                     <label className="text-[10px] text-zinc-500">+ peso<input aria-label="Incremento peso" className={`${fieldClass} mt-1`} min="0" step="1" type="number" value={loadIncrementDraft} disabled={baseLoadDraft === ''} onChange={(event) => setLoadIncrementDraft(event.target.value)} /></label>
-                    <label className="text-[10px] text-zinc-500">Unidad<select className={`${fieldClass} mt-1`} value={loadUnitDraft} disabled={baseLoadDraft === ''} onChange={(event) => setLoadUnitDraft(event.target.value as 'lbs' | 'kg')}><option value="kg">kg</option><option value="lbs">lbs</option></select></label>
                   </div>
                 )}
                 <button className="flex min-h-9 items-center gap-1.5 rounded-xl border border-brand-800 px-3 text-xs font-semibold text-brand-300 hover:bg-brand-950/40 disabled:cursor-not-allowed disabled:opacity-40" disabled={!selectedExercise || !Number.isSafeInteger(Number(prescribedSetsDraft)) || Number(prescribedSetsDraft) < 1 || Number(prescribedSetsDraft) > 50 || !rest.trim() || (programMode === 'SINGLE_DAY' && !prescribedReps.trim()) || (programMode === 'CYCLE' && (!Number.isSafeInteger(Number(baseRepetitionsDraft)) || Number(baseRepetitionsDraft) < 1 || (baseLoadDraft !== '' && (!Number.isSafeInteger(Number(baseLoadDraft)) || Number(baseLoadDraft) < 0)) || (repetitionsIncrementDraft !== '' && (!Number.isSafeInteger(Number(repetitionsIncrementDraft)) || Number(repetitionsIncrementDraft) < 0)) || (loadIncrementDraft !== '' && (!Number.isSafeInteger(Number(loadIncrementDraft)) || Number(loadIncrementDraft) < 0))))} onClick={addExercise} type="button">

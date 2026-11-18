@@ -7,7 +7,7 @@ interface ProfileImagePickerProps {
   alt: string;
   label: string;
   fallback: ReactNode;
-  shape: 'circle' | 'logo';
+  shape: 'circle' | 'logo' | 'icon';
   onUpload: (file: File) => Promise<string>;
 }
 
@@ -27,6 +27,7 @@ export default function ProfileImagePicker({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isCircle = shape === 'circle';
+  const isIcon = shape === 'icon';
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -57,9 +58,9 @@ export default function ProfileImagePicker({
     <div className="flex flex-col items-center gap-2">
       <ProfileMediaImage
         alt={alt}
-        className={`text-zinc-300 ${isCircle ? 'h-20 w-20 rounded-full border border-zinc-700 bg-zinc-800' : 'h-24 w-44 rounded-xl border border-dashed border-zinc-700 bg-transparent'}`}
+        className={`text-zinc-300 ${isCircle ? 'h-20 w-20 rounded-full border border-zinc-700 bg-zinc-800' : isIcon ? 'h-14 w-14 rounded-xl border border-dashed border-zinc-700 bg-transparent' : 'h-24 w-44 rounded-xl border border-dashed border-zinc-700 bg-transparent'}`}
         fallback={fallback}
-        imageClassName={`h-full w-full ${isCircle ? 'object-cover' : 'object-contain p-1.5'}`}
+        imageClassName={`h-full w-full ${isCircle ? 'object-cover' : isIcon ? 'object-contain p-1' : 'object-contain p-1.5'}`}
         src={imageUrl}
       />
       <input

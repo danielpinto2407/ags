@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, CalendarDays, ChartNoAxesColumnIncreasing, LoaderCircle } from 'lucide-react';
+import { ArrowRight, CalendarDays, ChartNoAxesColumnIncreasing } from 'lucide-react';
 import Header from '@/components/Header';
+import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { routineAssignmentRepository } from '@/data/routineAssignmentRepository';
 import type { StudentRoutineHistoryEntry } from '@/domain/workoutExecution';
 import { formatLocalDate } from '@/domain/localDate';
@@ -59,7 +60,7 @@ export default function StudentProgress({ profile, onNavigate }: StudentProgress
 
       {state.status === 'loading' && (
         <p className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-500" role="status">
-          <LoaderCircle className="animate-spin" size={17} /> Cargando tu historial…
+          <TenantLoadingIndicator size={17} /> Cargando tu historial…
         </p>
       )}
 
