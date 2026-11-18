@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, Dumbbell, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Dumbbell, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import DateField from '@/components/DateField';
@@ -75,6 +75,7 @@ function fromAssignmentDays(assignment: RoutineAssignment | undefined): DraftDay
 
 export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProps) {
   const tenantId = profile.tenant_id;
+  const cycleRoutinesRailRef = useRef<HTMLDivElement>(null);
   const [selectedDate, setSelectedDate] = useState(localDateInputValue);
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [programMode, setProgramMode] = useState<RoutineProgramMode>('SINGLE_DAY');
@@ -145,6 +146,11 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
     ? days.filter((day) => day.items.length === 0)
     : [];
   const canPublish = items.length > 0 && incompleteCycleDays.length === 0;
+  const scrollCycleRoutineCards = (direction: -1 | 1) => {
+    const rail = cycleRoutinesRailRef.current;
+    if (!rail) return;
+    rail.scrollLeft += direction * Math.max(160, rail.clientWidth * 0.8);
+  };
   const updateItems = (update: (current: DraftItem[]) => DraftItem[]) => {
     setDays((currentDays) => currentDays.map((day) => (
       day.position === selectedDayPosition ? { ...day, items: update(day.items) } : day
@@ -398,22 +404,52 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
                 Nombre del ciclo
                 <input className={`${fieldClass} mt-1.5`} maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} disabled={!editable} />
               </label>
-              <div aria-label="Rutinas del ciclo" className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="group">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Selecciona una rutina</span>
+                {days.length > 1 && (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      aria-label="Rutinas anteriores"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400"
+                      onClick={() => scrollCycleRoutineCards(-1)}
+                      title="Rutinas anteriores"
+                      type="button"
+                    >
+                      <ChevronLeft aria-hidden="true" size={16} />
+                    </button>
+                    <button
+                      aria-label="Rutinas siguientes"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400"
+                      onClick={() => scrollCycleRoutineCards(1)}
+                      title="Rutinas siguientes"
+                      type="button"
+                    >
+                      <ChevronRight aria-hidden="true" size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div
+                aria-label="Rutinas del ciclo"
+                className="no-scrollbar flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain scroll-smooth pb-1"
+                ref={cycleRoutinesRailRef}
+                role="group"
+              >
                 {days.map((day) => (
                   <button
                     aria-label={`Seleccionar rutina ${day.position}: ${day.title}, ${day.items.length} ${day.items.length === 1 ? 'ejercicio' : 'ejercicios'}`}
                     aria-pressed={selectedDayPosition === day.position}
-                    className={`flex min-h-[68px] items-center gap-3 rounded-xl border p-3 text-left transition-colors ${selectedDayPosition === day.position ? 'border-brand-700 bg-brand-950/30' : 'border-zinc-800 bg-zinc-900 hover:bg-zinc-800/60'}`}
+                    className={`flex min-h-14 w-36 shrink-0 snap-start items-center gap-2 rounded-xl border p-2 text-left transition-colors ${selectedDayPosition === day.position ? 'border-brand-700 bg-brand-950/30' : 'border-zinc-800 bg-zinc-900 hover:bg-zinc-800/60'}`}
                     key={day.position}
                     onClick={() => setSelectedDayPosition(day.position)}
                     type="button"
                   >
-                    <span aria-hidden="true" className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${selectedDayPosition === day.position ? 'bg-brand-900 text-brand-100' : 'bg-zinc-800 text-zinc-300'}`}>
-                      <Dumbbell size={16} />
+                    <span aria-hidden="true" className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${selectedDayPosition === day.position ? 'bg-brand-900 text-brand-100' : 'bg-zinc-800 text-zinc-300'}`}>
+                      <Dumbbell size={14} />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-bold text-white">{day.title}</span>
-                      <span className="mt-0.5 block text-[11px] text-zinc-400">
+                      <span className="block truncate text-xs font-bold text-white">{day.title}</span>
+                      <span className="mt-0.5 block truncate text-[10px] text-zinc-400">
                         {day.items.length} {day.items.length === 1 ? 'ejercicio' : 'ejercicios'}
                       </span>
                     </span>
@@ -422,7 +458,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
               </div>
               {incompleteCycleDays.length > 0 && (
                 <p className="text-xs text-amber-300" role="status">
-                  Completa las rutinas {incompleteCycleDays.map(({ position }) => position).join(', ')} antes de publicar.
+                  {incompleteCycleDays.length} {incompleteCycleDays.length === 1 ? 'rutina necesita' : 'rutinas necesitan'} ejercicios antes de publicar.
                 </p>
               )}
               {activeDay && (
