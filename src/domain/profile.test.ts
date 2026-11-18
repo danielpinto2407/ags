@@ -5,6 +5,7 @@ import { isProfile, resolveProfileAccess, type Profile } from '@/domain/profile'
 const activeTenant: Tenant = {
   id: 'tenant-ags',
   name: 'AGS GluteHouse',
+  description: 'Entrena con acompañamiento personalizado.',
   subdomain: 'ags',
   status: 'ACTIVE',
   theme: {

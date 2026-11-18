@@ -59,12 +59,14 @@ export function useStudentRoutineAssignment(studentId: string, tenantId: string,
     savePerformance: async (
       assignmentId: string,
       cycleDayPosition: number,
-      performance: ActualExercisePerformance
+      performance: ActualExercisePerformance,
+      executionId: string | null
     ) => {
       const saved = await routineAssignmentRepository.savePerformance(
         assignmentId,
         cycleDayPosition,
-        performance
+        performance,
+        executionId
       );
       setReloadKey((key) => key + 1);
       return saved;

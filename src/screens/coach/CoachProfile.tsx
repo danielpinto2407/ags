@@ -17,10 +17,17 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
   const { state: tenantState, retry: refreshTenant } = useTenantContext();
   const tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
   const [logoUrl, setLogoUrl] = useState<string | null>(tenant?.theme.logoUrl ?? null);
+  const [description, setDescription] = useState(tenant?.description ?? '');
+  const [savingDescription, setSavingDescription] = useState(false);
+  const [descriptionFeedback, setDescriptionFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
 
   useEffect(() => {
     setLogoUrl(tenant?.theme.logoUrl ?? null);
   }, [tenant?.theme.logoUrl]);
+
+  useEffect(() => {
+    setDescription(tenant?.description ?? '');
+  }, [tenant?.description]);
 
   const uploadGymLogo = async (file: File) => {
     if (!profile.tenant_id) throw new Error('No se encontró el gimnasio de esta cuenta.');
@@ -28,6 +35,24 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
     setLogoUrl(nextLogoUrl);
     refreshTenant();
     return nextLogoUrl;
+  };
+
+  const saveDescription = async () => {
+    setSavingDescription(true);
+    setDescriptionFeedback(null);
+    try {
+      const savedDescription = await profileRepository.setTenantDescription(description);
+      setDescription(savedDescription);
+      setDescriptionFeedback({ type: 'success', message: 'Descripción guardada.' });
+      refreshTenant();
+    } catch (error) {
+      setDescriptionFeedback({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'No se pudo guardar la descripción.',
+      });
+    } finally {
+      setSavingDescription(false);
+    }
   };
 
   return (
@@ -49,6 +74,40 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
             <h2 className="truncate text-lg font-display font-bold text-white">{profile.full_name}</h2>
             <p className="truncate text-xs text-zinc-500">{tenant?.name ?? 'Perfil del gimnasio'}</p>
           </div>
+        </div>
+
+        <div className="space-y-2 border-t border-zinc-800 pt-4">
+          <label className="block text-xs font-semibold text-zinc-300" htmlFor="tenant-login-description">
+            Descripción del inicio de sesión
+          </label>
+          <textarea
+            className="w-full resize-y rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-brand-500 focus:outline-none"
+            id="tenant-login-description"
+            maxLength={280}
+            onChange={(event) => {
+              setDescription(event.target.value);
+              setDescriptionFeedback(null);
+            }}
+            placeholder="Cuéntales brevemente qué ofrece tu gimnasio"
+            rows={3}
+            value={description}
+          />
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[10px] text-zinc-500">{description.length}/280 caracteres</p>
+            <button
+              className="min-h-10 rounded-lg bg-brand-600 px-4 text-xs font-bold text-white transition-colors hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={savingDescription || description === (tenant?.description ?? '')}
+              onClick={() => void saveDescription()}
+              type="button"
+            >
+              {savingDescription ? 'Guardando…' : 'Guardar descripción'}
+            </button>
+          </div>
+          {descriptionFeedback && (
+            <p className={`text-xs ${descriptionFeedback.type === 'error' ? 'text-rose-300' : 'text-brand-300'}`} role={descriptionFeedback.type === 'error' ? 'alert' : 'status'}>
+              {descriptionFeedback.message}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-3 border-t border-zinc-800 pt-4">

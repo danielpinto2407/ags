@@ -107,7 +107,11 @@ export default function StudentProgress({ profile, onNavigate }: StudentProgress
                 </div>
                 <div className="mt-4">
                   <div className="flex items-center justify-between gap-3 text-xs">
-                    <span className="text-zinc-400">{entry.completedExercises} de {entry.prescribedExercises} {entry.prescribedExercises === 1 ? 'ejercicio' : 'ejercicios'}</span>
+                    <span className="text-zinc-400">
+                      {entry.completedUnits} de {entry.prescribedUnits} {entry.progressUnit === 'sets'
+                        ? entry.prescribedUnits === 1 ? 'serie' : 'series'
+                        : entry.prescribedUnits === 1 ? 'ejercicio' : 'ejercicios'}
+                    </span>
                     <span className="font-semibold text-brand-300">{Math.round(entry.progressPercent)}%</span>
                   </div>
                   <div aria-label={`${Math.round(entry.progressPercent)}% completado`} aria-valuemax={100} aria-valuemin={0} aria-valuenow={Math.round(entry.progressPercent)} className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800" role="progressbar">

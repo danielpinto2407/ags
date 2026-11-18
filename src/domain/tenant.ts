@@ -21,6 +21,7 @@ export type TenantFeatures = Record<string, boolean>;
 export interface Tenant {
   id: string;
   name: string;
+  description: string;
   subdomain: string;
   status: TenantStatus;
   theme: TenantTheme;
@@ -110,6 +111,8 @@ export function isTenant(value: unknown): value is Tenant {
   const tenant = value as Partial<Tenant>;
   return typeof tenant.id === 'string'
     && typeof tenant.name === 'string'
+    && typeof tenant.description === 'string'
+    && tenant.description.length <= 280
     && typeof tenant.subdomain === 'string'
     && isTenantSubdomain(tenant.subdomain)
     && (tenant.status === 'ACTIVE' || tenant.status === 'SUSPENDED')
@@ -129,6 +132,7 @@ export function tenantFromResolverRow(value: unknown): Tenant | null {
   const tenant = {
     id: row.tenant_id,
     name: row.tenant_name,
+    description: row.tenant_description,
     subdomain: row.tenant_subdomain,
     status: row.tenant_status,
     theme,

@@ -11,6 +11,7 @@ import {
 const validTenant = {
   id: 'tenant-ags',
   name: 'AGS GluteHouse',
+  description: 'Entrena con acompañamiento personalizado.',
   subdomain: 'ags',
   status: 'ACTIVE',
   theme: DEFAULT_TENANT_THEME,
@@ -55,6 +56,7 @@ describe('tenant payload validation', () => {
     expect(tenantFromResolverRow({
       tenant_id: validTenant.id,
       tenant_name: validTenant.name,
+      tenant_description: validTenant.description,
       tenant_subdomain: validTenant.subdomain,
       tenant_status: validTenant.status,
       theme: validTenant.theme,
@@ -66,6 +68,7 @@ describe('tenant payload validation', () => {
     const tenant = tenantFromResolverRow({
       tenant_id: validTenant.id,
       tenant_name: validTenant.name,
+      tenant_description: validTenant.description,
       tenant_subdomain: validTenant.subdomain,
       tenant_status: validTenant.status,
       theme: { ...DEFAULT_TENANT_THEME, bodyFont: 'Roboto', displayFont: 'Playfair Display' },
@@ -80,6 +83,7 @@ describe('tenant payload validation', () => {
     const tenant = tenantFromResolverRow({
       tenant_id: validTenant.id,
       tenant_name: validTenant.name,
+      tenant_description: validTenant.description,
       tenant_subdomain: validTenant.subdomain,
       tenant_status: validTenant.status,
       theme: {
@@ -100,6 +104,7 @@ describe('tenant payload validation', () => {
     const tenant = tenantFromResolverRow({
       tenant_id: 'tenant-legacy',
       tenant_name: 'Legacy Gym',
+      tenant_description: 'Entrenamiento para ti.',
       tenant_subdomain: 'legacygym',
       tenant_status: 'ACTIVE',
       theme: {
