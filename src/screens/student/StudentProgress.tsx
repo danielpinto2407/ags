@@ -99,7 +99,7 @@ export default function StudentProgress({ profile, onNavigate }: StudentProgress
                       {formatLocalDate(entry.executionDate)}
                     </time>
                     <h2 className="mt-1 text-sm font-bold text-white">{entry.title}</h2>
-                    {entry.cycleDayTitle && entry.slotAttempt !== null && <p className="mt-0.5 text-xs text-zinc-400">{entry.cycleDayTitle} · Vuelta {entry.slotAttempt}</p>}
+                    {entry.cycleDayTitle && entry.slotAttempt !== null && <p className="mt-0.5 text-xs text-zinc-400">{entry.cycleDayTitle} · Ciclo {entry.slotAttempt}</p>}
                   </div>
                   <span className="shrink-0 rounded-full border border-zinc-700 px-2 py-1 text-[9px] font-semibold text-zinc-300">
                     {executionStatusLabels[entry.status]}

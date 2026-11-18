@@ -228,7 +228,7 @@ export default function StudentRoutines({ profile, initialDate, onStartTraining 
                     {nextTrainingBlocked ? (
                       <span className="shrink-0 text-[10px] text-zinc-400">Mañana</span>
                     ) : remainingAttempts !== null ? (
-                      <span className="shrink-0 text-[9px] text-zinc-400">Vuelta {choice.iteration}</span>
+                      <span className="shrink-0 text-[9px] text-zinc-400">Ciclo {choice.iteration}</span>
                     ) : (
                       <span className="shrink-0 text-[9px] text-zinc-400">Fecha asignada</span>
                     )}

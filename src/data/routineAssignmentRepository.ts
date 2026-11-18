@@ -735,7 +735,7 @@ function executionError(error: { message: string }): Error {
     daily_execution_limit: 'Ya registraste un entrenamiento hoy. Podrás iniciar otro mañana.',
     single_day_program_takes_precedence: 'Ya tienes un entrenamiento asignado para este día.',
     cycle_slot_attempts_exhausted: 'Ya completaste las veces disponibles para este día.',
-    cycle_iteration_not_ready: 'Este día estará disponible cuando termines los demás entrenamientos de esta vuelta.',
+    cycle_iteration_not_ready: 'Este día estará disponible cuando termines los demás entrenamientos de este ciclo.',
     completed_set_cannot_uncheck: 'No puedes desmarcar una serie ya realizada en un entrenamiento cerrado.',
     invalid_actual_performance: 'Revisa las repeticiones, carga y esfuerzo que registraste.',
     completed_set_requires_repetitions: 'Registra las repeticiones realizadas para completar la serie.',

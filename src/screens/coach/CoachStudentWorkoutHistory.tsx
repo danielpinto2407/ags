@@ -157,7 +157,7 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
                       <span className="block truncate text-sm font-semibold text-white">{title}</span>
                       <span className="mt-0.5 block text-xs text-zinc-400">
                         {formatLocalDate(entry.executionDate)}
-                        {entry.slotAttempt !== null ? ` · Vuelta ${entry.slotAttempt}` : ''}
+                        {entry.slotAttempt !== null ? ` · Ciclo ${entry.slotAttempt}` : ''}
                         {' · '}{executionStatusLabels[entry.status]}
                       </span>
                     </span>
