@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 
 interface LoginScreenProps {
   tenantName: string;
+  description: string;
   logoUrl: string | null;
   error: string | null;
   isSubmitting: boolean;
@@ -11,6 +12,7 @@ interface LoginScreenProps {
 
 export default function LoginScreen({
   tenantName,
+  description,
   logoUrl,
   error,
   isSubmitting,
@@ -44,9 +46,9 @@ export default function LoginScreen({
         <span className="font-display font-extrabold tracking-[0.2em] text-[11px] text-brand-500 uppercase mb-1" style={{ textShadow: '0 0 8px color-mix(in srgb, var(--tenant-primary) 30%, transparent)' }}>
           {tenantName}
         </span>
-        <p className="text-sm text-zinc-500 text-center mt-2 max-w-[260px]">
-          Rutinas personalizadas, seguimiento de progreso y comunicación directa con tu coach.
-        </p>
+        {description.trim() && (
+          <p className="mt-2 max-w-[320px] text-center text-sm text-zinc-500">{description}</p>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-3">

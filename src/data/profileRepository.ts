@@ -75,6 +75,16 @@ export const profileRepository = {
     return logoUrl;
   },
 
+  async setTenantDescription(description: string): Promise<string> {
+    const client = requireClient();
+    const { data, error } = await client.rpc('set_own_tenant_description', {
+      p_description: description,
+    });
+    if (error) throw new Error('No se pudo guardar la descripción del gimnasio. Inténtalo nuevamente.');
+    if (typeof data !== 'string') throw new Error('El servidor no confirmó la descripción del gimnasio.');
+    return data;
+  },
+
   async getOwnCoachName(): Promise<string | null> {
     if (!supabaseClient) throw new Error('Supabase no está configurado.');
 

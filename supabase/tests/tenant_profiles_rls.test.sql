@@ -6,7 +6,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select extensions.plan(56);
+select extensions.plan(58);
 
 insert into public.tenants (id, name, subdomain, status)
 values
@@ -129,8 +129,9 @@ select extensions.ok(
     where resolved.tenant_name = 'AGS GluteHouse RLS Test'
       and resolved.tenant_status = 'ACTIVE'
       and resolved.theme ? 'primaryColor'
+      and resolved.tenant_description = 'Rutinas personalizadas, seguimiento de progreso y comunicación directa con tu coach.'
   ),
-  'public resolver returns only the expected public tenant metadata'
+  'public resolver returns the tenant login description with public metadata'
 );
 select extensions.is(
   (select count(*)::integer from public.resolve_tenant_by_subdomain('unknown-gym')),
@@ -227,6 +228,11 @@ select extensions.is(
   1,
   'a coach can see only their own tenant'
 );
+select extensions.is(
+  public.set_own_tenant_description('Entrena con acompañamiento en RLS Gym.'),
+  'Entrena con acompañamiento en RLS Gym.',
+  'active coach can update only their tenant login description'
+);
 
 select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000007', true);
 select extensions.is(
@@ -259,6 +265,12 @@ select extensions.is(
 select extensions.ok(
   not (select private.current_profile_is_active()),
   'the RLS helper identifies an inactive profile'
+);
+select extensions.throws_ok(
+  $$select public.set_own_tenant_description('Texto no autorizado')$$,
+  '42501',
+  'not_authorized',
+  'student cannot update tenant login description'
 );
 
 select set_config('request.jwt.claim.sub', 'd1000000-0000-4000-8000-000000000006', true);

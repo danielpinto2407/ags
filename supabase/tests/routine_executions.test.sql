@@ -1,7 +1,7 @@
 ﻿begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(41);
+select extensions.plan(46);
 
 insert into public.tenants (id, name, subdomain, status)
 values ('e0000000-0000-4000-8000-000000000001', 'Execution Gym', 'execution-gym', 'ACTIVE');
@@ -158,6 +158,54 @@ select extensions.throws_ok(
   )$$,
   'P0001', 'execution_not_editable',
   'completed execution is immutable'
+);
+select extensions.is(
+  (public.save_routine_exercise_performance_v2(
+    (select id from public.routine_assignments where title = 'Hoy'), 1,
+    (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Hoy') limit 1),
+    (select id from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000002'),
+    '[{"setNumber":1,"completed":true,"actualRepetitions":10,"actualLoad":40,"loadUnit":"kg","rir":2,"rpePercent":80},{"setNumber":2,"completed":true,"actualRepetitions":9,"actualLoad":40,"loadUnit":"kg","rir":1,"rpePercent":90}]'::jsonb
+  ) ->> 'progressPercent')::numeric,
+  100::numeric,
+  'per-set RPC can correct a completed session and computes set progress'
+);
+select extensions.is(
+  (select count(*)::integer from public.routine_execution_sets where execution_id = (select id from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000002') and completed),
+  2,
+  'per-set correction persists each prescribed set'
+);
+select extensions.is(
+  (select status::text from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000002'),
+  'COMPLETED',
+  'per-set correction preserves terminal execution status'
+);
+reset role;
+set local role service_role;
+update public.routine_executions
+set status = 'CLOSED_INCOMPLETE', closed_at = pg_catalog.now()
+where student_id = 'e1000000-0000-4000-8000-000000000002';
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000002', true);
+select extensions.is(
+  (public.save_routine_exercise_performance_v2(
+    (select id from public.routine_assignments where title = 'Hoy'), 1,
+    (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Hoy') limit 1),
+    (select id from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000002'),
+    '[{"setNumber":1,"completed":true,"actualRepetitions":11,"actualLoad":40,"loadUnit":"kg","rir":2,"rpePercent":80},{"setNumber":2,"completed":true,"actualRepetitions":9,"actualLoad":40,"loadUnit":"kg","rir":1,"rpePercent":90}]'::jsonb
+  ) ->> 'status'),
+  'CLOSED_INCOMPLETE',
+  'correcting a closed-incomplete execution preserves its final status'
+);
+select extensions.throws_ok(
+  $$select public.save_routine_exercise_performance_v2(
+    (select id from public.routine_assignments where title = 'Hoy'), 1,
+    (select item.id from public.routine_assignment_items as item join public.routine_assignment_days as day on day.id = item.cycle_day_id where day.assignment_id = (select id from public.routine_assignments where title = 'Hoy') limit 1),
+    (select id from public.routine_executions where student_id = 'e1000000-0000-4000-8000-000000000002'),
+    '[{"setNumber":1,"completed":false,"actualRepetitions":11,"actualLoad":40,"loadUnit":"kg","rir":2,"rpePercent":80},{"setNumber":2,"completed":true,"actualRepetitions":9,"actualLoad":40,"loadUnit":"kg","rir":1,"rpePercent":90}]'::jsonb
+  )$$,
+  'P0001', 'completed_set_cannot_uncheck',
+  'a completed set cannot be unchecked after the session is closed'
 );
 
 select set_config('request.jwt.claim.sub', 'e1000000-0000-4000-8000-000000000001', true);

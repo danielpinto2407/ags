@@ -146,7 +146,7 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
                   <button
                     aria-controls={`coach-workout-review-${entry.id}`}
                     aria-expanded={isSelected}
-                    className="flex min-h-16 w-full items-center gap-3 p-3 text-left hover:bg-zinc-800/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-brand-400"
+                    className={`flex min-h-16 w-full items-center gap-3 p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-brand-400 ${isSelected ? 'border-l-4 border-brand-500 bg-zinc-900 text-white' : 'hover:bg-brand-950/30'}`}
                     onClick={() => toggleExecution(entry.id)}
                     type="button"
                   >
@@ -163,21 +163,25 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
                     </span>
                     <span className="shrink-0 text-right">
                       <span className="block text-sm font-bold text-brand-200">{Math.round(entry.progressPercent)}%</span>
-                      <span className="block text-[10px] text-zinc-400">{entry.completedExercises}/{entry.prescribedExercises} ejercicios</span>
+                      <span className="block text-[10px] text-zinc-300">
+                        {entry.progressUnit === 'sets'
+                          ? `${entry.completedUnits}/${entry.prescribedUnits} series`
+                          : `${entry.completedUnits}/${entry.prescribedUnits} ejercicios`}
+                      </span>
                     </span>
                   </button>
                   <span
-                    aria-label={`${Math.round(entry.progressPercent)}% de ejercicios completados`}
+                    aria-label={`${Math.round(entry.progressPercent)}% de ${entry.progressUnit === 'sets' ? 'series' : 'ejercicios'} completados`}
                     aria-valuemax={100}
                     aria-valuemin={0}
                     aria-valuenow={Math.round(entry.progressPercent)}
-                    className="block h-1 w-full bg-zinc-800"
+                    className={`block h-1 w-full ${isSelected ? 'bg-zinc-700' : 'bg-zinc-800'}`}
                     role="progressbar"
                   >
                     <span className="block h-full bg-brand-500" style={{ width: `${entry.progressPercent}%` }} />
                   </span>
 
-                  <div className="border-t border-zinc-800 p-3" hidden={!isSelected} id={`coach-workout-review-${entry.id}`}>
+                  <div className="border-t border-zinc-700 bg-zinc-800 p-3 text-zinc-100" hidden={!isSelected} id={`coach-workout-review-${entry.id}`}>
                     {isSelected && reviewState.status === 'loading' && (
                       <p className="flex items-center justify-center gap-2 py-5 text-sm text-zinc-400" role="status">
                         <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> Cargando detalle…
@@ -197,29 +201,42 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
                     )}
                     {isSelected && reviewState.status === 'loaded' && reviewState.review.id === entry.id && (
                       <div className="space-y-3">
-                        <p className="text-[11px] leading-relaxed text-zinc-400">
-                          La columna de prescripción muestra el objetivo; el registro refleja lo que realizó la alumna.
-                        </p>
+                        <div className="grid grid-cols-[1fr_auto] gap-3 px-1 text-[10px] font-semibold uppercase text-zinc-300">
+                          <span>Programado</span><span>Realizado</span>
+                        </div>
                         {reviewState.review.exercises.map((exercise) => (
-                          <article className="rounded-lg border border-zinc-800 bg-zinc-950 p-3" key={exercise.id}>
+                          <article className="rounded-lg border border-zinc-700 bg-zinc-900 p-3" key={exercise.id}>
                             <h4 className="text-sm font-semibold text-white">{exercise.position + 1}. {exercise.name}</h4>
-                            <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                              <div className="min-w-0">
-                                <p className="font-semibold text-zinc-400">Prescripción</p>
-                                <p className="mt-1 text-zinc-200">{exercise.prescribedSets} × {exercise.prescribedRepetitions}</p>
+                            <div className="mt-3 grid grid-cols-[1fr_auto] gap-3 text-xs">
+                              <div className="min-w-0 text-zinc-200">
+                                <p>{exercise.prescribedSets} × {exercise.prescribedRepetitions}</p>
                                 {exercise.prescribedLoad && <p className="mt-1 text-zinc-300">{exercise.prescribedLoad}</p>}
                               </div>
-                              <div className="min-w-0">
-                                <p className="font-semibold text-zinc-400">Registro</p>
-                                <p className="mt-1 text-zinc-200">
-                                  {exercise.completed ? 'Completado' : 'Incompleto'}
-                                  {exercise.actualRepetitions !== null ? ` · ${exercise.actualRepetitions} rep.` : ''}
-                                </p>
-                                {exercise.actualLoad !== null && (
-                                  <p className="mt-1 text-zinc-300">{exercise.actualLoad} {exercise.loadUnit}</p>
-                                )}
-                                {exercise.rir !== null && <p className="mt-1 text-zinc-300">RIR {exercise.rir}</p>}
-                                {exercise.rpePercent !== null && <p className="mt-1 text-zinc-300">RPE {exercise.rpePercent}%</p>}
+                              <div className="min-w-0 text-right">
+                                {exercise.sets.length > 0 ? exercise.sets.map((set) => (
+                                  <p className="mb-1 text-zinc-200" key={set.setNumber}>
+                                    S{set.setNumber}: {set.completed ? `${set.actualRepetitions ?? '—'} rep.` : 'No realizada'}
+                                    {set.actualLoad !== null ? ` · ${set.actualLoad} ${set.loadUnit}` : ''}
+                                    {set.rir !== null ? ` · RIR ${set.rir}` : ''}
+                                    {set.rpePercent !== null ? ` · RPE ${set.rpePercent}%` : ''}
+                                  </p>
+                                )) : exercise.legacyRecord ? (
+                                  <p className="text-zinc-200">
+                                    Registro anterior: {exercise.legacyRecord.completed ? 'Completado' : 'Incompleto'}
+                                    {exercise.legacyRecord.actualRepetitions !== null ? ` · ${exercise.legacyRecord.actualRepetitions} rep.` : ''}
+                                    {exercise.legacyRecord.actualLoad !== null ? ` · ${exercise.legacyRecord.actualLoad} ${exercise.legacyRecord.loadUnit}` : ''}
+                                    {exercise.legacyRecord.rir !== null ? ` · RIR ${exercise.legacyRecord.rir}` : ''}
+                                    {exercise.legacyRecord.rpePercent !== null ? ` · RPE ${exercise.legacyRecord.rpePercent}%` : ''}
+                                  </p>
+                                ) : <p className="text-zinc-400">Sin registro</p>}
+                                {exercise.sets.length > 0 && exercise.legacyRecord
+                                  && (exercise.legacyRecord.rir !== null || exercise.legacyRecord.rpePercent !== null) && (
+                                    <p className="mt-2 text-[10px] text-zinc-400">
+                                      Esfuerzo histórico por ejercicio:
+                                      {exercise.legacyRecord.rir !== null ? ` RIR ${exercise.legacyRecord.rir}` : ''}
+                                      {exercise.legacyRecord.rpePercent !== null ? ` · RPE ${exercise.legacyRecord.rpePercent}%` : ''}
+                                    </p>
+                                  )}
                               </div>
                             </div>
                           </article>

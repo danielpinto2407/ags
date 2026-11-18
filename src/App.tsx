@@ -162,6 +162,7 @@ export default function App() {
       <div className="tenant-app min-h-screen w-full" style={tenantThemeStyle(theme)}>
         <LoginScreen
           tenantName={tenant?.name ?? 'GluteHouse'}
+          description={tenant?.description ?? ''}
           logoUrl={tenant?.theme.logoUrl ?? null}
           error={authState.status === 'signed-out' ? authState.error : null}
           isSubmitting={authState.status === 'signed-out' && authState.submitting}

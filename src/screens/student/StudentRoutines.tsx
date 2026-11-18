@@ -176,7 +176,14 @@ export default function StudentRoutines({ profile, initialDate, onStartTraining 
                       {executionChoice.day.items.length} {executionChoice.day.items.length === 1 ? 'ejercicio' : 'ejercicios'} · {executionChoice.assignment.title}
                     </p>
                   </div>
-                  <span className="shrink-0 text-xs font-bold text-brand-200">{Math.round(state.execution.progressPercent)}%</span>
+                  <span className="shrink-0 text-right">
+                    <span className="block text-xs font-bold text-brand-200">{Math.round(state.execution.progressPercent)}%</span>
+                    <span className="block text-[9px] text-zinc-400">
+                      {state.execution.progressUnit === 'sets'
+                        ? `${state.execution.completedSets}/${state.execution.prescribedSets} series`
+                        : `${state.execution.completedExercises}/${state.execution.prescribedExercises} ejercicios`}
+                    </span>
+                  </span>
                 </div>
                 <button className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-zinc-700 text-sm font-semibold text-zinc-100 hover:bg-zinc-800" onClick={() => openTraining(executionChoice)} type="button">
                   {state.execution.status === 'IN_PROGRESS' && isSelectedDateToday ? 'Continuar' : 'Ver entrenamiento'}
@@ -239,11 +246,17 @@ export default function StudentRoutines({ profile, initialDate, onStartTraining 
               );
             })}
 
-            {pendingChoices.length === 0 && hasAnyCycle && (
+            {pendingChoices.length === 0 && (
               <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-3 text-xs text-zinc-400">
-                {isSelectedDateToday && state.execution
-                  ? 'Ya registraste un entrenamiento hoy. Podrás continuar mañana.'
-                  : 'Ya completaste todos los entrenamientos disponibles.'}
+                {!isSelectedDateToday
+                  ? 'No hay otros entrenamientos disponibles para esta fecha.'
+                  : state.execution
+                    ? hasAnyCycle
+                      ? 'Ya registraste un entrenamiento hoy. Podrás continuar mañana.'
+                      : 'Ya completaste el entrenamiento de hoy. Tu progreso aparece arriba.'
+                    : hasAnyCycle
+                      ? 'Ya completaste todos los entrenamientos disponibles.'
+                      : 'No hay otro entrenamiento disponible para hoy.'}
               </p>
             )}
           </section>
