@@ -5,6 +5,8 @@ export type AuthState =
   | { status: 'loading' }
   | { status: 'unconfigured' }
   | { status: 'signed-out'; error: string | null; submitting: boolean }
+  | { status: 'recovery' }
+  | { status: 'recovery-complete' }
   | { status: 'profile-loading' }
   | { status: 'authenticated'; profile: Profile; productRole: ProductRole | null }
   | { status: 'blocked'; message: string }
@@ -13,6 +15,9 @@ export type AuthState =
 export interface AuthContextValue {
   state: AuthState;
   signIn: (email: string, password: string) => Promise<void>;
+  requestPasswordRecovery: (email: string) => Promise<void>;
+  completePasswordRecovery: (password: string) => Promise<void>;
+  returnToSignIn: () => Promise<void>;
   signOut: () => Promise<void>;
   retryProfile: () => void;
 }

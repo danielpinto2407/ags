@@ -1,6 +1,6 @@
 # AGS Project Handoff
 
-Last verified: 2026-11-18
+Last verified: 2026-11-20
 
 This is a continuity note for current focus and verified release evidence, not a feature catalog or deployment authority. Product goals and acceptance behavior live in `product-context.md`; schema/security contracts live in `data-contracts.md`; implementation workflow lives in `feature-workflow.md`. Check GitHub for PR state, Supabase for migrations/functions, and Vercel for deployments. Update this handoff only when the focus, next step, blocker, or verified evidence materially changes.
 
@@ -10,9 +10,9 @@ Complete and validate the personalized-training path: coach invitation -> member
 
 ## Current Focus
 
-- **Current work:** compact, N-driven coach cycle carousel on the production cycle-card UI; the existing business limit remains 20 routines per cycle.
+- **Current work:** CU-01A self-service password recovery is implemented and verified locally; Production rollout awaits Auth redirect and password-policy verification.
 - **Release state:** Supabase Production is at migrations 001-036; Vercel Production deployment for merge SHA `ec624d10e876fe76271534afde71c71c04c90d8c` completed successfully. The old performance RPC remains available for rollout compatibility.
-- **Next step:** publish the cycle-carousel refinement through a feature PR and Vercel Preview. Tenants continue using the default LoaderCircle until a coach uploads a custom loading icon in Profile. Do not create or alter real member workouts for testing without explicit confirmation.
+- **Next step:** before releasing CU-01A, confirm the Production Auth redirect allowlist includes the fixed same-origin recovery callback for tenant hosts and align the Production minimum password length to 10. Local Mailpit confirms the custom recovery template is loaded. Do not send recovery email to real users during testing.
 - Do not create, publish, or complete Production training data for testing without explicit confirmation.
 - CU-04B biometrics remain pending the coach form, metric catalogue, and units definition. Other deferred scope is listed in `product-context.md`.
 
@@ -34,7 +34,8 @@ Complete and validate the personalized-training path: coach invitation -> member
 - **Cycle-card UI update:** `CoachProgramRoutine` now selects cycle slots through responsive cards; student cycle copy describes routines rather than calendar days. Local browser login confirmed the coach can select multiple routine cards and the existing editor follows the selected slot; student home shows routine-based copy and student selection cards remain unchanged. Typecheck, lint, 82 Vitest tests, and build pass. No DB or production data was changed.
 - **Tenant loading icon / PR #29:** migration 036 adds the tenant-scoped `loading-icons/` Storage path and `set_own_tenant_loading_icon`; pgTAP passes 272 assertions. The tenant theme validates nullable `loadingIconUrl`, coach profile exposes upload/reset, and content loading indicators use the custom image or default LoaderCircle. Production migration and deployment are verified; no custom icon has been uploaded to Production.
 - **PR #29 validation:** typecheck, lint, Vitest 82/82, build, and pgTAP 272/272 passed before merge. The public Production bundle contains the upload/reset controls and loading-icon behavior.
-- **Cycle carousel refinement:** coach cycle slots use a horizontal scroll-snap rail with compact cards and previous/next controls; 20 slots were exercised in the local browser at mobile width, confirming horizontal navigation and compact height. Selection/editor behavior is unchanged; no data was saved. Typecheck, lint, Vitest 82/82, and build pass. The current product rule still limits cycle length to 20.
+- **Cycle carousel refinement / PR #30:** coach cycle slots use a horizontal scroll-snap rail with compact cards and previous/next controls; 20 slots were exercised in the local browser at mobile width, confirming horizontal navigation and compact height. Selection/editor behavior is unchanged; no data was saved. Typecheck, lint, Vitest 82/82, build, Vercel Preview, and Vercel Production deployment pass. The current product rule still limits cycle length to 20.
+- **CU-01A local implementation:** login recovery request, generic confirmation, Supabase `PASSWORD_RECOVERY` routing, password update, and sign-out are implemented. Mailpit end-to-end testing verified a valid link, updated password, subsequent Auth sign-in, and a reused/expired link reaching the invalid-link state. After reloading local Supabase config, Mailpit confirmed the recovery subject/copy and tenant palette (`#f4eae3` background, `#7b2545` primary); the latest email explicitly says the password reset was requested and uses one brief sign-off. Temporary local Auth users were deleted; no profile, training data, or Production account was changed. Typecheck, lint, Vitest 86/86, and build pass. Production Auth settings and template delivery remain to be verified before release.
 
 ## Preservation And Safety
 

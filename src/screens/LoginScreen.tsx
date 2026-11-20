@@ -1,5 +1,6 @@
 import { Dumbbell, Eye, EyeOff } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import PasswordRecoveryScreen from '@/screens/PasswordRecoveryScreen';
 
 interface LoginScreenProps {
   tenantName: string;
@@ -8,6 +9,8 @@ interface LoginScreenProps {
   error: string | null;
   isSubmitting: boolean;
   onSubmit: (email: string, password: string) => Promise<void>;
+  onRequestPasswordRecovery: (email: string) => Promise<void>;
+  onCancelPasswordRecovery: () => Promise<void>;
 }
 
 export default function LoginScreen({
@@ -17,11 +20,14 @@ export default function LoginScreen({
   error,
   isSubmitting,
   onSubmit,
+  onRequestPasswordRecovery,
+  onCancelPasswordRecovery,
 }: LoginScreenProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showRecovery, setShowRecovery] = useState(false);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -51,6 +57,17 @@ export default function LoginScreen({
         )}
       </div>
 
+      {showRecovery ? (
+        <PasswordRecoveryScreen
+          gymName={tenantName}
+          mode="request"
+          onRequest={onRequestPasswordRecovery}
+          onReturnToSignIn={async () => {
+            await onCancelPasswordRecovery();
+            setShowRecovery(false);
+          }}
+        />
+      ) : (
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-3">
         <div>
           <label htmlFor="login-email" className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
@@ -106,8 +123,16 @@ export default function LoginScreen({
         >
           {isSubmitting ? 'Ingresando…' : 'Ingresar'}
         </button>
-
+        <button
+          className="min-h-11 w-full rounded-xl px-4 text-sm font-semibold text-zinc-400 hover:text-white disabled:opacity-60"
+          disabled={isSubmitting}
+          onClick={() => setShowRecovery(true)}
+          type="button"
+        >
+          Olvidé mi contraseña
+        </button>
       </form>
+      )}
     </main>
   );
 }

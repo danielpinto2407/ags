@@ -18,6 +18,7 @@ AGS GluteHouse is a multi-tenant fitness SaaS under active development. This ref
 |---|---|
 | CU-00 | Detect tenant by subdomain, load theme, handle unknown/suspended tenant |
 | CU-01 | Authenticate, validate profile/tenant, and route by role |
+| CU-01A (implemented; Production rollout pending) | A known account holder requests password recovery by email and sets a new password through a short-lived, single-use, allowlisted recovery link. |
 | CU-01B | Coach invites a member to the gym; onboarding grants personalized access. Personalized membership does not enforce `tenants.max_clients`. |
 | CU-02 | Browse the shared immutable exercise catalog and manage an independent gym-owned exercise library. |
 | CU-02B | Create reusable routine templates and reorder items. |
@@ -51,6 +52,15 @@ The target personalized acceptance path is invite email -> account activation ->
 - Any RIR/RPE scale labels or interpretation beyond the confirmed numeric ranges remain to be confirmed; do not infer a conversion between the scales.
 - Define the pending biometric registration form: metric catalogue, units, optionality, edit/correction policy, and whether the student sees every metric or coach-selected metrics.
 - Decide if biometrics and workout progress are charts, dated tables, or both, and define empty states and privacy/access rules. Do not infer metrics from mock/profile placeholders.
+
+### Password Recovery Status
+
+- **CU-01A: Self-service password recovery.** Implemented locally: the login offers recovery, the repository uses Supabase Auth, the provider gates the password form on `PASSWORD_RECOVERY`, and the invitation onboarding reuses the shared password field without changing its behavior. End-to-end local testing through Mailpit verified request, valid-link routing, password update, subsequent sign-in, and expired/reused-link handling. Production rollout is not yet verified.
+- **Flow:** from the tenant-branded login, accept an email and call Supabase Auth `resetPasswordForEmail` with a fixed, same-origin callback. Show the same neutral confirmation whether or not an account exists. After the trusted recovery event is recognized, allow a new password through `updateUser({ password })`; on success, sign out and return to sign-in. Do not create accounts or bypass `enable_signup = false`.
+- **Security/configuration:** local Auth enforces a 10-character minimum. Confirm Production enforces the same minimum and allowlists each exact production tenant origin (or a tightly scoped owned-domain tenant-subdomain pattern); never accept an arbitrary `next`/redirect URL. Keep the public/publishable key in the browser and do not add a service-role function for this standard Auth operation. Preserve single-use/expiry behavior and verify production email rate limits; add Supabase CAPTCHA protection if abuse risk or delivery volume warrants it. Consider a password-changed security notification. Keep invitation acceptance separate and unchanged.
+- **Acceptance criteria:** login offers “Olvidé mi contraseña”; request confirmation does not disclose whether the email is registered; valid recovery links reach a password-update screen instead of the normal role-routed app; expired, invalid, reused, and wrong-origin links cannot change a password; submitted passwords are validated and saved through the recovery session; success returns safely to sign-in; signup remains disabled; the gym's tenant branding is retained.
+- **Tests:** unit tests cover generic request errors, fixed same-origin callback, password update and hidden backend errors; local end-to-end testing covers the successful recovery and sign-in path plus expired/reused links. Before Production rollout, verify configured redirect URLs, password policy, and delivery using a non-production account.
+- **References:** [Supabase password-based Auth and reset flow](https://supabase.com/docs/guides/auth/passwords), [Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls), [Auth rate limits](https://supabase.com/docs/guides/auth/rate-limits), and [Auth CAPTCHA](https://supabase.com/docs/guides/auth/auth-captcha).
 
 ### Invited Member Experience
 

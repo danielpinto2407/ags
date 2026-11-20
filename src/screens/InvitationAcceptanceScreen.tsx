@@ -1,5 +1,6 @@
+import { ArrowRight, UserRound } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import { ArrowRight, Eye, EyeOff, UserRound } from 'lucide-react';
+import PasswordField from '@/components/PasswordField';
 import { invitationRepository } from '@/data/invitationRepository';
 
 interface InvitationAcceptanceScreenProps {
@@ -16,8 +17,6 @@ export default function InvitationAcceptanceScreen({
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,58 +75,26 @@ export default function InvitationAcceptanceScreen({
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold text-zinc-300" htmlFor="invite-password">
-              Crea tu contraseña
-            </label>
-            <div className="relative">
-              <input
-                autoComplete="new-password"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-3 pr-12 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-brand-500"
-                id="invite-password"
-                minLength={10}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-              />
-              <button
-                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-400 hover:text-white"
-                onClick={() => setShowPassword((visible) => !visible)}
-                type="button"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
+          <PasswordField
+            autoComplete="new-password"
+            id="invite-password"
+            label="Crea tu contraseña"
+            minLength={10}
+            onChange={setPassword}
+            value={password}
+          />
 
           <div>
-            <label className="mb-1.5 block text-xs font-semibold text-zinc-300" htmlFor="invite-password-confirmation">
-              Confirma tu contraseña
-            </label>
-            <div className="relative">
-              <input
-                aria-describedby={passwordConfirmation && password !== passwordConfirmation ? 'invite-password-mismatch' : undefined}
-                aria-invalid={Boolean(passwordConfirmation && password !== passwordConfirmation)}
-                autoComplete="new-password"
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-3 pr-12 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-brand-500"
-                id="invite-password-confirmation"
-                minLength={10}
-                onChange={(event) => setPasswordConfirmation(event.target.value)}
-                required
-                type={showPasswordConfirmation ? 'text' : 'password'}
-                value={passwordConfirmation}
-              />
-              <button
-                aria-label={showPasswordConfirmation ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'}
-                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-400 hover:text-white"
-                onClick={() => setShowPasswordConfirmation((visible) => !visible)}
-                type="button"
-              >
-                {showPasswordConfirmation ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
+            <PasswordField
+              autoComplete="new-password"
+              describedBy={passwordConfirmation && password !== passwordConfirmation ? 'invite-password-mismatch' : undefined}
+              id="invite-password-confirmation"
+              invalid={Boolean(passwordConfirmation && password !== passwordConfirmation)}
+              label="Confirma tu contraseña"
+              minLength={10}
+              onChange={setPasswordConfirmation}
+              value={passwordConfirmation}
+            />
             {passwordConfirmation && password !== passwordConfirmation && (
               <p className="mt-1.5 text-xs text-rose-400" id="invite-password-mismatch" role="status">
                 Las contraseñas no coinciden todavía.
