@@ -39,6 +39,19 @@ export const authRepository = {
     if (error) throw new Error(toSignInErrorMessage(error.status, error.code));
   },
 
+  async requestPasswordRecovery(email: string): Promise<void> {
+    const client = requireSupabaseClient();
+    const redirectTo = new URL('/?password_recovery=1', window.location.origin).toString();
+    const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw new Error('No se pudo procesar la solicitud. Inténtalo más tarde.');
+  },
+
+  async updatePassword(password: string): Promise<void> {
+    const client = requireSupabaseClient();
+    const { error } = await client.auth.updateUser({ password });
+    if (error) throw new Error('No se pudo actualizar la contraseña. Solicita un enlace nuevo.');
+  },
+
   async signOut(): Promise<void> {
     const client = requireSupabaseClient();
     const { error } = await client.auth.signOut();

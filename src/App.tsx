@@ -3,6 +3,7 @@ import LoginScreen from '@/screens/LoginScreen';
 import AppShell from '@/app/AppShell';
 import ScreenRenderer from '@/app/ScreenRenderer';
 import InvitationAcceptanceScreen from '@/screens/InvitationAcceptanceScreen';
+import PasswordRecoveryScreen from '@/screens/PasswordRecoveryScreen';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { useTenantContext } from '@/app/tenant/tenantContext';
 import { useAppNavigation } from '@/app/useAppNavigation';
@@ -38,9 +39,18 @@ function TenantMessage({ title, message, action, loading = false }: { title: str
 }
 
 export default function App() {
-  const { state: authState, signIn, signOut, retryProfile } = useAuth();
+  const {
+    state: authState,
+    signIn,
+    signOut,
+    retryProfile,
+    requestPasswordRecovery,
+    completePasswordRecovery,
+    returnToSignIn,
+  } = useAuth();
   const { state: tenantState, retry } = useTenantContext();
   const invitationId = new URLSearchParams(window.location.search).get('invitation_id');
+  const isPasswordRecoveryCallback = new URLSearchParams(window.location.search).get('password_recovery') === '1';
   const role = authState.status === 'authenticated' ? authState.productRole : null;
   const navigation = useAppNavigation(role);
   const fontTheme = tenantState.status === 'tenant' ? tenantState.tenant.theme : DEFAULT_TENANT_THEME;
@@ -103,6 +113,32 @@ export default function App() {
 
   if (authState.status === 'loading' || authState.status === 'profile-loading') {
     return <TenantMessage loading title="Verificando sesión" message="Estamos validando tu cuenta y el acceso a este gimnasio." />;
+  }
+
+  if (authState.status === 'recovery' || authState.status === 'recovery-complete') {
+    const recoveryMode = authState.status === 'recovery' ? 'update' : 'complete';
+    return (
+      <main className="tenant-app flex min-h-screen w-full items-center justify-center px-5 py-10" style={tenantThemeStyle(theme)}>
+        <PasswordRecoveryScreen
+          gymName={tenant?.name ?? 'GluteHouse'}
+          mode={recoveryMode}
+          onReturnToSignIn={returnToSignIn}
+          onUpdate={completePasswordRecovery}
+        />
+      </main>
+    );
+  }
+
+  if (isPasswordRecoveryCallback && authState.status !== 'authenticated') {
+    return (
+      <main className="tenant-app flex min-h-screen w-full items-center justify-center px-5 py-10" style={tenantThemeStyle(theme)}>
+        <PasswordRecoveryScreen
+          gymName={tenant?.name ?? 'GluteHouse'}
+          mode="invalid"
+          onReturnToSignIn={returnToSignIn}
+        />
+      </main>
+    );
   }
 
   if (authState.status === 'error') {
@@ -169,6 +205,8 @@ export default function App() {
           error={authState.status === 'signed-out' ? authState.error : null}
           isSubmitting={authState.status === 'signed-out' && authState.submitting}
           onSubmit={signIn}
+          onRequestPasswordRecovery={requestPasswordRecovery}
+          onCancelPasswordRecovery={returnToSignIn}
         />
       </div>
     );

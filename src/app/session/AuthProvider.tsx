@@ -17,6 +17,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   const [sessionError, setSessionError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [bootstrapComplete, setBootstrapComplete] = useState(false);
+  const [recoveryStage, setRecoveryStage] = useState<'active' | 'complete' | null>(null);
   const [authState, setAuthState] = useState<AuthState>(() => (
     authRepository.isConfigured()
       ? { status: 'loading' }
@@ -32,12 +33,18 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
 
     let cancelled = false;
-    const unsubscribe = authRepository.subscribeToAuthChanges((_event, nextSession) => {
+    const unsubscribe = authRepository.subscribeToAuthChanges((event, nextSession) => {
       if (cancelled) return;
       setSession(nextSession);
       setSessionReady(true);
       setSessionError(false);
-      if (!nextSession) setAuthState({ status: 'signed-out', error: null, submitting: false });
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryStage('active');
+        setAuthState({ status: 'recovery' });
+      } else if (event === 'SIGNED_OUT') {
+        setRecoveryStage(null);
+        setAuthState({ status: 'signed-out', error: null, submitting: false });
+      }
     });
 
     return () => {
@@ -83,6 +90,10 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
     if (sessionError) {
       setAuthState({ status: 'error', message: 'No se pudo recuperar la sesión. Inténtalo nuevamente.' });
+      return;
+    }
+    if (recoveryStage) {
+      setAuthState({ status: recoveryStage === 'active' ? 'recovery' : 'recovery-complete' });
       return;
     }
     if (!sessionUserId) {
@@ -153,7 +164,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, [attempt, bootstrapComplete, sessionError, sessionReady, sessionUserId, tenantState]);
+  }, [attempt, bootstrapComplete, recoveryStage, sessionError, sessionReady, sessionUserId, tenantState]);
 
   const signIn = async (email: string, password: string) => {
     setAuthState({ status: 'signed-out', error: null, submitting: true });
@@ -176,13 +187,38 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const requestPasswordRecovery = async (email: string) => {
+    await authRepository.requestPasswordRecovery(email.trim().toLowerCase());
+  };
+
+  const completePasswordRecovery = async (password: string) => {
+    if (recoveryStage !== 'active') throw new Error('Solicita un enlace nuevo para cambiar tu contraseña.');
+    await authRepository.updatePassword(password);
+    setRecoveryStage('complete');
+  };
+
+  const returnToSignIn = async () => {
+    await authRepository.signOut();
+    const url = new URL(window.location.href);
+    url.searchParams.delete('password_recovery');
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  };
+
   const retryProfile = () => {
     setAuthState({ status: 'loading' });
     setAttempt((currentAttempt) => currentAttempt + 1);
   };
 
   return (
-    <AuthContext.Provider value={{ state: authState, signIn, signOut, retryProfile }}>
+    <AuthContext.Provider value={{
+      state: authState,
+      signIn,
+      requestPasswordRecovery,
+      completePasswordRecovery,
+      returnToSignIn,
+      signOut,
+      retryProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );
