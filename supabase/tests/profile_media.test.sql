@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(26);
+select extensions.plan(17);
 
 insert into public.tenants (id, name, subdomain, status)
 values ('f2000000-0000-4000-8000-000000000001', 'Media Gym', 'media-gym', 'ACTIVE');
@@ -50,27 +50,30 @@ select extensions.ok(
   'profile media deletion is guarded by ownership policies'
 );
 select extensions.ok(
-  exists (select 1 from pg_catalog.pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'profile_media_insert_tenant_loading_icon'),
-  'loading icon uploads have a tenant-scoped insert policy'
-);
-select extensions.ok(
-  exists (select 1 from pg_catalog.pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname = 'profile_media_delete_tenant_loading_icon'),
-  'loading icon deletion has a tenant-scoped policy'
-);
-select extensions.ok(
   (select prosecdef from pg_catalog.pg_proc where oid = 'public.set_own_profile_avatar(text)'::regprocedure)
     and (select prosecdef from pg_catalog.pg_proc where oid = 'public.set_own_tenant_logo(text)'::regprocedure)
-    and (select prosecdef from pg_catalog.pg_proc where oid = 'public.set_own_tenant_loading_icon(text)'::regprocedure),
-  'avatar, tenant logo and loading icon updates use security-definer RPCs'
+    and pg_catalog.has_function_privilege('authenticated', 'public.set_own_profile_avatar(text)', 'EXECUTE')
+    and pg_catalog.has_function_privilege('authenticated', 'public.set_own_tenant_logo(text)', 'EXECUTE')
+    and not pg_catalog.has_function_privilege('anon', 'public.set_own_profile_avatar(text)', 'EXECUTE')
+    and not pg_catalog.has_function_privilege('anon', 'public.set_own_tenant_logo(text)', 'EXECUTE'),
+  'avatar and tenant logo updates use protected security-definer RPCs'
 );
 select extensions.ok(
-  pg_catalog.has_function_privilege('authenticated', 'public.set_own_profile_avatar(text)', 'EXECUTE')
-    and pg_catalog.has_function_privilege('authenticated', 'public.set_own_tenant_logo(text)', 'EXECUTE')
-    and pg_catalog.has_function_privilege('authenticated', 'public.set_own_tenant_loading_icon(text)', 'EXECUTE')
-    and not pg_catalog.has_function_privilege('anon', 'public.set_own_profile_avatar(text)', 'EXECUTE')
-    and not pg_catalog.has_function_privilege('anon', 'public.set_own_tenant_logo(text)', 'EXECUTE')
-    and not pg_catalog.has_function_privilege('anon', 'public.set_own_tenant_loading_icon(text)', 'EXECUTE'),
-  'only authenticated callers can execute media update RPCs'
+  not exists (
+    select 1 from pg_catalog.pg_policies
+    where schemaname = 'storage' and tablename = 'objects'
+      and policyname in ('profile_media_insert_tenant_loading_icon', 'profile_media_delete_tenant_loading_icon')
+  ),
+  'loading icon storage policies are retired'
+);
+select extensions.is(
+  pg_catalog.to_regprocedure('public.set_own_tenant_loading_icon(text)')::text,
+  null,
+  'loading icon RPC is retired'
+);
+select extensions.ok(
+  not exists (select 1 from public.tenants where theme ? 'loadingIconUrl'),
+  'tenant themes no longer retain loading icon URLs'
 );
 
 set local role anon;
@@ -85,12 +88,6 @@ select extensions.throws_ok(
   '42501', null,
   'anonymous callers cannot set a tenant logo'
 );
-select extensions.throws_ok(
-  $$select public.set_own_tenant_loading_icon('https://example.test/storage/v1/object/public/profile-media/loading-icons/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png')$$,
-  '42501', null,
-  'anonymous callers cannot set a tenant loading icon'
-);
-
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000001', true);
@@ -109,35 +106,6 @@ select extensions.is(
   'avatars/f3000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000001.webp',
   'coach roster exposes only its invited student avatar path'
 );
-select extensions.lives_ok(
-  $$insert into storage.objects (bucket_id, name, owner_id)
-    values ('profile-media', 'loading-icons/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png', 'f3000000-0000-4000-8000-000000000001')$$,
-  'an active coach can upload a loading icon to their own tenant folder'
-);
-select extensions.throws_ok(
-  $$insert into storage.objects (bucket_id, name, owner_id)
-    values ('profile-media', 'loading-icons/f2000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000001.png', 'f3000000-0000-4000-8000-000000000001')$$,
-  '42501', null,
-  'a coach cannot upload a loading icon to another tenant folder'
-);
-select extensions.is(
-  public.set_own_tenant_loading_icon('https://example.test/storage/v1/object/public/profile-media/loading-icons/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png'),
-  'https://example.test/storage/v1/object/public/profile-media/loading-icons/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png',
-  'an active coach can set an existing loading icon from their tenant folder'
-);
-select extensions.ok(
-  exists (
-    select 1 from public.resolve_tenant_by_subdomain('media-gym') as resolved
-    where resolved.theme->>'loadingIconUrl' = 'https://example.test/storage/v1/object/public/profile-media/loading-icons/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png'
-  ),
-  'public tenant resolver returns the configured loading icon'
-);
-select extensions.throws_ok(
-  $$select public.set_own_tenant_loading_icon('https://untrusted.example/loading.png')$$,
-  '22023', 'invalid_loading_icon_url',
-  'a coach cannot set a loading icon outside the tenant media folder'
-);
-
 reset role;
 insert into public.routine_assignments (
   id, tenant_id, coach_id, student_id, scheduled_for, title, status, published_at
@@ -213,21 +181,5 @@ select extensions.throws_ok(
   '42501', 'not_authorized',
   'a student cannot change the tenant logo'
 );
-select extensions.throws_ok(
-  $$select public.set_own_tenant_loading_icon('https://example.test/storage/v1/object/public/profile-media/loading-icons/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png')$$,
-  '42501', 'not_authorized',
-  'a student cannot change the tenant loading icon'
-);
-
-select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000001', true);
-select extensions.ok(
-  public.set_own_tenant_loading_icon(null) is null,
-  'clearing a loading icon returns null to select the default'
-);
-select extensions.ok(
-  (select theme->>'loadingIconUrl' is null from public.tenants where id = 'f2000000-0000-4000-8000-000000000001'),
-  'clearing a loading icon removes it from the tenant theme'
-);
-
 select * from extensions.finish();
 rollback;
