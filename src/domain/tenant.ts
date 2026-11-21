@@ -2,7 +2,6 @@ export type TenantStatus = 'ACTIVE' | 'SUSPENDED';
 
 export interface TenantTheme {
   logoUrl: string | null;
-  loadingIconUrl: string | null;
   primaryColor: string;
   secondaryColor: string;
   backgroundColor: string;
@@ -31,7 +30,6 @@ export interface Tenant {
 
 export const DEFAULT_TENANT_THEME: TenantTheme = {
   logoUrl: null,
-  loadingIconUrl: null,
   primaryColor: '#7b2545',
   secondaryColor: '#572239',
   backgroundColor: '#f4eae3',
@@ -91,13 +89,7 @@ export function isTenantTheme(value: unknown): value is TenantTheme {
     || (typeof theme.logoUrl === 'string'
       && (theme.logoUrl.startsWith('/') && !theme.logoUrl.startsWith('//')
         || /^https:\/\//i.test(theme.logoUrl)));
-  const validLoadingIcon = theme.loadingIconUrl === null
-    || (typeof theme.loadingIconUrl === 'string'
-      && (theme.loadingIconUrl.startsWith('/') && !theme.loadingIconUrl.startsWith('//')
-        || /^https:\/\//i.test(theme.loadingIconUrl)));
-
   return validLogo
-    && validLoadingIcon
     && typeof theme.primaryColor === 'string' && HEX_COLOR_PATTERN.test(theme.primaryColor)
     && typeof theme.secondaryColor === 'string' && HEX_COLOR_PATTERN.test(theme.secondaryColor)
     && typeof theme.backgroundColor === 'string' && HEX_COLOR_PATTERN.test(theme.backgroundColor)
@@ -133,9 +125,12 @@ export function tenantFromResolverRow(value: unknown): Tenant | null {
   const row = value as Record<string, unknown>;
   const storedTheme = row.theme;
   const themeDefaults = row.tenant_subdomain === 'ags' ? DEFAULT_TENANT_THEME : LEGACY_TENANT_THEME;
-  const theme = storedTheme && typeof storedTheme === 'object' && !Array.isArray(storedTheme)
-    ? { ...themeDefaults, ...(storedTheme as Partial<TenantTheme>) }
+  const storedThemeWithoutLoadingIcon = storedTheme && typeof storedTheme === 'object' && !Array.isArray(storedTheme)
+    ? Object.fromEntries(Object.entries(storedTheme).filter(([key]) => key !== 'loadingIconUrl'))
     : storedTheme;
+  const theme = storedThemeWithoutLoadingIcon && typeof storedThemeWithoutLoadingIcon === 'object' && !Array.isArray(storedThemeWithoutLoadingIcon)
+    ? { ...themeDefaults, ...(storedThemeWithoutLoadingIcon as Partial<TenantTheme>) }
+    : storedThemeWithoutLoadingIcon;
   const tenant = {
     id: row.tenant_id,
     name: row.tenant_name,
