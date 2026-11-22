@@ -9,15 +9,27 @@
         {{ else }}
         <p style="margin:0 0 20px;color:{{ if .Data.gym_primary_color }}{{ .Data.gym_primary_color }}{{ else }}#7b2545{{ end }};font-size:14px;font-weight:bold;letter-spacing:1px;">{{ if .Data.gym_name }}{{ .Data.gym_name }}{{ else }}AGS GluteHouse{{ end }}</p>
         {{ end }}
+        {{ if eq .Data.role "coach_admin" }}
+        <p style="margin:0;color:{{ if .Data.gym_primary_color }}{{ .Data.gym_primary_color }}{{ else }}#7b2545{{ end }};font-size:11px;font-weight:bold;letter-spacing:1.6px;text-transform:uppercase;">INCORPORACIÓN AL EQUIPO</p>
+        <h1 style="margin:14px 0 0;color:{{ if .Data.gym_text_color }}{{ .Data.gym_text_color }}{{ else }}#2b2528{{ end }};font-family:{{ if .Data.gym_display_font }}'{{ .Data.gym_display_font }}',{{ end }}Georgia,'Times New Roman',serif;font-size:30px;font-weight:normal;line-height:1.2;">Te invitamos a ser parte del equipo de coaching</h1>
+        {{ else }}
         <p style="margin:0;color:{{ if .Data.gym_primary_color }}{{ .Data.gym_primary_color }}{{ else }}#7b2545{{ end }};font-size:11px;font-weight:bold;letter-spacing:1.6px;text-transform:uppercase;">UN ESPACIO PARA TI</p>
         <h1 style="margin:14px 0 0;color:{{ if .Data.gym_text_color }}{{ .Data.gym_text_color }}{{ else }}#2b2528{{ end }};font-family:{{ if .Data.gym_display_font }}'{{ .Data.gym_display_font }}',{{ end }}Georgia,'Times New Roman',serif;font-size:30px;font-weight:normal;line-height:1.2;">Tu fuerza tiene un lugar aquí</h1>
+        {{ end }}
       </td>
     </tr>
     <tr>
       <td style="padding:16px 36px 36px;font-size:15px;line-height:1.75;color:{{ if .Data.gym_text_color }}{{ .Data.gym_text_color }}{{ else }}#2b2528{{ end }};">
+        {{ if eq .Data.role "coach_admin" }}
+        <p style="margin:0 0 16px;">Hola,</p>
+        <p style="margin:0 0 16px;">Nos complace invitarte a integrar el equipo de coaching de <strong>{{ if .Data.gym_name }}{{ .Data.gym_name }}{{ else }}AGS GluteHouse{{ end }}</strong>, como <strong>coach administradora</strong>.</p>
+        <p style="margin:0 0 16px;color:{{ if .Data.gym_muted_color }}{{ .Data.gym_muted_color }}{{ else }}#76696d{{ end }};">Este perfil te permitirá administrar alumnas, crear y asignar rutinas, seguir el progreso de tus deportistas y gestionar tus actividades dentro de la plataforma.</p>
+        <p style="margin:0 0 24px;color:{{ if .Data.gym_muted_color }}{{ .Data.gym_muted_color }}{{ else }}#76696d{{ end }};">Para activar tu acceso, acepta esta invitación y crea una contraseña segura.</p>
+        {{ else }}
         <p style="margin:0 0 16px;">Hola,</p>
         <p style="margin:0 0 16px;">{{ if .Data.coach_name }}{{ .Data.coach_name }} te invita a formar parte de <strong>{{ if .Data.gym_name }}{{ .Data.gym_name }}{{ else }}AGS GluteHouse{{ end }}</strong>.{{ else }}Te invitamos a formar parte de <strong>{{ if .Data.gym_name }}{{ .Data.gym_name }}{{ else }}AGS GluteHouse{{ end }}</strong>.{{ end }}</p>
         <p style="margin:0 0 24px;color:{{ if .Data.gym_muted_color }}{{ .Data.gym_muted_color }}{{ else }}#76696d{{ end }};">Al aceptar podrás confirmar tu nombre y crear tu contraseña para entrar a tu espacio personal.</p>
+        {{ end }}
         <p style="margin:0 0 24px;color:{{ if .Data.gym_muted_color }}{{ .Data.gym_muted_color }}{{ else }}#76696d{{ end }};font-size:13px;">Este enlace es personal. Si no esperabas esta invitación, puedes ignorar este correo; tu acceso no se activará.</p>
         <p style="margin:0 0 24px;text-align:center;">
           <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 26px;background-color:{{ if .Data.gym_primary_color }}{{ .Data.gym_primary_color }}{{ else }}#7b2545{{ end }};border-radius:8px;color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">Aceptar mi invitación</a>

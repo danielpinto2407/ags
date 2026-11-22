@@ -269,7 +269,7 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 [auth.email.template.invite]
-subject = "Una invitación para tu espacio de entrenamiento"
+subject = "Invitación para formar parte del equipo de coaching"
 content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.recovery]
@@ -463,6 +463,10 @@ minimum_password_length = 10
 enable_confirmations = true
 max_frequency = "1m"
 otp_length = 8
+
+[remotes.production.auth.email.template.invite]
+subject = "Invitación para formar parte del equipo de coaching"
+content_path = "./supabase/templates/invite.html"
 
 [remotes.production.auth.email.template.recovery]
 subject = "Restablece tu contraseña"
