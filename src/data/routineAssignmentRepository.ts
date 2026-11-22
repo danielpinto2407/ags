@@ -94,24 +94,13 @@ function requireClient() {
 }
 
 async function mapWorkoutComments(
-  client: ReturnType<typeof requireClient>,
-  tenantId: string,
   rows: Array<Record<string, unknown>>
 ): Promise<WorkoutComment[]> {
-  const authorIds = [...new Set(rows.map((row) => String(row.author_id)))];
-  const { data: profiles, error } = await client
-    .from('profiles')
-    .select('id, full_name')
-    .eq('tenant_id', tenantId)
-    .in('id', authorIds);
-  if (error) throw new Error('No se pudieron cargar los autores de los comentarios.');
-
-  const namesById = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]));
   return rows.map((row) => ({
     id: String(row.id),
     executionId: String(row.execution_id),
     authorId: String(row.author_id),
-    authorName: namesById.get(String(row.author_id)) || 'Usuario',
+    authorName: String(row.author_name || 'Usuario'),
     body: String(row.body),
     createdAt: String(row.created_at),
   }));
@@ -590,7 +579,7 @@ export const routineAssignmentRepository = {
         : Promise.resolve({ data: [], error: null }),
       client
         .from('routine_execution_comments')
-        .select('id, execution_id, author_id, body, created_at')
+        .select('id, execution_id, author_id, author_name, body, created_at')
         .eq('tenant_id', tenantId)
         .eq('execution_id', execution.id)
         .order('created_at', { ascending: true }),
@@ -692,7 +681,7 @@ export const routineAssignmentRepository = {
           : calculateRoutineProgress(completedUnits, prescribedUnits)
         : 0,
       exercises,
-      comments: await mapWorkoutComments(client, tenantId, commentResult.data ?? []),
+      comments: await mapWorkoutComments(commentResult.data ?? []),
     };
   },
 
@@ -711,13 +700,13 @@ export const routineAssignmentRepository = {
     const client = requireClient();
     const { data, error } = await client
       .from('routine_execution_comments')
-      .select('id, execution_id, author_id, body, created_at')
+      .select('id, execution_id, author_id, author_name, body, created_at')
       .eq('tenant_id', tenantId)
       .eq('execution_id', executionId)
       .order('created_at', { ascending: true });
 
     if (error) throw new Error('No se pudieron cargar los comentarios del entrenamiento.');
-    return mapWorkoutComments(client, tenantId, data ?? []);
+    return mapWorkoutComments(data ?? []);
   },
 
   async createWorkoutComment(executionId: string, tenantId: string, body: string): Promise<WorkoutComment> {
@@ -737,11 +726,11 @@ export const routineAssignmentRepository = {
         author_id: userData.user.id,
         body: normalizedBody,
       })
-      .select('id, execution_id, author_id, body, created_at')
+      .select('id, execution_id, author_id, author_name, body, created_at')
       .single();
 
     if (error) throw new Error('No se pudo publicar el comentario.');
-    const [comment] = await mapWorkoutComments(client, tenantId, [data]);
+    const [comment] = await mapWorkoutComments([data]);
     return comment;
   },
 
