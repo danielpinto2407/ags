@@ -29,7 +29,7 @@ AGS GluteHouse is a multi-tenant fitness SaaS under active development. This ref
 | CU-04C | The coach who owns a published routine reviews that assigned student's workout history, derived completion percentages, and per-exercise actual performance. The student is told this information is visible to that coach. Coach and student can exchange plain-text comments on that exact registered workout, with no second copy or modification of workout data. Read-only for workout values. |
 | CU-05 | Exercise detail, inline video, rest timer, sound/vibration alert. |
 | CU-06 | Direct contact with coach. |
-| CU-07 | Super-admin gym, plan, theme, subscription, and membership administration. |
+| CU-07 | Super-admin gym, plan, theme, subscription, membership administration, and tenant-specific catalog options. |
 | CU-08 | Feature flags by gym and plan. |
 | CU-09 | Suspend/reactivate gym access. |
 | CU-10 (proposed) | Group-class schedules, per-class capacity, booking, attendance, and `user_general` access; deferred after the personalized-training MVP. |
@@ -52,6 +52,7 @@ The target personalized acceptance path is invite email -> account activation ->
 - A routine starts only when the student uses “Registrar ejercicio” with valid actual reps/load and effort for an exercise. Opening the individual training screen or editing a draft does not create an execution or consume the daily allowance. That registration action records the exercise as completed. Progress is completed exercises divided by prescribed exercises, with one actual reps/load entry per exercise. Resume is restricted to the same date; at day end, an incomplete workout closes and its results can be reviewed but not changed. A new date permits another routine start.
 - Any RIR/RPE scale labels or interpretation beyond the confirmed numeric ranges remain to be confirmed; do not infer a conversion between the scales.
 - Define the pending biometric registration form: metric catalogue, units, optionality, edit/correction policy, and whether the student sees every metric or coach-selected metrics.
+- Define tenant-specific available equipment options for CU-02. The super-admin manages the tenant list; coaches select options when creating or editing an exercise. Do not model machine inventory, brand/model, composition, serial number, maintenance inspection, or per-exercise safety checklists. The option catalogue must remain tenant-isolated and backward-compatible with existing shared and tenant exercise records.
 - Decide if biometrics and workout progress are charts, dated tables, or both, and define empty states and privacy/access rules. Do not infer metrics from mock/profile placeholders.
 
 ### Password Recovery Status

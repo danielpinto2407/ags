@@ -13,6 +13,7 @@ import {
   exerciseEquipmentLabels,
   exerciseFocusLabels,
   exerciseMovementLabels,
+  formatEquipmentLabel,
   formatMuscleName,
 } from '@/domain/exerciseDefinition';
 import type { ExerciseDefinition, ExerciseDefinitionDifficulty, ExerciseDefinitionInput, ExerciseFocus } from '@/domain/exerciseDefinition';
@@ -52,7 +53,7 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
       ...exercise.secondaryMuscles,
       ...exercise.primaryMuscles.map(formatMuscleName),
       ...exercise.secondaryMuscles.map(formatMuscleName),
-      ...exercise.equipment.map((item) => exerciseEquipmentLabels[item]),
+      ...exercise.equipment.map(formatEquipmentLabel),
     ].join(' ').toLocaleLowerCase();
     return searchable.includes(normalizedQuery)
       && (focusFilter === 'ALL' || exercise.focus === focusFilter)
@@ -225,7 +226,7 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
               <div className="mt-3 flex flex-wrap gap-1.5">
                 <span className="rounded-full border border-zinc-700 bg-zinc-800/60 px-2 py-0.5 text-[9px] text-zinc-300">{exerciseFocusLabels[exercise.focus]}</span>
                 <span className={`rounded-full border px-2 py-0.5 text-[9px] ${difficultyColors[exercise.difficulty]}`}>{exerciseDifficultyLabels[exercise.difficulty]}</span>
-                {exercise.equipment.map((item) => <span key={item} className="rounded-full border border-zinc-800 px-2 py-0.5 text-[9px] text-zinc-500">{exerciseEquipmentLabels[item]}</span>)}
+                {exercise.equipment.map((item) => <span key={item} className="rounded-full border border-zinc-800 px-2 py-0.5 text-[9px] text-zinc-500">{formatEquipmentLabel(item)}</span>)}
               </div>
               <p className="mt-2 text-[10px] text-zinc-600">{exerciseMovementLabels[exercise.movementPattern]}</p>
 
@@ -290,6 +291,7 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
       {showCreateModal && (
         <CreateExerciseModal
           exercise={editorExercise ?? undefined}
+          equipmentOptions={library.state.status === 'loaded' ? library.state.equipmentOptions : []}
           onClose={() => { setShowCreateModal(false); setEditorExercise(null); }}
           onSave={saveExercise}
         />

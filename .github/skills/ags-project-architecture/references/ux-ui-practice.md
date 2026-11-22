@@ -24,6 +24,16 @@ The short design rationale should answer: **Who is doing what? What states and e
 
 When sources conflict, follow product/security constraints first, then accessible platform semantics, then the AGS visual system. Surface unresolved product choices instead of deciding them through layout.
 
+## Platform Super-Admin Checks
+
+- Separate the platform shell from tenant branding. Platform text, status, tables and forms should be neutral and operational, not inherit a gym's tenant palette as an identity.
+- Make the current tenant explicit. The user must see tenant name/subdomain/status before editing tenant-scoped options or data.
+- Prefer tenant selector plus resource list for platform workflows; use tabs or nested sections only when the same tenant context has multiple peer configuration areas.
+- Use one reusable resource-manager pattern for equipment and future tenant taxonomies: search/filter if justified, active/archived sections, persistent name input, save, archive/restore and explicit success/error feedback.
+- Confirm destructive or externally visible actions. Suspension, subdomain changes, role reassignment and billing actions need target and consequence text before submission.
+- Show no cross-tenant data by accident. If a request fails permission or tenant scope, show a neutral permission state and a safe retry/back path.
+- Platform rows must remain usable at narrow widths: stack tenant selector/content, keep action icons keyboard-accessible, and avoid dense tables that require horizontal scrolling where cards or list rows are clearer.
+
 ## Interaction And Visual Checks
 
 - Make hierarchy follow the task: show the current context, the primary action, and the consequence before secondary detail. Keep repeated operational screens scannable rather than turning them into decorative dashboards.

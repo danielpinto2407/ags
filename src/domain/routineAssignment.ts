@@ -1,6 +1,5 @@
 import {
   EXERCISE_DIFFICULTIES,
-  EXERCISE_EQUIPMENT,
   EXERCISE_FOCUSES,
   EXERCISE_MOVEMENT_PATTERNS,
 } from '@/domain/exerciseDefinition';
@@ -132,7 +131,7 @@ function toRoutineExerciseSnapshot(value: unknown): RoutineExerciseSnapshot {
     || !isStringArray(snapshot.primaryMuscles)
     || !isStringArray(snapshot.secondaryMuscles)
     || !Array.isArray(snapshot.equipment)
-    || !snapshot.equipment.every((item) => typeof item === 'string' && EXERCISE_EQUIPMENT.includes(item as ExerciseEquipment))
+    || !snapshot.equipment.every((item) => typeof item === 'string')
     || typeof snapshot.movementPattern !== 'string'
     || !EXERCISE_MOVEMENT_PATTERNS.includes(snapshot.movementPattern as ExerciseMovementPattern)
     || typeof snapshot.difficulty !== 'string'

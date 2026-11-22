@@ -3,15 +3,16 @@ import { exerciseLibraryRepository } from '@/data/exerciseLibraryRepository';
 import type { ExerciseDefinition, ExerciseDefinitionInput } from '@/domain/exerciseDefinition';
 
 export type ExerciseLibraryState =
-  | { status: 'loading'; catalog: ExerciseDefinition[]; tenantExercises: ExerciseDefinition[] }
-  | { status: 'error'; catalog: ExerciseDefinition[]; tenantExercises: ExerciseDefinition[]; message: string }
-  | { status: 'loaded'; catalog: ExerciseDefinition[]; tenantExercises: ExerciseDefinition[] };
+  | { status: 'loading'; catalog: ExerciseDefinition[]; tenantExercises: ExerciseDefinition[]; equipmentOptions: string[] }
+  | { status: 'error'; catalog: ExerciseDefinition[]; tenantExercises: ExerciseDefinition[]; equipmentOptions: string[]; message: string }
+  | { status: 'loaded'; catalog: ExerciseDefinition[]; tenantExercises: ExerciseDefinition[]; equipmentOptions: string[] };
 
 export function useExerciseLibrary(tenantId: string, coachId: string) {
   const [state, setState] = useState<ExerciseLibraryState>({
     status: 'loading',
     catalog: [],
     tenantExercises: [],
+    equipmentOptions: [],
   });
   const [includeArchived, setIncludeArchived] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -22,14 +23,16 @@ export function useExerciseLibrary(tenantId: string, coachId: string) {
       status: 'loading',
       catalog: current.catalog,
       tenantExercises: current.tenantExercises,
+      equipmentOptions: current.equipmentOptions,
     }));
 
     Promise.all([
       exerciseLibraryRepository.listCatalog(),
       exerciseLibraryRepository.listTenantExercises(tenantId, includeArchived),
+      exerciseLibraryRepository.listTenantEquipmentOptions(tenantId),
     ])
-      .then(([catalog, tenantExercises]) => {
-        if (!cancelled) setState({ status: 'loaded', catalog, tenantExercises });
+      .then(([catalog, tenantExercises, equipmentOptions]) => {
+        if (!cancelled) setState({ status: 'loaded', catalog, tenantExercises, equipmentOptions });
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -37,6 +40,7 @@ export function useExerciseLibrary(tenantId: string, coachId: string) {
           status: 'error',
           catalog: [],
           tenantExercises: [],
+          equipmentOptions: [],
           message: error instanceof Error ? error.message : 'No se pudo cargar la biblioteca de ejercicios.',
         });
       });

@@ -90,6 +90,17 @@ Dependencies flow inward. Screens may use feature hooks and repositories; domain
 7. Include loading, empty, error, permission, offline, and success states.
 8. Reuse the existing visual system and wire navigation last.
 
+## Super-Admin and CU-07 Direction
+
+- Treat `super_admin` as a platform-scoped actor with `tenant_id = null`; never map it into coach or student navigation.
+- Build CU-07 by vertical slices: platform shell, tenant administration, tenant theme/features, tenant equipment options, profile/role administration, plans/billing, and audit evidence.
+- Use reusable platform primitives for tenant selection, status, resource lists/forms, archive/restore confirmations and feedback. Reuse the smallest existing component if it fits; do not create tenant-specific duplicates.
+- Tenant equipment options are simple tenant-scoped labels, not machine inventory or specification/checklist entities.
+- Preserve existing exercise snapshots and assignments when equipment labels are renamed or archived; archived options are unavailable for future exercise selection only.
+- Do not enforce `max_clients` for personalized invitations or routines unless the product decision explicitly introduces gym-wide capacity rules.
+- Server-side authorization and RLS remain authoritative; hidden navigation is not a permission boundary.
+- Add pgTAP for super-admin allow/deny, cross-tenant isolation, suspended tenants, archive/restore and audit scope.
+
 ## Supabase Direction
 
 Keep Auth calls in `src/data/authRepository.ts` and session lifecycle in `src/app/session/AuthProvider.tsx`. Use only public Vite client configuration, never service-role keys. Resolve tenant before login, load and subscribe to session changes, validate profile/tenant status, preserve silent refresh, and keep session separate from profile role and tenant state. Public signup stays disabled until trusted invitation/provisioning exists.

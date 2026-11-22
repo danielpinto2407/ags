@@ -3,7 +3,7 @@ import { ArrowLeft, LoaderCircle, Save } from 'lucide-react';
 import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
-import { exerciseEquipmentLabels, exerciseFocusLabels, exerciseMovementLabels } from '@/domain/exerciseDefinition';
+import { formatEquipmentLabel, exerciseFocusLabels, exerciseMovementLabels } from '@/domain/exerciseDefinition';
 import { formatLocalDate, utcDateInputValue } from '@/domain/localDate';
 import {
   calculateCycleExerciseTarget,
@@ -239,7 +239,7 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
               <div className="space-y-4 border-t border-zinc-800 px-4 py-4">
                 <div className="flex flex-wrap gap-1.5 text-[10px] text-zinc-400">
                   {item.exercise.equipment.map((equipment) => (
-                    <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-1" key={equipment}>{exerciseEquipmentLabels[equipment]}</span>
+                    <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-1" key={equipment}>{formatEquipmentLabel(equipment)}</span>
                   ))}
                   <span className="rounded-md border border-zinc-800 bg-zinc-950 px-2 py-1">
                     {exerciseFocusLabels[item.exercise.focus]} · {exerciseMovementLabels[item.exercise.movementPattern]}

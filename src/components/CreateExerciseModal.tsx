@@ -25,6 +25,7 @@ interface CreateExerciseModalProps {
   onClose: () => void;
   onSave: (exercise: ExerciseDefinitionInput) => Promise<void>;
   exercise?: ExerciseDefinition;
+  equipmentOptions?: string[];
 }
 
 const DEFAULT_EXERCISE: ExerciseDefinitionInput = {
@@ -42,7 +43,13 @@ const DEFAULT_EXERCISE: ExerciseDefinitionInput = {
 
 const fieldClass = 'w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-sm text-zinc-200 placeholder-zinc-600 transition-colors focus:border-brand-500 focus:outline-none';
 
-export default function CreateExerciseModal({ onClose, onSave, exercise }: CreateExerciseModalProps) {
+export default function CreateExerciseModal({ onClose, onSave, exercise, equipmentOptions }: CreateExerciseModalProps) {
+  const equipmentByLabel = new Map<string, string>();
+  EXERCISE_EQUIPMENT.forEach((equipment) => equipmentByLabel.set(exerciseEquipmentLabels[equipment], equipment));
+  (equipmentOptions ?? []).forEach((option) => {
+    if (!equipmentByLabel.has(option)) equipmentByLabel.set(option, option);
+  });
+  const availableEquipment = Array.from(equipmentByLabel.values());
   const [form, setForm] = useState<ExerciseDefinitionInput>(() => (
     exercise ? toExerciseDefinitionInput(exercise) : DEFAULT_EXERCISE
   ));
@@ -212,7 +219,7 @@ export default function CreateExerciseModal({ onClose, onSave, exercise }: Creat
             Equipo <span className="text-brand-400">*</span>
           </legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {EXERCISE_EQUIPMENT.map((equipment) => (
+            {availableEquipment.map((equipment) => (
               <label key={equipment} className={`flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs transition-colors ${form.equipment.includes(equipment) ? 'border-brand-700 bg-brand-950/40 text-brand-200' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}>
                 <input
                   checked={form.equipment.includes(equipment)}
@@ -220,7 +227,7 @@ export default function CreateExerciseModal({ onClose, onSave, exercise }: Creat
                   onChange={() => toggleEquipment(equipment)}
                   type="checkbox"
                 />
-                {exerciseEquipmentLabels[equipment]}
+                {exerciseEquipmentLabels[equipment] ?? equipment}
               </label>
             ))}
           </div>

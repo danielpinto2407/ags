@@ -2,6 +2,13 @@
 
 ## Architecture
 
+- Is CU-07 divided into reusable platform slices instead of a single monolithic super-admin page?
+- Are `PlatformShell`, tenant selector, tenant summary, resource list/table, form shell, status badge, confirmation and feedback states extracted only if repeated behavior is real, not speculated?
+- Does platform navigation expose only implemented modules and keep future plans visibly deferred?
+- Does the screen preserve one responsibility per repository/domain/component and avoid direct Supabase calls in screens/components?
+- Can the equipment option manager be reused for future tenant catalog taxonomies without importing exercise/program domains?
+
+
 - Does the change map to a documented use case?
 - Is actor, tenant, role, status, and feature-flag scope explicit?
 - Does each module have one responsibility and one reason to change?
@@ -9,6 +16,17 @@
 - Were existing modules searched and reused before adding abstractions?
 
 ## Data and State
+
+- Does every platform write require an active `super_admin` profile and remain separate from coach/student tenant authorization?
+- Can an active super-admin read/create/update/archive/restore tenant equipment options without cross-tenant leakage?
+- Are tenant IDs, subdomains, names and option positions validated before insert/update, including duplicate names and ordering conflicts?
+- Are archived options excluded from future exercise selection but retained in existing exercise snapshots/history?
+- Is renaming an equipment option label non-destructive to existing assignments and catalog snapshots?
+- Are tenant themes, features and plans separate persisted concepts, with server-side fallback and independent authorization?
+- Does `max_clients` remain non-operational unless a separate product decision explicitly introduces a gym-wide cap or plan policy?
+- Are destructive tenant/profile/actions confirmed and represented as loading, success, error and retry states?
+- Is platform audit metadata append-oriented and free of passwords, secrets, raw CSS or unnecessary personal payloads?
+
 
 - Is the domain model explicit and typed?
 - Is data access behind a repository or service?
@@ -42,6 +60,14 @@
 
 ## UI and Visuals
 
+- Is the platform shell neutral and operational rather than using one gym tenant's branding?
+- Are tenant names, subdomains and statuses clear, and can users distinguish active, suspended and archived states without relying on color alone?
+- Are create, rename, archive and restore actions labeled by effect and confirmed where destructive or externally visible?
+- Does the equipment manager have search/filter only if the list is large enough to justify it; is an empty tenant and an empty search state distinct?
+- Are repeated platform forms, tables, toasts, dialogs and feedback patterns reused rather than duplicated per module?
+- On phone and desktop, do tenant lists collapse or stack without horizontal overflow and remain operable with keyboard/focus?
+
+
 - Is the user/goal/current context clear, and was the existing flow inspected before choosing a UI pattern?
 - Does all visible copy describe the user's situation/action in familiar Spanish rather than expose backend or state terminology such as UTC, RLS, RPC, or “solo lectura”?
 - Are stored timestamps/timezones kept separate from calendar presentation? Does the displayed day match the product's user-facing calendar contract without leaking storage implementation details?
@@ -62,6 +88,12 @@
 - Is tenant branding typed, validated, safely mapped to CSS variables, and given a fallback?
 
 ## Security and Integration
+
+- Are all super-admin repositories protected by server grants/RLS or trusted RPCs, not only hidden platform routes?
+- Do pgTAP tests cover platform super-admin access, coach/student denial, cross-tenant reads/writes, suspended tenant scope and archive/restore behavior?
+- Are tenant subdomain/theme/feature/plan writes validated and audited?
+- Does platform UI never expose service-role keys or accept role/tenant IDs as trusted browser input?
+
 
 - Is authorization enforced server-side rather than by hidden navigation?
 - Is tenant isolation enforced through backend policies such as RLS?

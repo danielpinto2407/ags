@@ -56,6 +56,17 @@ function requireClient() {
 }
 
 export const exerciseLibraryRepository = {
+  async listTenantEquipmentOptions(tenantId: string): Promise<string[]> {
+    const { data, error } = await requireClient()
+      .from('tenant_equipment_options')
+      .select('name')
+      .eq('tenant_id', tenantId)
+      .is('archived_at', null)
+      .order('position');
+    if (error) throw new Error('No se pudieron cargar los equipos configurados del gimnasio.');
+    return (data ?? []).map((option) => option.name);
+  },
+
   async listCatalog(): Promise<ExerciseDefinition[]> {
     const client = requireClient();
     const { data, error } = await client
