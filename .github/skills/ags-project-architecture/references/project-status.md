@@ -1,6 +1,6 @@
 # AGS Project Handoff
 
-Last verified: 2026-11-20
+Last verified: 2026-11-21
 
 This is a continuity note for current focus and verified release evidence, not a feature catalog or deployment authority. Product goals and acceptance behavior live in `product-context.md`; schema/security contracts live in `data-contracts.md`; implementation workflow lives in `feature-workflow.md`. Check GitHub for PR state, Supabase for migrations/functions, and Vercel for deployments. Update this handoff only when the focus, next step, blocker, or verified evidence materially changes.
 
@@ -10,17 +10,17 @@ Complete and validate the personalized-training path: coach invitation -> member
 
 ## Current Focus
 
-- **Current work:** PR #32 is merged; the custom loader is retired and recovery email branding is synchronized in Production.
-- **Release state:** Supabase Production is at migrations 001-038. Recovery UI/template/Auth config from PR #31 and the branding/loader follow-up from PR #32 are deployed. Vercel Production deployment for merge SHA `57e59c5e15fad66bbd89db0af555ae107c93fac7` completed successfully. SMTP is unchanged.
-- **Next step:** monitor Production. Migration 038 verified branding metadata for all 5 AGS accounts; migration 037 removed loader references and authorization. Existing loading-icon Storage objects remain unreferenced and should only be deleted with explicit approval.
+- **Current work:** PR #33 is merged; tenant-configured body/display fonts are synchronized through invitations and recovery emails.
+- **Release state:** Supabase Production is at migrations 001-039. PR #33 merge `0fc60d5` added migration 039, invitation font metadata, and synchronized Auth email templates. The existing UI palette and recovery changes remain deployed. SMTP settings are unchanged.
+- **Next step:** implement CU-04C coach review and execution-level comments for the assigned coach and owning student. Workout values remain read-only; comments are plain text and isolated by tenant/execution ownership.
 - Do not create, publish, or complete Production training data for testing without explicit confirmation.
 - CU-04B biometrics remain pending the coach form, metric catalogue, and units definition. Other deferred scope is listed in `product-context.md`.
 
 ## Verified Release Snapshot
 
-- **GitHub:** PR #27 is merged at `ddb724b`, PR #28 at `4a739f2`, PR #29 at `ec624d1`, PR #30 at `5fd5f09`, PR #31 at `4d80fe9`, and PR #32 at `57e59c5`.
-- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-038. Remote migration list confirms 038; no migrations are pending.
-- **Auth email:** recovery subject, reset-specific copy, tenant logo/palette and 10-character minimum are deployed; Production redirects allow the Vercel alias and owned tenant subdomains. The hosted SMTP settings were preserved; `invite-personalized-member` remains active at version 4 with `verify_jwt=true`.
+- **GitHub:** PR #27 is merged at `ddb724b`, PR #28 at `4a739f2`, PR #29 at `ec624d1`, PR #30 at `5fd5f09`, PR #31 at `4d80fe9`, PR #32 at `57e59c5`, and PR #33 at merge `0fc60d5` (`dd76595`).
+- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-039. Remote migration list confirms 039; no migrations are pending.
+- **Auth email:** recovery/invitation subjects and tenant logo/palette are deployed. Migration 039 synchronizes validated `gym_body_font` and `gym_display_font` metadata for profiles and tenant theme changes; `invite-personalized-member` supplies the same fields for initial invitations. Both templates use safe fallback stacks. Hosted SMTP settings were preserved; no real-account email was sent.
 - **Web:** `ags-roan-iota.vercel.app` serves the recovery link on the login screen; Vercel Production deployment for merge SHA `57e59c5e15fad66bbd89db0af555ae107c93fac7` completed successfully. The custom domain `ags.tugimnasioapp.com` still has unresolved DNS.
 - **Branding/media:** the user validated image upload. Production browser loaded the gym logo and Wilson's photo from Storage without broken images.
 
@@ -37,6 +37,7 @@ Complete and validate the personalized-training path: coach invitation -> member
 - **Cycle carousel refinement / PR #30:** coach cycle slots use a horizontal scroll-snap rail with compact cards and previous/next controls; 20 slots were exercised in the local browser at mobile width, confirming horizontal navigation and compact height. Selection/editor behavior is unchanged; no data was saved. Typecheck, lint, Vitest 82/82, build, Vercel Preview, and Vercel Production deployment pass. The current product rule still limits cycle length to 20.
 - **CU-01A recovery branding:** Production initially had the logo configured but `gym_logo_url` absent from all 5 Auth accounts. PR #32/migration 038 backfilled current profiles and syncs branding on tenant theme/profile changes. A local Mailpit test rendered the actual Production logo URL; a read-only Production aggregate now confirms metadata on 5/5 accounts. No Production recovery email was sent for testing.
 - **Loader retirement:** PR #32/migration 037 removed loader policies/RPC and theme references; `TenantLoadingIndicator` keeps the standard spinner. Local pgTAP passes 270/270; Production confirms the loader function, policies, and theme key are absent. Existing Storage objects were not deleted.
+- **Tenant email typography / PR #33:** migration 039 was applied locally and to Production, the invitation Edge Function was redeployed, and both Auth templates were updated through `config push`. Local pgTAP 14/14 and Vitest 88/88 pass, and local Mailpit rendered valid DM Sans/Fraunces and Roboto/Sora combinations for synthetic users. Malicious font values were rejected or rendered safely by the template engine. Gmail/unsupported email-client display remains unverified; Arial/Georgia stacks are fallbacks.
 
 ## Preservation And Safety
 

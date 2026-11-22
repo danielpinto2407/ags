@@ -49,6 +49,15 @@ export interface CycleSlotHistory {
   completedRuns: number;
 }
 
+export interface WorkoutComment {
+  id: string;
+  executionId: string;
+  authorId: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+}
+
 export interface StudentRoutineHistoryEntry {
   id: string;
   title: string;
@@ -80,6 +89,7 @@ export interface CoachRoutineExerciseReview {
 
 export interface CoachRoutineExecutionReview extends CoachRoutineExecutionSummary {
   exercises: CoachRoutineExerciseReview[];
+  comments: WorkoutComment[];
 }
 
 export function validateActualExercisePerformance(

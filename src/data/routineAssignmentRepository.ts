@@ -19,6 +19,7 @@ import type {
   CycleSlotHistory,
   StudentRoutineHistoryEntry,
   StudentRoutineExecutionSnapshot,
+  WorkoutComment,
 } from '@/domain/workoutExecution';
 import {
   calculateRoutineProgress,
@@ -90,6 +91,30 @@ interface AssignmentDayRow {
 function requireClient() {
   if (!supabaseClient) throw new Error('Supabase no está configurado.');
   return supabaseClient;
+}
+
+async function mapWorkoutComments(
+  client: ReturnType<typeof requireClient>,
+  tenantId: string,
+  rows: Array<Record<string, unknown>>
+): Promise<WorkoutComment[]> {
+  const authorIds = [...new Set(rows.map((row) => String(row.author_id)))];
+  const { data: profiles, error } = await client
+    .from('profiles')
+    .select('id, full_name')
+    .eq('tenant_id', tenantId)
+    .in('id', authorIds);
+  if (error) throw new Error('No se pudieron cargar los autores de los comentarios.');
+
+  const namesById = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]));
+  return rows.map((row) => ({
+    id: String(row.id),
+    executionId: String(row.execution_id),
+    authorId: String(row.author_id),
+    authorName: namesById.get(String(row.author_id)) || 'Usuario',
+    body: String(row.body),
+    createdAt: String(row.created_at),
+  }));
 }
 
 async function mapAssignments(rows: unknown[]): Promise<RoutineAssignment[]> {
@@ -541,7 +566,7 @@ export const routineAssignmentRepository = {
     const day = assignment?.days.find(({ id }) => id === execution.cycle_day_id);
     if (!assignment || !day) throw new Error('El entrenamiento ya no tiene una rutina disponible.');
 
-    const [setResult, performanceResult, earlierAttemptsResult] = await Promise.all([
+    const [setResult, performanceResult, earlierAttemptsResult, commentResult] = await Promise.all([
       client
         .from('routine_execution_sets')
         .select('routine_item_id, set_number, completed, actual_repetitions, actual_load, load_unit, rir, rpe_percent')
@@ -563,10 +588,16 @@ export const routineAssignmentRepository = {
           .eq('cycle_day_id', execution.cycle_day_id)
           .lt('slot_attempt', execution.slot_attempt)
         : Promise.resolve({ data: [], error: null }),
+      client
+        .from('routine_execution_comments')
+        .select('id, execution_id, author_id, body, created_at')
+        .eq('tenant_id', tenantId)
+        .eq('execution_id', execution.id)
+        .order('created_at', { ascending: true }),
     ]);
 
-    if (setResult.error || performanceResult.error || earlierAttemptsResult.error) {
-      throw new Error('No se pudieron cargar los ejercicios registrados.');
+    if (setResult.error || performanceResult.error || earlierAttemptsResult.error || commentResult.error) {
+      throw new Error('No se pudieron cargar los ejercicios o comentarios registrados.');
     }
 
     const setsByItemId = new Map<string, ActualSetPerformance[]>();
@@ -661,6 +692,7 @@ export const routineAssignmentRepository = {
           : calculateRoutineProgress(completedUnits, prescribedUnits)
         : 0,
       exercises,
+      comments: await mapWorkoutComments(client, tenantId, commentResult.data ?? []),
     };
   },
 
@@ -673,6 +705,44 @@ export const routineAssignmentRepository = {
     if (error) throw assignmentError(error);
     if (typeof data !== 'string') throw new Error('El servidor no confirmó el borrador.');
     return data;
+  },
+
+  async listWorkoutComments(executionId: string, tenantId: string): Promise<WorkoutComment[]> {
+    const client = requireClient();
+    const { data, error } = await client
+      .from('routine_execution_comments')
+      .select('id, execution_id, author_id, body, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('execution_id', executionId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw new Error('No se pudieron cargar los comentarios del entrenamiento.');
+    return mapWorkoutComments(client, tenantId, data ?? []);
+  },
+
+  async createWorkoutComment(executionId: string, tenantId: string, body: string): Promise<WorkoutComment> {
+    const normalizedBody = body.trim();
+    if (!normalizedBody) throw new Error('Escribe un comentario antes de enviarlo.');
+    if (normalizedBody.length > 2000) throw new Error('El comentario no puede superar 2000 caracteres.');
+
+    const client = requireClient();
+    const { data: userData, error: userError } = await client.auth.getUser();
+    if (userError || !userData.user) throw new Error('No se pudo identificar al autor del comentario.');
+
+    const { data, error } = await client
+      .from('routine_execution_comments')
+      .insert({
+        tenant_id: tenantId,
+        execution_id: executionId,
+        author_id: userData.user.id,
+        body: normalizedBody,
+      })
+      .select('id, execution_id, author_id, body, created_at')
+      .single();
+
+    if (error) throw new Error('No se pudo publicar el comentario.');
+    const [comment] = await mapWorkoutComments(client, tenantId, [data]);
+    return comment;
   },
 
   async saveDraft(input: SaveRoutineAssignmentDraftInput): Promise<string> {
