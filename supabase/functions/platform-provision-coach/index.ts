@@ -60,7 +60,7 @@ Deno.serve(async (request) => {
 
   const { data: tenant, error: tenantError } = await adminClient
     .from('tenants')
-    .select('id, name, subdomain, status')
+    .select('id, name, subdomain, status, theme')
     .eq('id', tenantId)
     .maybeSingle();
   if (tenantError) return jsonResponse(request, 500, { error: 'tenant_lookup_failed' });
@@ -70,9 +70,29 @@ Deno.serve(async (request) => {
     ?? Deno.env.get('INVITATION_REDIRECT_URL')
     ?? 'http://ags.localhost:5174/';
 
+  const theme = tenant.theme as Record<string, unknown> | null;
+  const logoUrl = typeof theme?.logoUrl === 'string' ? theme.logoUrl : null;
+  const data = {
+    full_name: fullName,
+    tenant_id: tenant.id,
+    role: 'coach_admin',
+    gym_name: tenant.name,
+    gym_logo_url: logoUrl,
+    gym_primary_color: typeof theme?.primaryColor === 'string' ? theme.primaryColor : null,
+    gym_secondary_color: typeof theme?.secondaryColor === 'string' ? theme.secondaryColor : null,
+    gym_background_color: typeof theme?.backgroundColor === 'string' ? theme.backgroundColor : null,
+    gym_accent_color: typeof theme?.accentColor === 'string' ? theme.accentColor : null,
+    gym_surface_color: typeof theme?.surfaceColor === 'string' ? theme.surfaceColor : null,
+    gym_text_color: typeof theme?.textColor === 'string' ? theme.textColor : null,
+    gym_muted_color: typeof theme?.mutedColor === 'string' ? theme.mutedColor : null,
+    gym_border_color: typeof theme?.borderColor === 'string' ? theme.borderColor : null,
+    gym_body_font: typeof theme?.bodyFont === 'string' ? theme.bodyFont : null,
+    gym_display_font: typeof theme?.displayFont === 'string' ? theme.displayFont : null,
+  };
+
   const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
     redirectTo: redirectUrl,
-    data: { full_name: fullName, tenant_id: tenant.id, role: 'coach_admin', gym_name: tenant.name },
+    data,
   });
   if (inviteError || !invited.user) {
     return jsonResponse(request, inviteError?.status === 422 ? 409 : 500, { error: 'coach_invite_failed' });
