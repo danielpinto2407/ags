@@ -10,16 +10,16 @@ Complete and validate the personalized-training path: coach invitation -> member
 
 ## Current Focus
 
-- **Current work:** PR #36 is merged; CU-04C comments show the snapshot name of each author to both coach and student views.
-- **Release state:** Supabase Production is at migrations 001-041. Migration 040 adds execution-level comments with tenant/student/coach RLS; migration 041 snapshots and backfills author names. PR #35 presentation and PR #36 author-name fixes are deployed. SMTP settings are unchanged.
-- **Next step:** complete CU-07 by extending the local platform slice with tenant theme/features, coach profile management after invitation, plans/billing decisions and audit activity. The first tenant/equipment/coach-admin shell is implemented locally but not published. The local equipment prototype is not yet published.
+- **Current work:** PR #37 is merged; CU-07 super-admin tenant/equipment management and coach provisioning are deployed.
+- **Release state:** Supabase Production is at migrations 001-047. PR #37 includes migrations 042-047, the `platform-provision-coach` Edge Function, the platform shell and dynamic exercise equipment integration. Migration 040 adds execution-level comments with tenant/student/coach RLS; migration 041 snapshots and backfills author names. PR #35 presentation and PR #36 author-name fixes are deployed. SMTP settings are unchanged.
+- **Next step:** verify the Production super-admin host and account, continue tenant theme/features, profile management, plans/billing decisions and audit activity. The first tenant/equipment/coach-admin shell is implemented locally but not published. The local equipment prototype is not yet published.
 - Do not create, publish, or complete Production training data for testing without explicit confirmation.
 - CU-04B biometrics remain pending the coach form, metric catalogue, and units definition. Other deferred scope is listed in `product-context.md`.
 
 ## Verified Release Snapshot
 
-- **GitHub:** PR #27 is merged at `ddb724b`, PR #28 at `4a739f2`, PR #29 at `ec624d1`, PR #30 at `5fd5f09`, PR #31 at `4d80fe9`, PR #32 at `57e59c5`, PR #33 at merge `0fc60d5` (`dd76595`), PR #34 at merge `26b1b2e`, PR #35 at merge `1ba9023`, and PR #36 at merge `aec910e`.
-- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-041. Remote migration list confirms 041; no migrations are pending.
+- **GitHub:** PR #27 is merged at `ddb724b`, PR #28 at `4a739f2`, PR #29 at `ec624d1`, PR #30 at `5fd5f09`, PR #31 at `4d80fe9`, PR #32 at `57e59c5`, PR #33 at merge `0fc60d5` (`dd76595`), PR #34 at merge `26b1b2e`, PR #35 at merge `1ba9023`, PR #36 at merge `aec910e`, and PR #37 at merge `a8b7875`.
+- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-047. Remote migration list confirms 041; no migrations are pending.
 - **Auth email:** recovery/invitation subjects and tenant logo/palette are deployed. Migration 039 synchronizes validated `gym_body_font` and `gym_display_font` metadata for profiles and tenant theme changes; `invite-personalized-member` supplies the same fields for initial invitations. Both templates use safe fallback stacks. Hosted SMTP settings were preserved; no real-account email was sent.
 - **Web:** `ags-roan-iota.vercel.app` serves the recovery link on the login screen; Vercel Production deployment for merge SHA `57e59c5e15fad66bbd89db0af555ae107c93fac7` completed successfully. The custom domain `ags.tugimnasioapp.com` still has unresolved DNS.
 - **Branding/media:** the user validated image upload. Production browser loaded the gym logo and Wilson's photo from Storage without broken images.
@@ -41,7 +41,8 @@ Complete and validate the personalized-training path: coach invitation -> member
 - **CU-04C workout comments:** migration 040 was applied locally and to Production. The assigned coach and owning student can exchange plain-text comments on one registered workout; workout values remain read-only and comment names come from active profiles. Local browser testing verified coach creation, student reply, coach re-read and full-name attribution. Synthetic comments were deleted. pgTAP 7/7 and Vitest 88/88 pass.
 - **Collapsible comment presentation / PR #35:** comment threads now start collapsed, show `Comentarios (n)`, use an accessible native `details/summary`, and expand the existing composer thread. Comment surfaces use tenant brand `brand-950/20` and `brand-950/40` treatments rather than neutral gray containers. Local open/close behavior, typecheck, lint, 88 Vitest tests and build pass.
 - **Tenant equipment options:** CU-02/CU-07 use a simple tenant-scoped option catalogue for equipment labels. Local implementation includes migrations 042-047, super-admin create/update/archival RPCs and UI, coach provision via the `platform-provision-coach` Edge Function, dynamic exercise equipment fields, and coach read access; not deployed. Existing exercise equipment remains backward-compatible; no physical machine specification or safety checklist is planned. A local super-admin shell, repository and 042/043 migrations were implemented and pass local browser/pgTAP checks; they remain uncommitted and unpublished until the full feature is reviewed.
-- **Comment author-name fix / PR #36:** migration 041 adds server-snapshotted `author_name`, backfills existing comments, and prevents client override. The frontend reads `author_name` directly, so a student no longer triggers a blocked profile lookup and sees the coach's profile name instead of `Usuario`. pgTAP 9/9, Vitest 88/88, typecheck and build pass.
+- **Comment author-name fix / PR #36:** migration 041 adds server-snapshotted `author_name`, backfills existing comments, and prevents client override.
+- **Super-admin release / PR #37:** migrations 042-047 and `platform-provision-coach` are deployed to Production. `wdpinto@utp.edu.co` is an active `super_admin` with `tenant_id` and `coach_id` null. Its previous test routine assignment, execution and invitation were removed; no real student profile was affected. The frontend reads `author_name` directly, so a student no longer triggers a blocked profile lookup and sees the coach's profile name instead of `Usuario`. pgTAP 9/9, Vitest 88/88, typecheck and build pass.
 
 ## Preservation And Safety
 
