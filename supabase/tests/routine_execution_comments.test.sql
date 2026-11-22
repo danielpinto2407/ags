@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(7);
+select extensions.plan(9);
 
 insert into public.tenants (id, name, subdomain, status)
 values
@@ -52,8 +52,8 @@ select extensions.is(
   'RLS is enabled on workout comments'
 );
 
-insert into public.routine_execution_comments (tenant_id, execution_id, author_id, body)
-values ('e8000000-0000-4000-8000-000000000001', 'e8400000-0000-4000-8000-000000000001', 'e8100000-0000-4000-8000-000000000001', 'Buen trabajo en la técnica del día.');
+insert into public.routine_execution_comments (tenant_id, execution_id, author_id, author_name, body)
+values ('e8000000-0000-4000-8000-000000000001', 'e8400000-0000-4000-8000-000000000001', 'e8100000-0000-4000-8000-000000000001', 'Nombre falso', 'Buen trabajo en la técnica del día.');
 
 select extensions.is(
   (select count(*)::integer from public.routine_execution_comments where execution_id = 'e8400000-0000-4000-8000-000000000001'),
@@ -70,6 +70,18 @@ select extensions.is(
   (select count(*)::integer from public.routine_execution_comments where execution_id = 'e8400000-0000-4000-8000-000000000001'),
   2,
   'owning student can respond to workout feedback'
+);
+select extensions.is(
+  (select author_name from public.routine_execution_comments
+   where author_id = 'e8100000-0000-4000-8000-000000000001'),
+  'Comments Coach',
+  'student-visible coach comment carries the server-snapshotted author name'
+);
+select extensions.is(
+  (select author_name from public.routine_execution_comments
+   where author_id = 'e8100000-0000-4000-8000-000000000001'),
+  'Comments Coach',
+  'client-provided author_name cannot override the profile name'
 );
 
 select set_config('request.jwt.claim.sub', 'e8100000-0000-4000-8000-000000000003', true);
