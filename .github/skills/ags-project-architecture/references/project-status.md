@@ -10,16 +10,16 @@ Complete and validate the personalized-training path: coach invitation -> member
 
 ## Current Focus
 
-- **Current work:** PR #35 is merged; CU-04C workout comments are deployed and collapse by default for both coach and student views.
-- **Release state:** Supabase Production is at migrations 001-040. Migration 040 adds execution-level comments with tenant/student/coach RLS. PR #35 changed only frontend presentation: comments show their count and use the existing brand surfaces. SMTP settings are unchanged.
-- **Next step:** verify the new collapsed-comment presentation on the public Production domain and monitor actual comment usage without creating or modifying real training data.
+- **Current work:** PR #36 is merged; CU-04C comments show the snapshot name of each author to both coach and student views.
+- **Release state:** Supabase Production is at migrations 001-041. Migration 040 adds execution-level comments with tenant/student/coach RLS; migration 041 snapshots and backfills author names. PR #35 presentation and PR #36 author-name fixes are deployed. SMTP settings are unchanged.
+- **Next step:** verify one real comment in Production only with explicit user approval and monitor that existing comments display names instead of "Usuario".
 - Do not create, publish, or complete Production training data for testing without explicit confirmation.
 - CU-04B biometrics remain pending the coach form, metric catalogue, and units definition. Other deferred scope is listed in `product-context.md`.
 
 ## Verified Release Snapshot
 
-- **GitHub:** PR #27 is merged at `ddb724b`, PR #28 at `4a739f2`, PR #29 at `ec624d1`, PR #30 at `5fd5f09`, PR #31 at `4d80fe9`, PR #32 at `57e59c5`, PR #33 at merge `0fc60d5` (`dd76595`), PR #34 at merge `26b1b2e`, and PR #35 at merge `1ba9023`.
-- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-040. Remote migration list confirms 040; no migrations are pending.
+- **GitHub:** PR #27 is merged at `ddb724b`, PR #28 at `4a739f2`, PR #29 at `ec624d1`, PR #30 at `5fd5f09`, PR #31 at `4d80fe9`, PR #32 at `57e59c5`, PR #33 at merge `0fc60d5` (`dd76595`), PR #34 at merge `26b1b2e`, PR #35 at merge `1ba9023`, and PR #36 at merge `aec910e`.
+- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-041. Remote migration list confirms 041; no migrations are pending.
 - **Auth email:** recovery/invitation subjects and tenant logo/palette are deployed. Migration 039 synchronizes validated `gym_body_font` and `gym_display_font` metadata for profiles and tenant theme changes; `invite-personalized-member` supplies the same fields for initial invitations. Both templates use safe fallback stacks. Hosted SMTP settings were preserved; no real-account email was sent.
 - **Web:** `ags-roan-iota.vercel.app` serves the recovery link on the login screen; Vercel Production deployment for merge SHA `57e59c5e15fad66bbd89db0af555ae107c93fac7` completed successfully. The custom domain `ags.tugimnasioapp.com` still has unresolved DNS.
 - **Branding/media:** the user validated image upload. Production browser loaded the gym logo and Wilson's photo from Storage without broken images.
@@ -40,6 +40,7 @@ Complete and validate the personalized-training path: coach invitation -> member
 - **Tenant email typography / PR #33:** migration 039 was applied locally and to Production, the invitation Edge Function was redeployed, and both Auth templates were updated through `config push`. Local pgTAP 14/14 and Vitest 88/88 pass, and local Mailpit rendered valid DM Sans/Fraunces and Roboto/Sora combinations for synthetic users. Malicious font values were rejected or rendered safely by the template engine. Gmail/unsupported email-client display remains unverified; Arial/Georgia stacks are fallbacks.
 - **CU-04C workout comments:** migration 040 was applied locally and to Production. The assigned coach and owning student can exchange plain-text comments on one registered workout; workout values remain read-only and comment names come from active profiles. Local browser testing verified coach creation, student reply, coach re-read and full-name attribution. Synthetic comments were deleted. pgTAP 7/7 and Vitest 88/88 pass.
 - **Collapsible comment presentation / PR #35:** comment threads now start collapsed, show `Comentarios (n)`, use an accessible native `details/summary`, and expand the existing composer thread. Comment surfaces use tenant brand `brand-950/20` and `brand-950/40` treatments rather than neutral gray containers. Local open/close behavior, typecheck, lint, 88 Vitest tests and build pass.
+- **Comment author-name fix / PR #36:** migration 041 adds server-snapshotted `author_name`, backfills existing comments, and prevents client override. The frontend reads `author_name` directly, so a student no longer triggers a blocked profile lookup and sees the coach's profile name instead of `Usuario`. pgTAP 9/9, Vitest 88/88, typecheck and build pass.
 
 ## Preservation And Safety
 
