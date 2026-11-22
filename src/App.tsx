@@ -101,6 +101,7 @@ export default function App() {
   }
 
   const tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
+  const isPlatform = tenantState.status === 'platform';
   const theme = tenant?.theme ?? DEFAULT_TENANT_THEME;
 
   if (authState.status === 'unconfigured') {
@@ -122,7 +123,7 @@ export default function App() {
     return (
       <main className="tenant-app flex min-h-screen w-full items-center justify-center px-5 py-10" style={tenantThemeStyle(theme)}>
         <PasswordRecoveryScreen
-          gymName={tenant?.name ?? 'GluteHouse'}
+          gymName={isPlatform ? 'Administración AGS' : tenant?.name ?? 'GluteHouse'}
           mode={recoveryMode}
           onReturnToSignIn={returnToSignIn}
           onUpdate={completePasswordRecovery}
@@ -135,7 +136,7 @@ export default function App() {
     return (
       <main className="tenant-app flex min-h-screen w-full items-center justify-center px-5 py-10" style={tenantThemeStyle(theme)}>
         <PasswordRecoveryScreen
-          gymName={tenant?.name ?? 'GluteHouse'}
+          gymName={isPlatform ? 'Administración AGS' : tenant?.name ?? 'GluteHouse'}
           mode="invalid"
           onReturnToSignIn={returnToSignIn}
         />
@@ -189,12 +190,27 @@ export default function App() {
     return <PlatformEquipmentAdmin profile={authState.profile} onLogout={signOut} />;
   }
 
+  if (isPlatform && authState.status === 'authenticated') {
+    return (
+      <TenantMessage
+        title="Acceso no disponible"
+        message="Esta cuenta no tiene permisos de superadministrador para la plataforma."
+        theme={theme}
+        action={(
+          <button onClick={signOut} className="mt-3 rounded-xl bg-zinc-800 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700">
+            Cerrar sesión
+          </button>
+        )}
+      />
+    );
+  }
+
   if (!role) {
     return (
       <div className="tenant-app min-h-screen w-full" style={tenantThemeStyle(theme)}>
         <LoginScreen
-          tenantName={tenant?.name ?? 'GluteHouse'}
-          description={tenant?.description ?? ''}
+          tenantName={isPlatform ? 'Administración AGS' : tenant?.name ?? 'GluteHouse'}
+          description={isPlatform ? 'Acceso exclusivo para superadministradores de la plataforma.' : tenant?.description ?? ''}
           logoUrl={tenant?.theme.logoUrl ?? null}
           error={authState.status === 'signed-out' ? authState.error : null}
           isSubmitting={authState.status === 'signed-out' && authState.submitting}
