@@ -10,16 +10,16 @@ Complete and validate the personalized-training path: coach invitation -> member
 
 ## Current Focus
 
-- **Current work:** PR #33 is merged; tenant-configured body/display fonts are synchronized through invitations and recovery emails.
-- **Release state:** Supabase Production is at migrations 001-039. PR #33 merge `0fc60d5` added migration 039, invitation font metadata, and synchronized Auth email templates. The existing UI palette and recovery changes remain deployed. SMTP settings are unchanged.
-- **Next step:** implement CU-04C coach review and execution-level comments for the assigned coach and owning student. Workout values remain read-only; comments are plain text and isolated by tenant/execution ownership.
+- **Current work:** PR #33 is merged and CU-04C workout comments are implemented locally for the assigned coach and owning student.
+- **Release state:** Supabase Production is at migrations 001-040. Migration 040 adds execution-level comments with tenant/student/coach RLS. The existing UI palette and recovery changes remain deployed. SMTP settings are unchanged.
+- **Next step:** merge PR #34, deploy the frontend bundle, and verify the comment thread in Production without sending real-account test messages.
 - Do not create, publish, or complete Production training data for testing without explicit confirmation.
 - CU-04B biometrics remain pending the coach form, metric catalogue, and units definition. Other deferred scope is listed in `product-context.md`.
 
 ## Verified Release Snapshot
 
-- **GitHub:** PR #27 is merged at `ddb724b`, PR #28 at `4a739f2`, PR #29 at `ec624d1`, PR #30 at `5fd5f09`, PR #31 at `4d80fe9`, PR #32 at `57e59c5`, and PR #33 at merge `0fc60d5` (`dd76595`).
-- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-039. Remote migration list confirms 039; no migrations are pending.
+- **GitHub:** PR #27 is merged at `ddb724b`, PR #28 at `4a739f2`, PR #29 at `ec624d1`, PR #30 at `5fd5f09`, PR #31 at `4d80fe9`, PR #32 at `57e59c5`, PR #33 at merge `0fc60d5` (`dd76595`), and PR #34 is open for the CU-04C comments release.
+- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-040. Remote migration list confirms 040; no migrations are pending.
 - **Auth email:** recovery/invitation subjects and tenant logo/palette are deployed. Migration 039 synchronizes validated `gym_body_font` and `gym_display_font` metadata for profiles and tenant theme changes; `invite-personalized-member` supplies the same fields for initial invitations. Both templates use safe fallback stacks. Hosted SMTP settings were preserved; no real-account email was sent.
 - **Web:** `ags-roan-iota.vercel.app` serves the recovery link on the login screen; Vercel Production deployment for merge SHA `57e59c5e15fad66bbd89db0af555ae107c93fac7` completed successfully. The custom domain `ags.tugimnasioapp.com` still has unresolved DNS.
 - **Branding/media:** the user validated image upload. Production browser loaded the gym logo and Wilson's photo from Storage without broken images.
@@ -38,6 +38,7 @@ Complete and validate the personalized-training path: coach invitation -> member
 - **CU-01A recovery branding:** Production initially had the logo configured but `gym_logo_url` absent from all 5 Auth accounts. PR #32/migration 038 backfilled current profiles and syncs branding on tenant theme/profile changes. A local Mailpit test rendered the actual Production logo URL; a read-only Production aggregate now confirms metadata on 5/5 accounts. No Production recovery email was sent for testing.
 - **Loader retirement:** PR #32/migration 037 removed loader policies/RPC and theme references; `TenantLoadingIndicator` keeps the standard spinner. Local pgTAP passes 270/270; Production confirms the loader function, policies, and theme key are absent. Existing Storage objects were not deleted.
 - **Tenant email typography / PR #33:** migration 039 was applied locally and to Production, the invitation Edge Function was redeployed, and both Auth templates were updated through `config push`. Local pgTAP 14/14 and Vitest 88/88 pass, and local Mailpit rendered valid DM Sans/Fraunces and Roboto/Sora combinations for synthetic users. Malicious font values were rejected or rendered safely by the template engine. Gmail/unsupported email-client display remains unverified; Arial/Georgia stacks are fallbacks.
+- **CU-04C workout comments:** migration 040 was applied locally and to Production. The assigned coach and owning student can exchange plain-text comments on one registered workout; workout values remain read-only and comment names come from active profiles. Local browser testing verified coach creation, student reply, coach re-read and full-name attribution. Synthetic comments were deleted. pgTAP 7/7 and Vitest 88/88 pass.
 
 ## Preservation And Safety
 
