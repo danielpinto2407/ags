@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
+import { ChevronDown, ChevronRight, RefreshCw, Send } from 'lucide-react';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { routineAssignmentRepository } from '@/data/routineAssignmentRepository';
 import { formatLocalDate } from '@/domain/localDate';
@@ -38,6 +38,9 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
   const [reviewState, setReviewState] = useState<ReviewState>({ status: 'idle' });
   const [reviewReloadKey, setReviewReloadKey] = useState(0);
+  const [commentDraft, setCommentDraft] = useState('');
+  const [commentSending, setCommentSending] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,6 +106,25 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
 
   const toggleExecution = (executionId: string) => {
     setSelectedExecutionId((current) => current === executionId ? null : executionId);
+    setCommentDraft('');
+    setCommentError(null);
+  };
+
+  const sendComment = async (executionId: string) => {
+    if (!tenantId) return;
+    setCommentSending(true);
+    setCommentError(null);
+    try {
+      const comment = await routineAssignmentRepository.createWorkoutComment(executionId, tenantId, commentDraft);
+      setReviewState((current) => current.status === 'loaded'
+        ? { ...current, review: { ...current.review, comments: [...current.review.comments, comment] } }
+        : current);
+      setCommentDraft('');
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : 'No se pudo publicar el comentario.');
+    } finally {
+      setCommentSending(false);
+    }
   };
 
   return (
@@ -242,6 +264,43 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
                             </div>
                           </article>
                         ))}
+                        <section className="mt-4 border-t border-zinc-700 pt-3" aria-label="Comentarios del entrenamiento">
+                          <h4 className="text-xs font-bold uppercase tracking-wide text-zinc-300">Comentarios</h4>
+                          {reviewState.review.comments.length === 0 ? (
+                            <p className="mt-2 text-xs text-zinc-400">Aún no hay comentarios sobre este entrenamiento.</p>
+                          ) : (
+                            <ol className="mt-2 space-y-2">
+                              {reviewState.review.comments.map((comment) => (
+                                <li className="rounded-lg border border-zinc-700 bg-zinc-950/40 p-3" key={comment.id}>
+                                  <p className="text-[10px] font-semibold text-brand-200">
+                                    {comment.authorName} · {formatLocalDate(comment.createdAt.slice(0, 10))}
+                                  </p>
+                                  <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-100">{comment.body}</p>
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                          {commentError && <p className="mt-2 text-xs text-rose-300" role="alert">{commentError}</p>}
+                          <div className="mt-3 flex items-end gap-2">
+                            <textarea
+                              aria-label="Comentario para la alumna"
+                              className="min-h-20 flex-1 resize-none rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:border-brand-500 focus:outline-none"
+                              maxLength={2000}
+                              onChange={(event) => setCommentDraft(event.target.value)}
+                              placeholder="Escribe una observación sobre este entrenamiento"
+                              value={commentDraft}
+                            />
+                            <button
+                              aria-label="Enviar comentario"
+                              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-brand-500 text-white hover:bg-brand-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+                              disabled={commentSending || !commentDraft.trim()}
+                              onClick={() => sendComment(reviewState.review.id)}
+                              type="button"
+                            >
+                              <Send aria-hidden="true" size={16} />
+                            </button>
+                          </div>
+                        </section>
                       </div>
                     )}
                   </div>

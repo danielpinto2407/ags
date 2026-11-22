@@ -12,7 +12,7 @@ Complete and validate the personalized-training path: coach invitation -> member
 
 - **Current work:** PR #33 is merged; tenant-configured body/display fonts are synchronized through invitations and recovery emails.
 - **Release state:** Supabase Production is at migrations 001-039. PR #33 merge `0fc60d5` added migration 039, invitation font metadata, and synchronized Auth email templates. The existing UI palette and recovery changes remain deployed. SMTP settings are unchanged.
-- **Next step:** verify the public Vercel deployment for merge `0fc60d5` and monitor actual email delivery; no real-account or live-email test has been run.
+- **Next step:** implement CU-04C coach review and execution-level comments for the assigned coach and owning student. Workout values remain read-only; comments are plain text and isolated by tenant/execution ownership.
 - Do not create, publish, or complete Production training data for testing without explicit confirmation.
 - CU-04B biometrics remain pending the coach form, metric catalogue, and units definition. Other deferred scope is listed in `product-context.md`.
 
