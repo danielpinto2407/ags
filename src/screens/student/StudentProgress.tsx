@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, CalendarDays, ChartNoAxesColumnIncreasing, Send } from 'lucide-react';
+import { ArrowRight, CalendarDays, ChartNoAxesColumnIncreasing, ChevronDown, Send } from 'lucide-react';
 import Header from '@/components/Header';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { routineAssignmentRepository } from '@/data/routineAssignmentRepository';
@@ -161,43 +161,48 @@ export default function StudentProgress({ profile, onNavigate }: StudentProgress
                     <div className="h-full rounded-full bg-brand-500" style={{ width: `${entry.progressPercent}%` }} />
                   </div>
                 </div>
-                <section className="mt-4 border-t border-zinc-800 pt-3" aria-label="Comentarios del entrenamiento">
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-zinc-400">Comentarios</h3>
-                  {(commentsByExecution[entry.id] ?? []).length === 0 ? (
-                    <p className="mt-2 text-xs text-zinc-500">Aún no hay comentarios sobre este entrenamiento.</p>
-                  ) : (
-                    <ol className="mt-2 space-y-2">
-                      {(commentsByExecution[entry.id] ?? []).map((comment) => (
-                        <li className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-3" key={comment.id}>
-                          <p className="text-[10px] font-semibold text-brand-300">
-                            {comment.authorName} · {formatLocalDate(comment.createdAt.slice(0, 10))}
-                          </p>
-                          <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-100">{comment.body}</p>
-                        </li>
-                      ))}
-                    </ol>
-                  )}
-                  {commentErrors[entry.id] && <p className="mt-2 text-xs text-rose-300" role="alert">{commentErrors[entry.id]}</p>}
-                  <div className="mt-3 flex items-end gap-2">
-                    <textarea
-                      aria-label="Responder comentario"
-                      className="min-h-20 flex-1 resize-none rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:border-brand-500 focus:outline-none"
-                      maxLength={2000}
-                      onChange={(event) => setCommentDrafts((current) => ({ ...current, [entry.id]: event.target.value }))}
-                      placeholder="Escribe una respuesta"
-                      value={commentDrafts[entry.id] ?? ''}
-                    />
-                    <button
-                      aria-label="Enviar comentario"
-                      className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-brand-500 text-white hover:bg-brand-action-hover disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={sendingComments[entry.id] || !(commentDrafts[entry.id] ?? '').trim()}
-                      onClick={() => sendComment(entry.id)}
-                      type="button"
-                    >
-                      <Send aria-hidden="true" size={16} />
-                    </button>
+                <details className="group mt-4 overflow-hidden rounded-xl border border-brand-800/60 bg-brand-950/20" aria-label="Comentarios del entrenamiento">
+                  <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 marker:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-brand-400">
+                    <span className="text-xs font-bold text-brand-200">Comentarios ({(commentsByExecution[entry.id] ?? []).length})</span>
+                    <ChevronDown aria-hidden="true" className="shrink-0 text-brand-300 transition-transform group-open:rotate-180" size={16} />
+                  </summary>
+                  <div className="border-t border-brand-800/50 p-3">
+                    {(commentsByExecution[entry.id] ?? []).length === 0 ? (
+                      <p className="text-xs text-zinc-400">Aún no hay comentarios sobre este entrenamiento.</p>
+                    ) : (
+                      <ol className="space-y-2">
+                        {(commentsByExecution[entry.id] ?? []).map((comment) => (
+                          <li className="rounded-lg border border-brand-800/50 bg-brand-950/40 p-3" key={comment.id}>
+                            <p className="text-[10px] font-semibold text-brand-200">
+                              {comment.authorName} · {formatLocalDate(comment.createdAt.slice(0, 10))}
+                            </p>
+                            <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-100">{comment.body}</p>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                    {commentErrors[entry.id] && <p className="mt-2 text-xs text-rose-300" role="alert">{commentErrors[entry.id]}</p>}
+                    <div className="mt-3 flex items-end gap-2">
+                      <textarea
+                        aria-label="Responder comentario"
+                        className="min-h-20 flex-1 resize-none rounded-lg border border-brand-800/70 bg-zinc-950 px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:border-brand-500 focus:outline-none"
+                        maxLength={2000}
+                        onChange={(event) => setCommentDrafts((current) => ({ ...current, [entry.id]: event.target.value }))}
+                        placeholder="Escribe una respuesta"
+                        value={commentDrafts[entry.id] ?? ''}
+                      />
+                      <button
+                        aria-label="Enviar comentario"
+                        className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-brand-500 text-white hover:bg-brand-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={sendingComments[entry.id] || !(commentDrafts[entry.id] ?? '').trim()}
+                        onClick={() => sendComment(entry.id)}
+                        type="button"
+                      >
+                        <Send aria-hidden="true" size={16} />
+                      </button>
+                    </div>
                   </div>
-                </section>
+                </details>
               </article>
             </li>
           ))}
