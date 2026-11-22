@@ -23,7 +23,7 @@
 
 When a feature is being migrated from mocks to Supabase, retain an explicit mock adapter and add a Supabase adapter behind the same repository contract. Select exactly one source per run, preserve typed loading/error behavior, and test the use case against local Supabase before removing its mock path. Never hide a Supabase failure by returning mock data.
 
-For CU-02 and CU-03, trace the full exercise contract through library -> published assignment -> student routine/detail. Preserve the video reference and every instructional field; keep assignment prescription overrides separate from catalog defaults and freeze the published content/version.
+For CU-02 and CU-03, trace the full exercise contract through library -> published assignment -> student routine/detail. Keep tenant equipment options as a tenant-scoped reference catalogue, editable only by authorized platform administration in CU-07 and selectable by coaches in CU-02. Do not implement machine composition, brand/model specifications, serial inventory or maintenance checklists in this slice. Preserve the video reference and every instructional field; keep assignment prescription overrides separate from catalog defaults and freeze the published content/version.
 
 For the newly requested CU-03/04/04C/04B scope, implement in this order: (1) migrate CU-03 to one unified `SINGLE_DAY`/`CYCLE` model. A selected `SINGLE_DAY` routine takes precedence for that date. `CYCLE` contains N ordinal slots with one routine and per-exercise integer progression per slot; each slot has at most `1 + additionalCycleRepeats` attempts and can be selected out of order. An incomplete close consumes that slot's attempt but does not advance progression; only completed executions progress it. (2) Persist executions only when the first exercise is marked complete with valid actual reps/load; Play and an incomplete exercise draft do not consume the daily start. Enforce one started execution per student/calendar date across both modes, same-day resume only, and immutable end-of-day closure. Derive progress from completed exercises / prescribed exercises. (3) Persist one actual reps/load/completion record per exercise regardless of prescribed set count, plus RIR/RPE per exercise separately from targets; use separate slider-style bars with visible bounds/current values. (4) Add CU-04C coach review using existing execution/performance records: first enforce coach + student + assignment ownership in RLS, then add a read-only dated list under student detail and an exercise-level prescription-versus-actual view with derived percentage, status, and truthful empty/incomplete states. Add a bidirectional plain-text comment thread attached to each exact workout execution, not to the reusable routine or cycle slot. Only the active assigned coach and the owning student in the same active tenant may list/create comments. Store author, timestamp, tenant, and execution reference; reject empty/oversized/HTML content, prevent cross-tenant reads/writes, and keep other authors' comments immutable. Display comments in chronological order in both coach and student workout views. Tell students their assigned coach can review the records. Keep the first view to list + selected-workout detail; defer charts, exports, and trend claims. Do not duplicate or mutate progress data. (5) Define the pending biometric form, metric catalogue/units, and coach-write/student-own-read permissions for the separate CU-04B flow. (6) Add pgTAP/RLS and domain tests for migration fidelity, both programming modes, single-day precedence, concurrent daily-start enforcement, closure, slot attempts/progression, exercise-derived progress, coach owner/assignment/tenant allow-deny reads, read-only behavior, student visibility disclosure, and valid biometric metric boundaries before screen work. The currently deployed execution RLS must be checked for assignment `coach_id`, not only the student's `coach_id`. (7) Surface unified coach programming, student routine choice/execution, actual-performance logging, coach workout review, then biometric/profile history. Keep prescriptions, actual exercise performance, and biometrics in separate records; retain legacy per-set rows only as history during transition.
 
@@ -47,6 +47,62 @@ Published-program editing is a planned CU-03 capability: allow a coach to change
 CU-02 uses two sources: a cross-tenant curated catalog that clients can read but never edit, and a tenant-owned library with CRUD for active authorized coaches. Copying a catalog entry creates an independent tenant-owned snapshot with source provenance; it does not create a live link. Archive instead of hard-delete by default so future assignment/history references remain valid. Current `coach_admin` is the coach UI role; do not invent a separate `coach` database role without defining and testing its permission mapping. Keep enum values stable in storage and Spanish labels in UI. Production catalog records belong in reviewed, idempotent migrations; `supabase/seed.sql` is local-only and must not be applied to Production. CU-02 currently uses Supabase directly; do not add a parallel mock adapter unless an explicit demo mode is requested.
 
 Recommended CU-02 slice order: (1) separate exercise definition from prescription types with an explicit legacy mapper; (2) add global catalog and tenant-owned schema, constraints, grants, archive/provenance, and RLS; (3) add pgTAP allow/deny and cross-tenant copy-isolation tests; (4) add stable seed data; (5) add repository contract and Supabase adapter; (6) implement search/filter and shared/read-only versus gym-owned UI, then create/edit/copy/archive flows; (7) verify coach and member roles, inactive/suspended cases, reload persistence, and phone/full responsive layouts. CU-03 assignment snapshots must retain the chosen definition when the catalog or gym copy changes later.
+
+## CU-07 Super-Admin Platform Implementation Plan
+
+Implement CU-07 incrementally; do not turn the first equipment module into a monolithic administration screen.
+
+### Phase 1 — Platform shell and shared primitives
+
+1. Replace the existing super-admin “panel in preparation” state with a dedicated `PlatformEquipmentAdmin` shell only after extracting reusable platform composition.
+2. Add shared platform components: tenant selector/search, tenant summary, status badge, resource table/list, create/edit form, archive/restore action, confirmation dialog, loading/empty/error/success states, and reload control.
+3. Keep the shell neutral and operational; it should not inherit tenant branding or coach/student navigation. Reuse `TenantLoadingIndicator`, zinc surfaces, brand primary tokens and the existing accessible focus/error patterns.
+4. Add platform navigation states such as `platformTenants`, `platformEquipment`, `platformThemes`, `platformFeatures`, `platformUsers`, `platformPlans` and `platformAudit` only when each slice is implemented.
+
+### Phase 2 — Tenant and profile administration
+
+1. Add tenant list/detail repository operations for active/suspended tenants.
+2. Implement create tenant, edit name/subdomain/description/status and view tenant metadata. Subdomain changes require explicit confirmation and a DNS/link compatibility check.
+3. Add active/inactive coach and platform profile administration. Never let the browser choose role or `tenant_id`; validate and derive both server-side.
+4. Reuse profile data mapping and active/suspended state components. Do not expose service-role keys or cross-tenant records in browser queries.
+
+### Phase 3 — Tenant theme and features
+
+1. Reuse `src/domain/tenant.ts` validators and tenant theme mapping. Add a typed repository and controlled preview for logo, colors and body/display fonts.
+2. Preserve existing themes when upgrading legacy tenants and show a neutral fallback for missing or suspended tenants.
+3. Implement feature flags for personalized routines, workout timer, load tracking, WhatsApp, and future group classes separately from plan identifiers. Backend authorization remains independent of UI visibility.
+4. Keep capacity `max_clients` visible or deferred explicitly; current personalized invitations and executions do not enforce it.
+
+### Phase 4 — Tenant equipment options
+
+1. Persist `tenant_equipment_options` per tenant with stable ID, ordered name, active/archive state and audit timestamps.
+2. Seed current equipment labels for existing and future tenants through migration/backfill only. Do not seed personal data or overwrite super-admin changes.
+3. Build `platformEquipmentRepository` and the reusable option-manager form around it.
+4. Integrate active equipment options into the coach exercise create/edit form. Store exercise equipment keys independently of tenant display labels and freeze existing exercise snapshots when a label is renamed or archived.
+5. Renaming must not change historical assignment snapshots; archiving removes an option from future selection but does not remove it from existing exercise records/history.
+
+### Phase 5 — Plans and billing preparation
+
+1. Add a typed plan catalogue only after the commercial model is confirmed.
+2. Distinguish plan entitlements from mutable feature overrides.
+3. Defer payment gateway, invoices and transactions until a provider/model is selected. Do not model mock billing state as real billing.
+
+### Phase 6 — Audit and operational evidence
+
+1. Add a platform audit table for gym/theme/equipment/profile/feature actions.
+2. Record actor, tenant, action, target, timestamp and safe before/after metadata; never store secrets or sensitive full payloads.
+3. Add filters and chronological detail views using shared platform list patterns.
+4. Provide status, reload and permission-denied states without exposing another tenant's records.
+
+### Reusable implementation boundaries
+
+- `src/domain/platform*.ts`: pure types and validation.
+- `src/data/platform*.ts`: typed Supabase repositories.
+- `src/app/platform/`: platform shell, navigation and tenant selection state.
+- `src/screens/platform/`: role composition only.
+- `src/components/platform/`: tenant selector, resource list/table, status badge, archive/restore confirmation, option manager, form shell and feedback states.
+- Supabase migrations: constraints, RLS, grants, RPCs and idempotent backfills.
+- pgTAP: super-admin allow/deny, tenant isolation, suspension, archive/restore and audit coverage.
 
 ## Placement
 

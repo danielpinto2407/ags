@@ -12,6 +12,21 @@ Screens and components must not import fixtures directly or call Supabase, `fetc
 
 For CU-00, use `src/domain/tenant.ts` for typed payloads and validators, `src/data/tenantRepository.ts` for the public RPC, and `src/app/tenant/` for subdomain parsing/bootstrap state. Before login, the browser may call only `resolve_tenant_by_subdomain`; never query all tenant rows or expose private tenant fields.
 
+## CU-07 Platform and Super-Admin Contracts
+
+- `super_admin` is platform-scoped: `tenant_id` must be null and platform reads/writes require an active `super_admin` profile.
+- No coach, student or inactive profile may access platform repositories or infer another tenant's configuration.
+- Platform mutations must derive or verify tenant ownership in trusted server code/RLS/RPC. The browser must never provide a role or tenant assignment as a trusted identity claim.
+- Tenant administration entities include stable tenant ID, name, subdomain, status, description, theme, features and audit timestamps. Subdomain uniqueness and format remain database constraints.
+- `max_clients` remains a retained/non-operational setting until a separate product decision defines gym-wide capacity behavior. It must not be enforced by personalized invitations or routines.
+- Tenant theme fields use validated controlled values and neutral fallbacks. Platform writes must preserve unrelated theme keys and not inject arbitrary CSS.
+- Feature flags are persisted tenant state and evaluated server-side as well as UI-side. They do not override profile authorization, tenant status or active membership.
+- Tenant equipment options are per-tenant reference rows: stable ID, display name, position, active/archive state and timestamps. The global catalog is not a machine inventory and does not model brand, model, serial, composition or maintenance.
+- Exercise equipment values remain backward-compatible. Historical exercise snapshots keep their selected display/equipment keys; renaming or archiving an option cannot rewrite prior routines or executions.
+- Super-admin writes use `tenant_equipment_options` RLS and should be implemented through typed repository methods or RPCs with clear validation. Future platform entities use the same repository/policy pattern rather than ad hoc direct tables.
+- Audit records are append-oriented: actor profile, tenant when applicable, action, target, timestamp and safe metadata. Secrets, raw CSS, passwords and tokens are not audit payload fields.
+- pgTAP must cover super-admin allow/deny, coach/member denial, cross-tenant reads/writes, suspended tenant behavior, duplicate names, position ordering, archive/restore and audit actor/tenant scope.
+
 ## Repository Rules
 
 - Keep Supabase CLI configuration at the project root and version SQL migrations under `supabase/migrations/`; do not store deployable SQL under `src/`.

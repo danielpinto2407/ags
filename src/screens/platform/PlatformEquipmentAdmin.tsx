@@ -1,0 +1,375 @@
+import { useEffect, useState, type FormEvent } from 'react';
+import { Archive, Building2, Dumbbell, LogOut, RefreshCw, Save, Plus, UserPlus } from 'lucide-react';
+import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
+import {
+  platformEquipmentRepository,
+  type PlatformTenant,
+  type TenantEquipmentOption,
+} from '@/data/platformEquipmentRepository';
+import type { Profile } from '@/domain/profile';
+
+interface PlatformEquipmentAdminProps {
+  profile: Profile;
+  onLogout: () => void;
+}
+
+export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEquipmentAdminProps) {
+  const [tenants, setTenants] = useState<PlatformTenant[]>([]);
+  const [selectedTenantId, setSelectedTenantId] = useState('');
+  const [options, setOptions] = useState<TenantEquipmentOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState('');
+  const [draftNames, setDraftNames] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<'tenants' | 'equipment' | 'coaches'>('tenants');
+  const [tenantDraft, setTenantDraft] = useState({ name: '', subdomain: '', description: '', status: 'ACTIVE' as 'ACTIVE' | 'SUSPENDED' });
+  const [editingTenantId, setEditingTenantId] = useState<string | null>(null);
+  const [coachDraft, setCoachDraft] = useState({ fullName: '', email: '' });
+
+  const loadTenants = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await platformEquipmentRepository.listTenants();
+      setTenants(data);
+      setSelectedTenantId((current) => current || data[0]?.id || '');
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los gimnasios.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void loadTenants(); }, []);
+
+  useEffect(() => {
+    if (!selectedTenantId) {
+      setOptions([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    platformEquipmentRepository.listOptions(selectedTenantId)
+      .then((data) => {
+        if (cancelled) return;
+        setOptions(data);
+        setDraftNames(Object.fromEntries(data.map((option) => [option.id, option.name])));
+      })
+      .catch((loadError) => {
+        if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los equipos.');
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [selectedTenantId]);
+
+  const reloadOptions = async () => {
+    if (!selectedTenantId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await platformEquipmentRepository.listOptions(selectedTenantId);
+      setOptions(data);
+      setDraftNames(Object.fromEntries(data.map((option) => [option.id, option.name])));
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los equipos.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createOption = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSavingId('new');
+    setError(null);
+    setNotice(null);
+    try {
+      await platformEquipmentRepository.createOption(selectedTenantId, newName);
+      setNewName('');
+      setNotice('Equipo agregado.');
+      await reloadOptions();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudo agregar el equipo.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const renameOption = async (option: TenantEquipmentOption) => {
+    setSavingId(option.id);
+    setError(null);
+    setNotice(null);
+    try {
+      await platformEquipmentRepository.renameOption(option.id, selectedTenantId, draftNames[option.id] ?? option.name);
+      setNotice('Nombre actualizado.');
+      await reloadOptions();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudo actualizar el equipo.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const setArchived = async (option: TenantEquipmentOption, archived: boolean) => {
+    setSavingId(option.id);
+    setError(null);
+    setNotice(null);
+    try {
+      await platformEquipmentRepository.setArchived(option.id, selectedTenantId, archived);
+      setNotice(archived ? 'Equipo archivado.' : 'Equipo restaurado.');
+      await reloadOptions();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudo cambiar el estado del equipo.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const selectedTenant = tenants.find((tenant) => tenant.id === selectedTenantId) ?? null;
+
+  const startEditTenant = (tenant: PlatformTenant) => {
+    setEditingTenantId(tenant.id);
+    setTenantDraft({ name: tenant.name, subdomain: tenant.subdomain, description: tenant.description, status: tenant.status });
+  };
+
+  const createOrUpdateTenant = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSavingId('tenant');
+    setError(null);
+    setNotice(null);
+    try {
+      if (editingTenantId) {
+        await platformEquipmentRepository.updateTenant({
+          id: editingTenantId,
+          name: tenantDraft.name,
+          subdomain: tenantDraft.subdomain,
+          description: tenantDraft.description,
+          status: tenantDraft.status,
+        });
+        setNotice('Gimnasio actualizado.');
+      } else {
+        await platformEquipmentRepository.createTenant({
+          name: tenantDraft.name,
+          subdomain: tenantDraft.subdomain,
+          description: tenantDraft.description,
+        });
+        setNotice('Gimnasio creado.');
+      }
+      setEditingTenantId(null);
+      setTenantDraft({ name: '', subdomain: '', description: '', status: 'ACTIVE' });
+      await loadTenants();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudo guardar el gimnasio.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const provisionCoach = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedTenantId) return;
+    setSavingId('coach');
+    setError(null);
+    setNotice(null);
+    try {
+      await platformEquipmentRepository.provisionCoach({
+        tenantId: selectedTenantId,
+        email: coachDraft.email,
+        fullName: coachDraft.fullName,
+      });
+      setCoachDraft({ fullName: '', email: '' });
+      setNotice('Coach invitado. Recibirá un correo para activar su acceso.');
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudo crear el coach.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-zinc-950 px-4 py-5 text-zinc-100 sm:px-6">
+      <div className="mx-auto max-w-5xl">
+        <header className="flex items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-300">Panel de plataforma</p>
+            <h1 className="mt-1 text-xl font-bold text-white">Equipos por gimnasio</h1>
+            <p className="mt-1 text-xs text-zinc-400">{profile.full_name}</p>
+          </div>
+          <button
+            aria-label="Cerrar sesión"
+            className="grid h-10 w-10 place-items-center rounded-lg border border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white"
+            onClick={onLogout}
+            type="button"
+          >
+            <LogOut size={17} />
+          </button>
+        </header>
+
+        <nav className="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-zinc-800 bg-zinc-950 p-1" aria-label="Gestión de plataforma">
+          {([
+            ['tenants', 'Gimnasios', Building2],
+            ['equipment', 'Equipos', Dumbbell],
+            ['coaches', 'Coaches', UserPlus],
+          ] as const).map(([section, label, Icon]) => (
+            <button
+              className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-semibold ${activeSection === section ? 'bg-brand-600 text-white' : 'text-zinc-400 hover:bg-zinc-900'}`}
+              key={section}
+              onClick={() => setActiveSection(section)}
+              type="button"
+            >
+              <Icon aria-hidden="true" size={14} /> {label}
+            </button>
+          ))}
+        </nav>
+
+        {activeSection === 'tenants' && (
+          <section className="mt-4 grid gap-4 lg:grid-cols-[220px_1fr]">
+            <aside className="rounded-xl border border-zinc-800 bg-zinc-900 p-2">
+              {tenants.map((tenant) => (
+                <button
+                  className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left ${selectedTenantId === tenant.id ? 'bg-brand-950/50 text-brand-200' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                  key={tenant.id}
+                  onClick={() => { setSelectedTenantId(tenant.id); startEditTenant(tenant); }}
+                  type="button"
+                >
+                  <span className="min-w-0"><span className="block truncate text-sm font-semibold">{tenant.name}</span><span className="block truncate text-[10px] text-zinc-500">{tenant.subdomain}</span></span>
+                </button>
+              ))}
+            </aside>
+            <div>
+              {error && <p className="mb-3 rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{error}</p>}
+              {notice && <p className="mb-3 rounded-xl border border-brand-800/60 bg-brand-950/30 p-3 text-xs text-brand-200" role="status">{notice}</p>}
+              <form className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4" onSubmit={(event) => void createOrUpdateTenant(event)}>
+                <div className="flex items-center justify-between gap-3"><h2 className="text-sm font-bold text-white">{editingTenantId ? 'Editar gimnasio' : 'Nuevo gimnasio'}</h2>{editingTenantId && <button className="text-xs text-zinc-400 hover:text-white" onClick={() => { setEditingTenantId(null); setTenantDraft({ name:'', subdomain:'', description:'', status:'ACTIVE' }); }} type="button">Cancelar</button>}</div>
+                <input aria-label="Nombre del gimnasio" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none" maxLength={120} placeholder="Nombre del gimnasio" value={tenantDraft.name} onChange={(event) => setTenantDraft((current) => ({ ...current, name: event.target.value }))} />
+                <input aria-label="Subdominio" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none" maxLength={63} placeholder="subdominio" value={tenantDraft.subdomain} onChange={(event) => setTenantDraft((current) => ({ ...current, subdomain: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'') }))} />
+                <textarea aria-label="Descripción" className="min-h-24 w-full resize-y rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none" maxLength={280} placeholder="Descripción" value={tenantDraft.description} onChange={(event) => setTenantDraft((current) => ({ ...current, description: event.target.value }))} />
+                {editingTenantId && <label className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-xs text-zinc-300">Estado<select className="rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-white" value={tenantDraft.status} onChange={(event) => setTenantDraft((current) => ({ ...current, status: event.target.value as 'ACTIVE' | 'SUSPENDED' }))}><option value="ACTIVE">Activo</option><option value="SUSPENDED">Suspendido</option></select></label>}
+                <button className="min-h-11 w-full rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover disabled:opacity-50" disabled={savingId === 'tenant' || !tenantDraft.name.trim() || !tenantDraft.subdomain.trim()} type="submit">{editingTenantId ? 'Guardar cambios' : 'Crear gimnasio'}</button>
+              </form>
+            </div>
+          </section>
+        )}
+
+        {activeSection === 'coaches' && (
+          <section className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+            <h2 className="text-sm font-bold text-white">Invitar coach administrador</h2>
+            {error && <p className="mt-3 rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{error}</p>}
+            {notice && <p className="mt-3 rounded-xl border border-brand-800/60 bg-brand-950/30 p-3 text-xs text-brand-200" role="status">{notice}</p>}
+            <form className="mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(event) => void provisionCoach(event)}>
+              <label className="text-xs font-semibold text-zinc-400">Gimnasio<select className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white" value={selectedTenantId} onChange={(event) => setSelectedTenantId(event.target.value)}><option value="">Selecciona un gimnasio</option>{tenants.map((tenant) => <option key={tenant.id} value={tenant.id}>{tenant.name}</option>)}</select></label>
+              <input aria-label="Nombre del coach" className="mt-0 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white sm:mt-[18px]" placeholder="Nombre completo" value={coachDraft.fullName} onChange={(event) => setCoachDraft((current) => ({ ...current, fullName: event.target.value }))} />
+              <input aria-label="Correo del coach" className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white sm:col-span-2" type="email" placeholder="correo@ejemplo.com" value={coachDraft.email} onChange={(event) => setCoachDraft((current) => ({ ...current, email: event.target.value }))} />
+              <button className="min-h-11 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover disabled:opacity-50 sm:col-span-2" disabled={!selectedTenantId || savingId === 'coach' || coachDraft.fullName.trim().length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(coachDraft.email)} type="submit"><UserPlus className="mr-2 inline" size={16} />Enviar invitación</button>
+            </form>
+          </section>
+        )}
+
+        {activeSection === 'equipment' && (
+          loading && tenants.length === 0 ? (
+          <p className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-400"><TenantLoadingIndicator size={16} /> Cargando gimnasios…</p>
+        ) : (
+          <div className="mt-5 grid gap-4 lg:grid-cols-[220px_1fr]">
+            <aside className="rounded-xl border border-zinc-800 bg-zinc-900 p-2">
+              {tenants.map((tenant) => (
+                <button
+                  className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left ${selectedTenantId === tenant.id ? 'bg-brand-950/50 text-brand-200' : 'text-zinc-300 hover:bg-zinc-800'}`}
+                  key={tenant.id}
+                  onClick={() => setSelectedTenantId(tenant.id)}
+                  type="button"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold">{tenant.name}</span>
+                    <span className="block truncate text-[10px] text-zinc-500">{tenant.subdomain}</span>
+                  </span>
+                </button>
+              ))}
+            </aside>
+
+            <section className="min-w-0">
+              {selectedTenant && (
+                <div className="mb-3 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Gimnasio seleccionado</p>
+                    <h2 className="mt-1 text-base font-bold text-white">{selectedTenant.name}</h2>
+                  </div>
+                  <button
+                    aria-label="Recargar equipos"
+                    className="grid h-9 w-9 place-items-center rounded-lg border border-zinc-800 text-zinc-400 hover:bg-zinc-900"
+                    onClick={() => void reloadOptions()}
+                    type="button"
+                  >
+                    <RefreshCw size={15} />
+                  </button>
+                </div>
+              )}
+
+              {error && <p className="mb-3 rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{error}</p>}
+              {notice && <p className="mb-3 rounded-xl border border-brand-800/60 bg-brand-950/30 p-3 text-xs text-brand-200" role="status">{notice}</p>}
+
+              <form className="mb-3 flex gap-2" onSubmit={(event) => void createOption(event)}>
+                <input
+                  aria-label="Nombre del equipo"
+                  className="min-w-0 flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:border-brand-500 focus:outline-none"
+                  maxLength={80}
+                  onChange={(event) => setNewName(event.target.value)}
+                  placeholder="Ej: Prensa de piernas"
+                  value={newName}
+                />
+                <button
+                  aria-label="Agregar equipo"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-brand-500 text-white hover:bg-brand-action-hover disabled:opacity-50"
+                  disabled={!selectedTenantId || !newName.trim() || savingId === 'new'}
+                  type="submit"
+                >
+                  <Plus size={17} />
+                </button>
+              </form>
+
+              {loading ? (
+                <p className="flex items-center justify-center gap-2 py-8 text-sm text-zinc-400"><TenantLoadingIndicator size={16} /> Cargando equipos…</p>
+              ) : (
+                <div className="space-y-2">
+                  {options.map((option) => (
+                    <article className={`flex items-center gap-2 rounded-xl border p-3 ${option.archivedAt ? 'border-zinc-800 bg-zinc-900/50 opacity-70' : 'border-brand-800/50 bg-brand-950/20'}`} key={option.id}>
+                      <Dumbbell aria-hidden="true" className="shrink-0 text-brand-300" size={16} />
+                      <input
+                        aria-label={`Nombre de ${option.name}`}
+                        className="min-w-0 flex-1 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-white focus:border-brand-500 focus:outline-none"
+                        maxLength={80}
+                        onChange={(event) => setDraftNames((current) => ({ ...current, [option.id]: event.target.value }))}
+                        value={draftNames[option.id] ?? option.name}
+                      />
+                      <button
+                        aria-label={`Guardar ${option.name}`}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-zinc-800 text-brand-300 hover:bg-brand-950/40 disabled:opacity-50"
+                        disabled={savingId === option.id || draftNames[option.id] === option.name}
+                        onClick={() => void renameOption(option)}
+                        type="button"
+                      >
+                        <Save size={14} />
+                      </button>
+                      <button
+                        aria-label={option.archivedAt ? `Restaurar ${option.name}` : `Archivar ${option.name}`}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                        disabled={savingId === option.id}
+                        onClick={() => void setArchived(option, !option.archivedAt)}
+                        type="button"
+                      >
+                        {option.archivedAt ? <RefreshCw size={14} /> : <Archive size={14} />}
+                      </button>
+                    </article>
+                  ))}
+                  {options.length === 0 && <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-xs text-zinc-500">Este gimnasio no tiene opciones configuradas.</p>}
+                </div>
+              )}
+            </section>
+          </div>
+          )
+        )}
+      </div>
+    </main>
+  );
+}

@@ -4,6 +4,7 @@ import AppShell from '@/app/AppShell';
 import ScreenRenderer from '@/app/ScreenRenderer';
 import InvitationAcceptanceScreen from '@/screens/InvitationAcceptanceScreen';
 import PasswordRecoveryScreen from '@/screens/PasswordRecoveryScreen';
+import PlatformEquipmentAdmin from '@/screens/platform/PlatformEquipmentAdmin';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { useTenantContext } from '@/app/tenant/tenantContext';
 import { useAppNavigation } from '@/app/useAppNavigation';
@@ -184,19 +185,8 @@ export default function App() {
     );
   }
 
-  if (authState.status === 'authenticated' && authState.productRole === null) {
-    return (
-      <TenantMessage
-        title="Panel de plataforma en preparación"
-        message={`Hola ${authState.profile.full_name}. Tu cuenta de superadministración está autenticada, pero el panel global todavía no está disponible.`}
-        theme={theme}
-        action={(
-          <button onClick={signOut} className="mt-3 rounded-xl bg-zinc-800 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700">
-            Cerrar sesión
-          </button>
-        )}
-      />
-    );
+  if (authState.status === 'authenticated' && authState.profile.role === 'super_admin') {
+    return <PlatformEquipmentAdmin profile={authState.profile} onLogout={signOut} />;
   }
 
   if (!role) {

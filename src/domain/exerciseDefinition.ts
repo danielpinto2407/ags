@@ -12,7 +12,7 @@ export const EXERCISE_EQUIPMENT = [
   'KETTLEBELL',
   'OTHER',
 ] as const;
-export type ExerciseEquipment = (typeof EXERCISE_EQUIPMENT)[number];
+export type ExerciseEquipment = string;
 
 export const EXERCISE_MOVEMENT_PATTERNS = [
   'SQUAT',
@@ -99,8 +99,7 @@ export function toExerciseDefinition(value: unknown): ExerciseDefinition {
     || !isOneOf(focus, EXERCISE_FOCUSES)
     || !isStringArray(primaryMuscles)
     || !isStringArray(secondaryMuscles)
-    || !Array.isArray(equipment)
-    || !equipment.every((item) => isOneOf(item, EXERCISE_EQUIPMENT))
+    || !isStringArray(equipment)
     || !isOneOf(movementPattern, EXERCISE_MOVEMENT_PATTERNS)
     || !isOneOf(difficulty, EXERCISE_DIFFICULTIES)
     || typeof instructions !== 'string'
@@ -153,7 +152,7 @@ export const exerciseFocusLabels: Record<ExerciseFocus, string> = {
   FULL_BODY: 'Cuerpo completo',
 };
 
-export const exerciseEquipmentLabels: Record<ExerciseEquipment, string> = {
+export const exerciseEquipmentLabels: Record<string, string> = {
   DUMBBELLS: 'Mancuernas',
   BARBELL: 'Barra',
   MACHINE: 'Máquina',
@@ -164,6 +163,10 @@ export const exerciseEquipmentLabels: Record<ExerciseEquipment, string> = {
   KETTLEBELL: 'Kettlebell',
   OTHER: 'Otro',
 };
+
+export function formatEquipmentLabel(value: string): string {
+  return exerciseEquipmentLabels[value] ?? value;
+}
 
 export const exerciseMovementLabels: Record<ExerciseMovementPattern, string> = {
   SQUAT: 'Sentadilla',
