@@ -31,6 +31,12 @@ function safeEmailColor(value: unknown, fallback: string): string {
   return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : fallback;
 }
 
+function safeEmailFont(value: unknown): string {
+  return typeof value === 'string' && value === value.trim() && /^[A-Za-z0-9 ]{1,50}$/.test(value) && value.trim()
+    ? value
+    : '';
+}
+
 function safeEmailLogoUrl(value: unknown, appOrigin: string): string {
   if (
     typeof value !== 'string'
@@ -70,6 +76,8 @@ function invitationTemplateData(
     gym_text_color: safeEmailColor(theme.textColor, DEFAULT_EMAIL_COLORS.text),
     gym_muted_color: safeEmailColor(theme.mutedColor, DEFAULT_EMAIL_COLORS.muted),
     gym_border_color: safeEmailColor(theme.borderColor, DEFAULT_EMAIL_COLORS.border),
+    gym_body_font: safeEmailFont(theme.bodyFont),
+    gym_display_font: safeEmailFont(theme.displayFont),
   };
 }
 

@@ -39,6 +39,21 @@
         "Includes mobile, accessibility, empty, loading, error, and permission-state checks.",
         "Uses project-status to distinguish shipped behavior from planned behavior."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "En AGS, el botón de recuperar contraseña no coincide con ingresar y los correos de invitación y recuperación deben seguir colores, logo y tipografías de cada gimnasio. ¿Qué revisarías y cómo evitarías regresiones?",
+      "expected_output": "An evidence-based tenant-theme workflow that distinguishes primary and secondary tokens, traces tenant body/display fonts through each email path, acknowledges the current fixed-font gap and email-client limitations, and validates multiple themes and fallback behavior.",
+      "files": [],
+      "expectations": [
+        "Identifies brand-500 as tenant primary and brand-600 as tenant secondary, rather than assuming any brand token is equivalent.",
+        "Checks rendered default, hover, focus, disabled and contrast states against at least two tenant palettes.",
+        "Uses validated tenant branding for both Supabase emails and keeps their structure and inline styles synchronized.",
+        "Identifies fixed Arial/Georgia as a current gap and traces bodyFont and displayFont from tenant data through invitation and recovery metadata to both templates.",
+        "Requires validated font inputs, compatible email-client font loading and tested fallbacks; does not claim unsupported clients will render web fonts.",
+        "Preserves fallback behavior, confirmation links, tenant isolation, and does not send emails to Production test users.",
+        "Distinguishes static template parity tests from actual email delivery, font loading and client rendering, and reports what remains unverified."
+      ]
     }
   ]
 }

@@ -10,18 +10,18 @@ Complete and validate the personalized-training path: coach invitation -> member
 
 ## Current Focus
 
-- **Current work:** remove the tenant-configurable loading icon and repair recovery-email logo branding; code and migrations 037/038 are local and need a follow-up PR.
-- **Release state:** Supabase Production is at migrations 001-036. Recovery UI/template/config from PR #31 is deployed; Vercel Production deployment for merge SHA `4d80fe9e2af6469d6c676b9f3ea8f78a830db855` completed successfully. Auth config now has the 10-character password minimum and recovery redirects for the Production alias/owned tenant domain. The SMTP configuration is unchanged.
-- **Next step:** review and deploy migrations 037/038 with the loader removal and tenant branding metadata backfill/sync. Existing loading-icon Storage objects are retained but no longer referenced; do not delete stored media without explicit approval.
+- **Current work:** PR #32 is merged; the custom loader is retired and recovery email branding is synchronized in Production.
+- **Release state:** Supabase Production is at migrations 001-038. Recovery UI/template/Auth config from PR #31 and the branding/loader follow-up from PR #32 are deployed. Vercel Production deployment for merge SHA `57e59c5e15fad66bbd89db0af555ae107c93fac7` completed successfully. SMTP is unchanged.
+- **Next step:** monitor Production. Migration 038 verified branding metadata for all 5 AGS accounts; migration 037 removed loader references and authorization. Existing loading-icon Storage objects remain unreferenced and should only be deleted with explicit approval.
 - Do not create, publish, or complete Production training data for testing without explicit confirmation.
 - CU-04B biometrics remain pending the coach form, metric catalogue, and units definition. Other deferred scope is listed in `product-context.md`.
 
 ## Verified Release Snapshot
 
-- **GitHub:** PR #27 is merged at `ddb724b`, PR #28 at `4a739f2`, PR #29 at `ec624d1`, PR #30 at `5fd5f09`, and password recovery PR #31 at `4d80fe9`.
-- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-036. Remote migration list confirms 036; no migrations are pending.
-- **Auth email:** recovery subject/body and branded recovery template from PR #31 are deployed; Supabase Auth config push applied the Production allowlist/minimum-password updates while preserving SMTP. `invite-personalized-member` remains active at version 4 with `verify_jwt=true`.
-- **Web:** `ags-roan-iota.vercel.app` serves the recovery link on the login screen; Vercel Production deployment for merge SHA `4d80fe9e2af6469d6c676b9f3ea8f78a830db855` completed successfully. The custom domain `ags.tugimnasioapp.com` still has unresolved DNS.
+- **GitHub:** PR #27 is merged at `ddb724b`, PR #28 at `4a739f2`, PR #29 at `ec624d1`, PR #30 at `5fd5f09`, PR #31 at `4d80fe9`, and PR #32 at `57e59c5`.
+- **Supabase Production:** project `ags` (`vmrcwizgluzvsmmkkhnt`) is at migrations 001-038. Remote migration list confirms 038; no migrations are pending.
+- **Auth email:** recovery subject, reset-specific copy, tenant logo/palette and 10-character minimum are deployed; Production redirects allow the Vercel alias and owned tenant subdomains. The hosted SMTP settings were preserved; `invite-personalized-member` remains active at version 4 with `verify_jwt=true`.
+- **Web:** `ags-roan-iota.vercel.app` serves the recovery link on the login screen; Vercel Production deployment for merge SHA `57e59c5e15fad66bbd89db0af555ae107c93fac7` completed successfully. The custom domain `ags.tugimnasioapp.com` still has unresolved DNS.
 - **Branding/media:** the user validated image upload. Production browser loaded the gym logo and Wilson's photo from Storage without broken images.
 
 ## Recent Evidence
@@ -32,11 +32,11 @@ Complete and validate the personalized-training path: coach invitation -> member
 - **PR #27 validation:** typecheck, lint, Vitest 82/82, build, and pgTAP 261/261 passed. Supabase migrations 034/035 were applied before frontend merge; remote checks confirm the tenant description column, versioned per-set RPC, and preserved legacy RPC. Public Vercel bundle contains the per-set UI, student empty-state copy, coach `Programado` label, and tenant description form.
 - **PR #28 validation:** typecheck, lint, and build passed; Vercel Preview and Production deployments completed successfully. User-facing cycle attempt labels now read “Ciclo 1”, “Ciclo 2”, etc.
 - **Cycle-card UI update:** `CoachProgramRoutine` now selects cycle slots through responsive cards; student cycle copy describes routines rather than calendar days. Local browser login confirmed the coach can select multiple routine cards and the existing editor follows the selected slot; student home shows routine-based copy and student selection cards remain unchanged. Typecheck, lint, 82 Vitest tests, and build pass. No DB or production data was changed.
-- **Tenant loading icon / PR #29:** migration 036 originally added tenant-scoped uploads and the profile control. Removal is pending: frontend now uses the default LoaderCircle only, migration 037 drops the RPC/policies and strips theme references, while old Storage objects remain unreferenced rather than being destructively deleted.
-- **PR #29 validation (at release):** typecheck, lint, Vitest 82/82, build, and pgTAP 272/272 passed before merge. The loading-icon controls described in that release are being removed by follow-up migration 037.
+- **Tenant loading icon:** PR #29 and migration 036 originally added tenant-scoped uploads and the profile control. PR #32/migration 037 removed the profile control, upload repository methods, theme field, RPC, and policies. All app loading states use the standard `LoaderCircle`; existing Storage objects remain unreferenced.
+- **PR #29 validation (at release):** typecheck, lint, Vitest 82/82, build, and pgTAP 272/272 passed before merge. Its loading-icon feature has since been retired by PR #32/migration 037.
 - **Cycle carousel refinement / PR #30:** coach cycle slots use a horizontal scroll-snap rail with compact cards and previous/next controls; 20 slots were exercised in the local browser at mobile width, confirming horizontal navigation and compact height. Selection/editor behavior is unchanged; no data was saved. Typecheck, lint, Vitest 82/82, build, Vercel Preview, and Vercel Production deployment pass. The current product rule still limits cycle length to 20.
-- **CU-01A recovery branding:** a read-only Production aggregate found the tenant logo configured but `gym_logo_url` absent from all 5 Auth accounts (1 coach, 4 members). The reset template reads Auth user metadata, and the invite edge function was the only code path populating those branding keys. Migration 038 backfills current profiles and syncs brand metadata on tenant theme/profile changes; local pgTAP covers existing users, theme changes, new profiles, and metadata preservation. Recovery UI/template/Auth config from PR #31 are in Production; migration 038 is pending.
-- **Loader retirement / CU-01A follow-up validation:** migration 037 removes the dedicated policies/RPC and clears `loadingIconUrl`; `TenantLoadingIndicator` keeps the standard animated `LoaderCircle`. Local pgTAP passes 270/270 with migrations 037/038. Production remains at 036 until the follow-up PR is merged and applied.
+- **CU-01A recovery branding:** Production initially had the logo configured but `gym_logo_url` absent from all 5 Auth accounts. PR #32/migration 038 backfilled current profiles and syncs branding on tenant theme/profile changes. A local Mailpit test rendered the actual Production logo URL; a read-only Production aggregate now confirms metadata on 5/5 accounts. No Production recovery email was sent for testing.
+- **Loader retirement:** PR #32/migration 037 removed loader policies/RPC and theme references; `TenantLoadingIndicator` keeps the standard spinner. Local pgTAP passes 270/270; Production confirms the loader function, policies, and theme key are absent. Existing Storage objects were not deleted.
 
 ## Preservation And Safety
 

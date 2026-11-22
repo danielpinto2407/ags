@@ -95,7 +95,7 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
           <div className="flex items-center justify-between gap-3">
             <p className="text-[10px] text-zinc-500">{description.length}/280 caracteres</p>
             <button
-              className="min-h-10 rounded-lg bg-brand-600 px-4 text-xs font-bold text-white transition-colors hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-10 rounded-lg bg-brand-500 px-4 text-xs font-bold text-white transition-colors hover:bg-brand-action-hover disabled:cursor-not-allowed disabled:opacity-60"
               disabled={savingDescription || description === (tenant?.description ?? '')}
               onClick={() => void saveDescription()}
               type="button"

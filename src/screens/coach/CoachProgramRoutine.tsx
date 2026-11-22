@@ -594,7 +594,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
                 Guardar borrador
               </button>
               <button
-                className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 text-sm font-bold text-white hover:bg-brand-500 disabled:cursor-wait disabled:opacity-50"
+                className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-500 text-sm font-bold text-white hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-50"
                 disabled={saving || assignmentsQuery.state.status !== 'loaded' || !canPublish}
                 onClick={() => void saveDraft(true)}
                 type="button"

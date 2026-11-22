@@ -53,7 +53,8 @@
 - Are primary path, decisions, validation, loading, empty, error, success, and permission states explicitly considered? Does empty-state copy reflect actual data?
 - Were the relevant official accessibility/platform references checked for new or complex interactions, and are semantics, keyboard/focus, accessible names, and feedback correct?
 - Was the changed task exercised in a browser at phone and desktop widths without unsafe Production writes?
-- Does the feature reuse `Sora`, `Inter`, Tailwind `brand-*`, zinc/status colors, spacing, radii, borders, shadows, and responsive patterns?
+- Does the feature use the validated tenant's body/display fonts, Tailwind `brand-*`, zinc/status colors, spacing, radii, borders, shadows, and responsive patterns, with fallbacks only when tenant data or client support is unavailable?
+- For tenant emails, were body/display fonts, logo, colors, shared layout and fallback behavior traced from tenant data through each delivery path and checked in rendered messages? Does the evidence distinguish static template parity from actual font loading and email-client support?
 - Are visual tokens centralized rather than duplicated in screens?
 - Are loading, empty, error, success, offline, and permission states represented?
 - Does every visible control have real behavior or an explicit disabled state?

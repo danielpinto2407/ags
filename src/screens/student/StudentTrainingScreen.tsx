@@ -373,7 +373,7 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
                   })}
                   {canRegister && performance.sets.some(({ completed }) => completed) && (
                     <button
-                      className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 text-sm font-bold text-white hover:bg-brand-500 disabled:cursor-wait disabled:opacity-50"
+                      className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-50"
                       disabled={savingItemId === item.id}
                       onClick={() => void registerExercise(item)}
                       type="button"

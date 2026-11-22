@@ -71,7 +71,7 @@ export default function StudentHome({ onNavigate, profile }: StudentHomeProps) {
             )}
             <button
               onClick={() => onNavigate('routines')}
-              className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand-600 text-sm font-bold text-white transition-colors hover:bg-brand-700"
+              className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand-500 text-sm font-bold text-white transition-colors hover:bg-brand-action-hover"
               type="button"
             >
               {assignment?.programMode === 'CYCLE' ? 'Elegir entrenamiento' : assignment ? 'Ver mi rutina' : 'Consultar mis rutinas'}

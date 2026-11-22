@@ -15,6 +15,7 @@ export default {
           300: 'color-mix(in srgb, var(--tenant-accent, #ff70b5) 72%, white)',
           400: 'var(--tenant-accent, #ff3d9a)',
           500: 'var(--tenant-primary, #ff0a78)',
+          'action-hover': 'color-mix(in srgb, var(--tenant-primary, #ff0a78) 85%, black)',
           600: 'var(--tenant-secondary, #f00068)',
           700: 'color-mix(in srgb, var(--tenant-secondary, #d9005d) 86%, black)',
           800: 'color-mix(in srgb, var(--tenant-primary, #ff0a78) 66%, black)',
