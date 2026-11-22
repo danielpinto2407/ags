@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { resolveTenantBySubdomain } from '@/data/tenantRepository';
 import { TenantContext, type TenantBootstrapState } from '@/app/tenant/tenantContext';
-import { getTenantSubdomain } from '@/app/tenant/tenantSubdomain';
+import { getTenantSubdomain, isPlatformPath } from '@/app/tenant/tenantSubdomain';
 
 interface TenantProviderProps {
   children: ReactNode;
@@ -12,12 +12,14 @@ const localDefaultSubdomain = import.meta.env.VITE_DEFAULT_TENANT_SUBDOMAIN ?? '
 const previewTenantHostname = import.meta.env.VITE_PREVIEW_TENANT_HOSTNAME ?? '';
 
 export function TenantProvider({ children }: TenantProviderProps) {
-  const subdomain = getTenantSubdomain(
-    window.location.hostname,
-    rootDomain,
-    localDefaultSubdomain,
-    previewTenantHostname
-  );
+  const subdomain = isPlatformPath(window.location.pathname)
+    ? null
+    : getTenantSubdomain(
+      window.location.hostname,
+      rootDomain,
+      localDefaultSubdomain,
+      previewTenantHostname
+    );
   const [attempt, setAttempt] = useState(0);
   const [state, setState] = useState<TenantBootstrapState>(() => (
     subdomain ? { status: 'loading' } : { status: 'platform' }

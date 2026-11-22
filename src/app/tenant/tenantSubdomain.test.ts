@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { getTenantSubdomain } from '@/app/tenant/tenantSubdomain';
+import { getTenantSubdomain, isPlatformPath } from '@/app/tenant/tenantSubdomain';
+
+describe('isPlatformPath', () => {
+  it.each(['/platform', '/platform/', '/platform/recovery'])('recognizes the platform route %s', (pathname) => {
+    expect(isPlatformPath(pathname)).toBe(true);
+  });
+
+  it.each(['/', '/login', '/platform-settings'])('does not claim tenant routes %s', (pathname) => {
+    expect(isPlatformPath(pathname)).toBe(false);
+  });
+});
 
 describe('getTenantSubdomain', () => {
   const rootDomain = 'tugimnasioapp.com';

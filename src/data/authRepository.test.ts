@@ -32,6 +32,16 @@ describe('password recovery', () => {
     });
   });
 
+  it('keeps platform password recovery on the platform route', async () => {
+    vi.stubGlobal('window', { location: { origin: 'https://ags-roan-iota.vercel.app', pathname: '/platform' } });
+
+    await authRepository.requestPasswordRecovery('admin@example.test');
+
+    expect(authMethods.resetPasswordForEmail).toHaveBeenCalledWith('admin@example.test', {
+      redirectTo: 'https://ags-roan-iota.vercel.app/platform?password_recovery=1',
+    });
+  });
+
   it('returns a generic request error without exposing account lookup details', async () => {
     authMethods.resetPasswordForEmail.mockResolvedValue({ error: new Error('User not found') });
 

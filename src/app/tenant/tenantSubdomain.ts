@@ -1,5 +1,9 @@
 import { isTenantSubdomain } from '@/domain/tenant';
 
+export function isPlatformPath(pathname: string): boolean {
+  return pathname === '/platform' || pathname.startsWith('/platform/');
+}
+
 export function getTenantSubdomain(
   hostname: string,
   rootDomain: string,

@@ -41,7 +41,8 @@ export const authRepository = {
 
   async requestPasswordRecovery(email: string): Promise<void> {
     const client = requireSupabaseClient();
-    const redirectTo = new URL('/?password_recovery=1', window.location.origin).toString();
+    const callbackPath = window.location.pathname === '/platform' ? '/platform?password_recovery=1' : '/?password_recovery=1';
+    const redirectTo = new URL(callbackPath, window.location.origin).toString();
     const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw new Error('No se pudo procesar la solicitud. Inténtalo más tarde.');
   },
