@@ -6,7 +6,7 @@ const jsonResponse = (request: Request, status: number, body: Record<string, unk
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+      'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info, x-supabase-api-version',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Origin': origin,
       'Vary': 'Origin',
