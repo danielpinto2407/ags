@@ -80,7 +80,7 @@ export default function StudentProgress({ profile, onNavigate }: StudentProgress
           <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-zinc-500">
             Cuando registres tu primer ejercicio, tus entrenamientos aparecerán aquí.
           </p>
-          <button className="mx-auto mt-4 flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 text-xs font-bold text-white hover:bg-brand-500" onClick={() => onNavigate('routines')} type="button">
+          <button className="mx-auto mt-4 flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 text-xs font-bold text-white hover:bg-brand-action-hover" onClick={() => onNavigate('routines')} type="button">
             Ir a entrenar <ArrowRight aria-hidden="true" size={14} />
           </button>
         </div>

@@ -119,7 +119,7 @@ export default function LoginScreen({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3.5 font-bold rounded-2xl text-sm transition-all bg-brand-500 hover:bg-brand-400 text-white shadow-neon disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full py-3.5 font-bold rounded-2xl text-sm transition-all bg-brand-500 hover:bg-brand-action-hover text-white shadow-neon disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting ? 'Ingresando…' : 'Ingresar'}
         </button>

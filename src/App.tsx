@@ -25,9 +25,9 @@ const tenantThemeStyle = (theme: typeof DEFAULT_TENANT_THEME): CSSProperties => 
   '--tenant-display-font': `"${theme.displayFont}"`,
 } as CSSProperties);
 
-function TenantMessage({ title, message, action, loading = false }: { title: string; message: string; action?: ReactNode; loading?: boolean }) {
+function TenantMessage({ title, message, action, loading = false, theme = DEFAULT_TENANT_THEME }: { title: string; message: string; action?: ReactNode; loading?: boolean; theme?: typeof DEFAULT_TENANT_THEME }) {
   return (
-    <main className="tenant-app min-h-screen w-full flex items-center justify-center px-6 py-12 text-center">
+    <main className="tenant-app min-h-screen w-full flex items-center justify-center px-6 py-12 text-center" style={tenantThemeStyle(theme)}>
       <section className="max-w-md space-y-3">
         {loading && <TenantLoadingIndicator className="mx-auto" size={28} />}
         <p className="font-display text-xl font-bold text-zinc-900">{title}</p>
@@ -96,7 +96,7 @@ export default function App() {
   }
 
   if (tenantState.status === 'tenant' && tenantState.tenant.status === 'SUSPENDED') {
-    return <TenantMessage title="Servicio pausado" message="Este gimnasio tiene el acceso suspendido. Contacta a la administración para obtener ayuda." />;
+    return <TenantMessage title="Servicio pausado" message="Este gimnasio tiene el acceso suspendido. Contacta a la administración para obtener ayuda." theme={tenantState.tenant.theme} />;
   }
 
   const tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
@@ -107,12 +107,13 @@ export default function App() {
       <TenantMessage
         title="Autenticación no configurada"
         message="Configura Supabase local en .env.local para poder iniciar sesión. No uses claves administrativas en el navegador."
+        theme={theme}
       />
     );
   }
 
   if (authState.status === 'loading' || authState.status === 'profile-loading') {
-    return <TenantMessage loading title="Verificando sesión" message="Estamos validando tu cuenta y el acceso a este gimnasio." />;
+    return <TenantMessage loading title="Verificando sesión" message="Estamos validando tu cuenta y el acceso a este gimnasio." theme={theme} />;
   }
 
   if (authState.status === 'recovery' || authState.status === 'recovery-complete') {
@@ -146,8 +147,9 @@ export default function App() {
       <TenantMessage
         title={authState.message.includes('sesión') ? 'No se pudo validar la sesión' : 'No se pudo verificar el perfil'}
         message={authState.message}
+        theme={theme}
         action={(
-          <button onClick={retryProfile} className="mt-3 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-500">
+          <button onClick={retryProfile} className="mt-3 rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-action-hover">
             Reintentar
           </button>
         )}
@@ -172,6 +174,7 @@ export default function App() {
       <TenantMessage
         title="Acceso no disponible"
         message={authState.message}
+        theme={theme}
         action={(
           <button onClick={signOut} className="mt-3 rounded-xl bg-zinc-800 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700">
             Cerrar sesión
@@ -186,6 +189,7 @@ export default function App() {
       <TenantMessage
         title="Panel de plataforma en preparación"
         message={`Hola ${authState.profile.full_name}. Tu cuenta de superadministración está autenticada, pero el panel global todavía no está disponible.`}
+        theme={theme}
         action={(
           <button onClick={signOut} className="mt-3 rounded-xl bg-zinc-800 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700">
             Cerrar sesión

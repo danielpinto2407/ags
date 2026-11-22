@@ -1,4 +1,6 @@
-<div style="margin:0;padding:32px 16px;background-color:{{ if .Data.gym_background_color }}{{ .Data.gym_background_color }}{{ else }}#f4eae3{{ end }};font-family:Arial,Helvetica,sans-serif;color:{{ if .Data.gym_text_color }}{{ .Data.gym_text_color }}{{ else }}#2b2528{{ end }};">
+{{ if .Data.gym_body_font }}<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ .Data.gym_body_font }}&amp;display=swap">{{ end }}
+{{ if .Data.gym_display_font }}<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{ .Data.gym_display_font }}&amp;display=swap">{{ end }}
+<div style="margin:0;padding:32px 16px;background-color:{{ if .Data.gym_background_color }}{{ .Data.gym_background_color }}{{ else }}#f4eae3{{ end }};font-family:{{ if .Data.gym_body_font }}'{{ .Data.gym_body_font }}',{{ end }}Arial,Helvetica,sans-serif;color:{{ if .Data.gym_text_color }}{{ .Data.gym_text_color }}{{ else }}#2b2528{{ end }};">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:580px;margin:0 auto;background-color:{{ if .Data.gym_surface_color }}{{ .Data.gym_surface_color }}{{ else }}#fff9f6{{ end }};border:1px solid {{ if .Data.gym_border_color }}{{ .Data.gym_border_color }}{{ else }}#dfd2d2{{ end }};border-radius:16px;">
     <tr>
       <td style="padding:36px 32px 14px;text-align:center;">
@@ -8,7 +10,7 @@
         <p style="margin:0 0 20px;color:{{ if .Data.gym_primary_color }}{{ .Data.gym_primary_color }}{{ else }}#7b2545{{ end }};font-size:14px;font-weight:bold;letter-spacing:1px;">{{ if .Data.gym_name }}{{ .Data.gym_name }}{{ else }}AGS GluteHouse{{ end }}</p>
         {{ end }}
         <p style="margin:0;color:{{ if .Data.gym_primary_color }}{{ .Data.gym_primary_color }}{{ else }}#7b2545{{ end }};font-size:11px;font-weight:bold;letter-spacing:1.6px;text-transform:uppercase;">RESTABLECE TU CONTRASEÑA</p>
-        <h1 style="margin:14px 0 0;color:{{ if .Data.gym_text_color }}{{ .Data.gym_text_color }}{{ else }}#2b2528{{ end }};font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:normal;line-height:1.2;">Crea una contraseña nueva</h1>
+        <h1 style="margin:14px 0 0;color:{{ if .Data.gym_text_color }}{{ .Data.gym_text_color }}{{ else }}#2b2528{{ end }};font-family:{{ if .Data.gym_display_font }}'{{ .Data.gym_display_font }}',{{ end }}Georgia,'Times New Roman',serif;font-size:30px;font-weight:normal;line-height:1.2;">Crea una contraseña nueva</h1>
       </td>
     </tr>
     <tr>

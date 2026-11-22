@@ -73,8 +73,9 @@ Dependencies flow inward. Screens may use feature hooks and repositories; domain
 9. Prefer the simplest functional integration; avoid speculative abstractions, global stores, dependencies, and folders.
 10. Use immutable updates, stable IDs, validated external data, and explicit async states.
 11. Keep tenant and student scope in data mutations; do not mutate a global routine when a student is selected.
-12. Preserve the Spanish UI, `Sora`/`Inter` typography, Tailwind tokens, responsive behavior, and accessible states.
+12. Preserve the Spanish UI, validated tenant-configured body/display typography, Tailwind tokens, responsive behavior, and accessible states. Fixed fonts are fallbacks, not tenant branding.
 13. Database-driven themes must use a typed validated contract mapped to controlled CSS variables; never inject arbitrary CSS.
+	For tenant UI and transactional email changes, follow `references/visual-system.md`: trace logo, colors and both font families from the tenant through the relevant rendering path; verify actual rendered output and explicitly report unsupported email-client fallbacks or incomplete coverage.
 14. Client-side guards improve UX only; real authorization and tenant isolation belong server-side/RLS.
 15. Do not add controls without behavior, and do not treat localStorage as a database once synchronization is required.
 

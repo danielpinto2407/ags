@@ -27,9 +27,9 @@
   .tenant-app [class~="bg-zinc-950/90"] {
     background-color: color-mix(in srgb, var(--tenant-surface, #fff9f6) 94%, transparent);
   }
-  .tenant-app [class*="bg-zinc-950/"],
-  .tenant-app [class*="bg-zinc-900/"],
-  .tenant-app [class*="bg-zinc-800/"] {
+  .tenant-app [class~="bg-zinc-950/30"],
+  .tenant-app [class~="bg-zinc-900/60"],
+  .tenant-app [class~="bg-zinc-800/60"] {
     background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 20%, var(--tenant-surface, #fff9f6));
   }
   .tenant-app .bg-zinc-800 {
@@ -56,7 +56,9 @@
   .tenant-app .text-zinc-800 {
     color: var(--tenant-muted, #76696d);
   }
-  .tenant-app [class*="border-zinc-"] {
+  .tenant-app .border-zinc-700,
+  .tenant-app .border-zinc-800,
+  .tenant-app [class~="border-zinc-800/60"] {
     border-color: var(--tenant-border, #e5d8d2);
   }
   .tenant-app .divide-zinc-800 > :not([hidden]) ~ :not([hidden]) {
@@ -71,12 +73,39 @@
   }
   .tenant-app .bg-brand-950,
   .tenant-app .bg-brand-900,
-  .tenant-app [class*="bg-brand-950/"],
-  .tenant-app [class*="bg-brand-900/"] {
+  .tenant-app [class~="bg-brand-950/20"],
+  .tenant-app [class~="bg-brand-950/30"],
+  .tenant-app [class~="bg-brand-950/40"],
+  .tenant-app [class~="bg-brand-950/50"],
+  .tenant-app [class~="bg-brand-900/30"] {
     background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 30%, var(--tenant-surface, #fff9f6));
   }
-  .tenant-app [class*="border-brand-"] {
+  .tenant-app [class~="hover:bg-brand-950/20"]:hover,
+  .tenant-app [class~="hover:bg-brand-950/30"]:hover,
+  .tenant-app [class~="hover:bg-brand-950/40"]:hover,
+  .tenant-app [class~="hover:bg-zinc-800/60"]:hover,
+  .tenant-app [class~="hover:bg-zinc-800"]:hover,
+  .tenant-app [class~="hover:bg-zinc-900"]:hover {
+    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 30%, var(--tenant-surface, #fff9f6));
+  }
+  .tenant-app .border-brand-500,
+  .tenant-app .border-brand-700,
+  .tenant-app .border-brand-800,
+  .tenant-app [class~="border-brand-500/25"],
+  .tenant-app [class~="border-brand-500/30"],
+  .tenant-app [class~="border-brand-800/50"],
+  .tenant-app [class~="border-brand-800/70"],
+  .tenant-app [class~="border-brand-900/40"],
+  .tenant-app [class~="border-brand-900/50"] {
     border-color: color-mix(in srgb, var(--tenant-primary, #7b2545) 24%, var(--tenant-border, #e5d8d2));
+  }
+  .tenant-app input[class~="focus:border-brand-500"]:focus,
+  .tenant-app textarea[class~="focus:border-brand-500"]:focus,
+  .tenant-app select[class~="focus:border-brand-500"]:focus,
+  .tenant-app [class~="hover:border-brand-500"]:hover,
+  .tenant-app [class~="hover:border-brand-700"]:hover,
+  .tenant-app [class~="hover:border-brand-800"]:hover {
+    border-color: var(--tenant-primary, #7b2545);
   }
   .tenant-app .text-brand-100,
   .tenant-app .text-brand-200,

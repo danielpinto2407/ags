@@ -294,7 +294,7 @@ export default function CreateExerciseModal({ onClose, onSave, exercise }: Creat
           <button
             disabled={saving}
             type="submit"
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand-600 py-3.5 text-sm font-bold text-white transition-colors hover:bg-brand-500 disabled:cursor-wait disabled:opacity-60"
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand-500 py-3.5 text-sm font-bold text-white transition-colors hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-60"
           >
             <Check size={16} />
             {saving ? 'Guardando…' : exercise ? 'Guardar cambios' : 'Crear ejercicio'}

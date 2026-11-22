@@ -105,7 +105,7 @@ export default function InvitationAcceptanceScreen({
           {error && <p className="text-sm text-rose-400" role="alert">{error}</p>}
 
           <button
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white hover:bg-brand-500 disabled:cursor-wait disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 text-sm font-bold text-white hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-60"
             disabled={isSubmitting || fullName.trim().length < 2 || password.length < 10 || password !== passwordConfirmation}
             type="submit"
           >

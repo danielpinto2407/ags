@@ -69,7 +69,7 @@ export default function InviteMemberModal({ onClose }: InviteMemberModalProps) {
               </div>
             </div>
             <button
-              className="w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white hover:bg-brand-500"
+              className="w-full rounded-xl bg-brand-500 px-4 py-3 text-sm font-bold text-white hover:bg-brand-action-hover"
               onClick={onClose}
               type="button"
             >
@@ -107,7 +107,7 @@ export default function InviteMemberModal({ onClose }: InviteMemberModalProps) {
                 Cancelar
               </button>
               <button
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white hover:bg-brand-500 disabled:cursor-wait disabled:opacity-60"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 text-sm font-bold text-white hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-60"
                 disabled={isSubmitting || !email.trim()}
                 type="submit"
               >

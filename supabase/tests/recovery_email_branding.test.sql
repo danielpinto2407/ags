@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(7);
+select extensions.plan(14);
 
 insert into public.tenants (id, name, subdomain, status, theme)
 values (
@@ -9,7 +9,7 @@ values (
   'Recovery Brand Gym',
   'recovery-brand',
   'ACTIVE',
-  '{"logoUrl":"https://cdn.example.test/logo-v1.png","primaryColor":"#123456","accentColor":"#abcdef","backgroundColor":"#f4eae3","surfaceColor":"#fff9f6","textColor":"#2b2528","mutedColor":"#76696d","borderColor":"#e5d8d2"}'::jsonb
+  '{"logoUrl":"https://cdn.example.test/logo-v1.png","primaryColor":"#123456","accentColor":"#abcdef","backgroundColor":"#f4eae3","surfaceColor":"#fff9f6","textColor":"#2b2528","mutedColor":"#76696d","borderColor":"#e5d8d2","bodyFont":"DM Sans","displayFont":"Fraunces"}'::jsonb
 );
 
 insert into auth.users (id, email, raw_user_meta_data)
@@ -42,6 +42,16 @@ select extensions.is(
   'profile creation syncs the gym email palette into Auth metadata'
 );
 select extensions.is(
+  (select raw_user_meta_data->>'gym_body_font' from auth.users where id = 'f7000000-0000-4000-8000-000000000002'),
+  'DM Sans',
+  'profile creation syncs the tenant body font'
+);
+select extensions.is(
+  (select raw_user_meta_data->>'gym_display_font' from auth.users where id = 'f7000000-0000-4000-8000-000000000002'),
+  'Fraunces',
+  'profile creation syncs the tenant display font'
+);
+select extensions.is(
   (select raw_user_meta_data->>'coach_setting' from auth.users where id = 'f7000000-0000-4000-8000-000000000002'),
   'preserved',
   'branding sync preserves unrelated user metadata'
@@ -52,13 +62,21 @@ select extensions.ok(
 );
 
 update public.tenants
-set theme = pg_catalog.jsonb_set(theme, '{logoUrl}', pg_catalog.to_jsonb('https://cdn.example.test/logo-v2.png'::text), true)
+set theme = pg_catalog.jsonb_set(
+  pg_catalog.jsonb_set(theme, '{logoUrl}', pg_catalog.to_jsonb('https://cdn.example.test/logo-v2.png'::text), true),
+  '{bodyFont}', pg_catalog.to_jsonb('Roboto'::text), true
+)
 where id = 'f7000000-0000-4000-8000-000000000001';
 
 select extensions.is(
   (select raw_user_meta_data->>'gym_logo_url' from auth.users where id = 'f7000000-0000-4000-8000-000000000002'),
   'https://cdn.example.test/logo-v2.png',
   'tenant logo changes synchronize to existing Auth users'
+);
+select extensions.is(
+  (select raw_user_meta_data->>'gym_body_font' from auth.users where id = 'f7000000-0000-4000-8000-000000000002'),
+  'Roboto',
+  'tenant font changes synchronize to existing Auth users'
 );
 
 insert into public.profiles (id, tenant_id, role, status, full_name)
@@ -74,6 +92,36 @@ select extensions.is(
   (select raw_user_meta_data->>'gym_logo_url' from auth.users where id = 'f7000000-0000-4000-8000-000000000003'),
   'https://cdn.example.test/logo-v2.png',
   'new member profiles receive the current recovery email logo'
+);
+
+update public.tenants
+set theme = theme || '{"bodyFont":"X\u0027;background:red","displayFont":123}'::jsonb
+where id = 'f7000000-0000-4000-8000-000000000001';
+
+select extensions.is(
+  (select raw_user_meta_data->>'gym_body_font' from auth.users where id = 'f7000000-0000-4000-8000-000000000002'),
+  '',
+  'unsafe CSS font names are rejected'
+);
+select extensions.is(
+  (select raw_user_meta_data->>'gym_display_font' from auth.users where id = 'f7000000-0000-4000-8000-000000000002'),
+  '',
+  'non-string font names are rejected'
+);
+
+update public.tenants
+set theme = theme - 'bodyFont' - 'displayFont'
+where id = 'f7000000-0000-4000-8000-000000000001';
+
+select extensions.is(
+  (select raw_user_meta_data->>'gym_body_font' from auth.users where id = 'f7000000-0000-4000-8000-000000000002'),
+  '',
+  'missing body font uses the email fallback'
+);
+select extensions.is(
+  (select raw_user_meta_data->>'gym_display_font' from auth.users where id = 'f7000000-0000-4000-8000-000000000002'),
+  '',
+  'missing display font uses the email fallback'
 );
 
 select * from extensions.finish();

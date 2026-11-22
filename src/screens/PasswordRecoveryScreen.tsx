@@ -128,7 +128,7 @@ export default function PasswordRecoveryScreen({
               </div>
               {error && <p className="text-sm text-rose-400" role="alert">{error}</p>}
               <button
-                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white hover:bg-brand-500 disabled:cursor-wait disabled:opacity-60"
+                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-60"
                 disabled={isSubmitting}
                 type="submit"
               >
@@ -179,7 +179,7 @@ export default function PasswordRecoveryScreen({
             )}
             {error && <p className="text-sm text-rose-400" role="alert">{error}</p>}
             <button
-              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white hover:bg-brand-500 disabled:cursor-wait disabled:opacity-60"
+              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-60"
               disabled={isSubmitting || password.length < 10 || password !== passwordConfirmation}
               type="submit"
             >
