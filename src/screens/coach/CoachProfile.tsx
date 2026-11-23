@@ -21,10 +21,18 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
   const [savingDescription, setSavingDescription] = useState(false);
   const [descriptionFeedback, setDescriptionFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
   const [branding, setBranding] = useState({
-    primaryColor: tenant?.theme.primaryColor ?? '#7B2545',
-    secondaryColor: tenant?.theme.secondaryColor ?? '#572239',
-    backgroundColor: tenant?.theme.backgroundColor ?? '#F4EAE3',
-    accentColor: tenant?.theme.accentColor ?? '#D8BAC4',
+    primaryColor: tenant?.theme.primaryColor ?? '#71717A',
+    secondaryColor: tenant?.theme.secondaryColor ?? '#52525B',
+    backgroundColor: tenant?.theme.backgroundColor ?? '#09090B',
+    accentColor: tenant?.theme.accentColor ?? '#A1A1AA',
+    surfaceColor: tenant?.theme.surfaceColor ?? '#18181B',
+    textColor: tenant?.theme.textColor ?? '#FAFAFA',
+    mutedColor: tenant?.theme.mutedColor ?? '#A1A1AA',
+    borderColor: tenant?.theme.borderColor ?? '#27272A',
+    warmAccentColor: tenant?.theme.warmAccentColor ?? '#A1A1AA',
+    softAccentColor: tenant?.theme.softAccentColor ?? '#52525B',
+    bodyFont: tenant?.theme.bodyFont ?? 'DM Sans',
+    displayFont: tenant?.theme.displayFont ?? 'Fraunces',
   });
   const [savingBranding, setSavingBranding] = useState(false);
   const [brandingFeedback, setBrandingFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
@@ -44,6 +52,14 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
       secondaryColor: tenant.theme.secondaryColor,
       backgroundColor: tenant.theme.backgroundColor,
       accentColor: tenant.theme.accentColor,
+      surfaceColor: tenant.theme.surfaceColor,
+      textColor: tenant.theme.textColor,
+      mutedColor: tenant.theme.mutedColor,
+      borderColor: tenant.theme.borderColor,
+      warmAccentColor: tenant.theme.warmAccentColor,
+      softAccentColor: tenant.theme.softAccentColor,
+      bodyFont: tenant.theme.bodyFont,
+      displayFont: tenant.theme.displayFont,
     });
   }, [tenant]);
 
@@ -54,6 +70,10 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
     refreshTenant();
     return nextLogoUrl;
   };
+
+  const brandingIsValid = Object.entries(branding).every(([key, value]) =>
+    key.endsWith('Font') || /^#[0-9A-Fa-f]{6}$/.test(value)
+  );
 
   const saveBranding = async () => {
     setSavingBranding(true);
@@ -147,32 +167,74 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
             <p className="text-xs font-semibold text-zinc-300">Paleta del gimnasio</p>
             <p className="mt-1 text-[10px] text-zinc-500">Estos colores se aplican al entorno de tu gimnasio.</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {([
               ['primaryColor', 'Principal'],
               ['secondaryColor', 'Secundario'],
               ['backgroundColor', 'Fondo'],
               ['accentColor', 'Acento'],
+              ['surfaceColor', 'Superficie'],
+              ['textColor', 'Texto'],
+              ['mutedColor', 'Texto tenue'],
+              ['borderColor', 'Bordes'],
+              ['warmAccentColor', 'Acento cálido'],
+              ['softAccentColor', 'Acento suave'],
             ] as const).map(([key, label]) => (
-              <label className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-[11px] text-zinc-400" key={key}>
-                <input
-                  aria-label={label}
-                  className="h-8 w-8 cursor-pointer rounded-lg border-0 bg-transparent"
+              <label className="grid gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-[11px] text-zinc-400" key={key}>
+                <span>{label}</span>
+                <span className="flex items-center gap-2">
+                  <input
+                    aria-label={`Selector de ${label.toLowerCase()}`}
+                    className="h-9 w-12 cursor-pointer rounded-lg border-0 bg-transparent"
+                    onChange={(event) => {
+                      setBranding((current) => ({ ...current, [key]: event.target.value.toUpperCase() }));
+                      setBrandingFeedback(null);
+                    }}
+                    type="color"
+                    value={/^#[0-9A-Fa-f]{6}$/.test(branding[key]) ? branding[key] : '#71717A'}
+                  />
+                  <input
+                    aria-label={`Hexadecimal de ${label.toLowerCase()}`}
+                    className="min-w-0 flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-2 font-mono text-xs uppercase text-zinc-200 outline-none focus:border-brand-500"
+                    maxLength={7}
+                    onChange={(event) => {
+                      const value = event.target.value.toUpperCase();
+                      setBranding((current) => ({ ...current, [key]: value.startsWith('#') ? value : `#${value}` }));
+                      setBrandingFeedback(null);
+                    }}
+                    spellCheck={false}
+                    value={branding[key]}
+                  />
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {([
+              ['bodyFont', 'Tipografía de cuerpo'],
+              ['displayFont', 'Tipografía de títulos'],
+            ] as const).map(([key, label]) => (
+              <label className="grid gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-[11px] text-zinc-400" key={key}>
+                <span>{label}</span>
+                <select
+                  className="min-h-10 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 text-xs text-zinc-200 outline-none focus:border-brand-500"
                   onChange={(event) => {
-                    setBranding((current) => ({ ...current, [key]: event.target.value.toUpperCase() }));
+                    setBranding((current) => ({ ...current, [key]: event.target.value }));
                     setBrandingFeedback(null);
                   }}
-                  type="color"
                   value={branding[key]}
-                />
-                <span>{label}</span>
+                >
+                  {['DM Sans', 'Fraunces', 'Inter', 'Sora', 'Roboto', 'Montserrat', 'Poppins', 'Manrope', 'Lato', 'Nunito', 'Merriweather', 'Playfair Display', 'Source Serif 4', 'Raleway', 'Work Sans'].map((font) => (
+                    <option key={font} value={font}>{font}</option>
+                  ))}
+                </select>
               </label>
             ))}
           </div>
           <div className="flex justify-end">
             <button
               className="min-h-10 rounded-lg bg-brand-500 px-4 text-xs font-bold text-white transition-colors hover:bg-brand-action-hover disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={savingBranding}
+              disabled={savingBranding || !brandingIsValid}
               onClick={() => void saveBranding()}
               type="button"
             >

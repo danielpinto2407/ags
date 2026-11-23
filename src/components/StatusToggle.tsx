@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
 
@@ -25,6 +25,17 @@ export default function StatusToggle({
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const titleId = useId();
+  const portalTheme = (() => {
+    const root = document.querySelector<HTMLElement>('main.platform-admin, .tenant-app');
+    if (!root) return {} as CSSProperties;
+    const styles = getComputedStyle(root);
+    const variables = [
+      '--tenant-primary', '--tenant-on-primary', '--tenant-secondary', '--tenant-background', '--tenant-accent',
+      '--tenant-surface', '--tenant-text', '--tenant-muted', '--tenant-border',
+      '--tenant-warm-accent', '--tenant-soft-accent', '--tenant-body-font', '--tenant-display-font',
+    ];
+    return Object.fromEntries(variables.map((name) => [name, styles.getPropertyValue(name).trim()])) as CSSProperties;
+  })();
 
   useEffect(() => {
     if (!confirming) return;
@@ -88,6 +99,7 @@ export default function StatusToggle({
             aria-modal="true"
             aria-labelledby={titleId}
             className="w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-950 p-5 shadow-2xl"
+            style={portalTheme}
             onPointerDown={(event) => event.stopPropagation()}
             role="dialog"
           >

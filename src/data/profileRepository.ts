@@ -85,14 +85,9 @@ export const profileRepository = {
     return data;
   },
 
-  async setTenantBranding(theme: { primaryColor: string; secondaryColor: string; backgroundColor: string; accentColor: string }): Promise<void> {
+  async setTenantBranding(theme: Record<string, string>): Promise<void> {
     const client = requireClient();
-    const { error } = await client.rpc('set_own_tenant_branding', {
-      p_primary_color: theme.primaryColor,
-      p_secondary_color: theme.secondaryColor,
-      p_background_color: theme.backgroundColor,
-      p_accent_color: theme.accentColor,
-    });
+    const { error } = await client.rpc('set_own_tenant_theme', { p_theme: theme });
     if (error) throw new Error(error.message.includes('invalid_theme_color')
       ? 'Los colores deben usar formato hexadecimal válido.'
       : 'No se pudo guardar la paleta del gimnasio.');

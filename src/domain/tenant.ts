@@ -1,5 +1,14 @@
 export type TenantStatus = 'ACTIVE' | 'SUSPENDED';
 
+export function getContrastingTextColor(hexColor: string): string {
+  const hex = /^#[0-9A-Fa-f]{6}$/.test(hexColor) ? hexColor.slice(1) : '71717A';
+  const red = parseInt(hex.slice(0, 2), 16);
+  const green = parseInt(hex.slice(2, 4), 16);
+  const blue = parseInt(hex.slice(4, 6), 16);
+  const luminance = (red * 299 + green * 587 + blue * 114) / 1000;
+  return luminance >= 150 ? '#18181B' : '#FAFAFA';
+}
+
 export interface TenantTheme {
   logoUrl: string | null;
   primaryColor: string;
@@ -42,6 +51,22 @@ export const DEFAULT_TENANT_THEME: TenantTheme = {
   softAccentColor: '#c4b1d2',
   bodyFont: 'DM Sans',
   displayFont: 'Fraunces',
+};
+
+export const PLATFORM_TENANT_THEME: TenantTheme = {
+  ...DEFAULT_TENANT_THEME,
+  primaryColor: '#71717A',
+  secondaryColor: '#52525B',
+  backgroundColor: '#09090B',
+  accentColor: '#A1A1AA',
+  surfaceColor: '#18181B',
+  textColor: '#FAFAFA',
+  mutedColor: '#A1A1AA',
+  borderColor: '#27272A',
+  warmAccentColor: '#A1A1AA',
+  softAccentColor: '#52525B',
+  bodyFont: 'DM Sans',
+  displayFont: 'DM Sans',
 };
 
 const LEGACY_TENANT_THEME: TenantTheme = {

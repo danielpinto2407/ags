@@ -7,9 +7,9 @@
     -webkit-tap-highlight-color: transparent;
   }
   body {
-    font-family: var(--tenant-body-font, sans-serif);
-    background: var(--tenant-background, #f4eae3);
-    color: var(--tenant-text, #2b2528);
+    font-family: var(--tenant-body-font, "DM Sans");
+    background: var(--tenant-background, #09090b);
+    color: var(--tenant-text, #fafafa);
     overscroll-behavior: none;
   }
 }
@@ -17,59 +17,55 @@
 @layer components {
   .tenant-app {
     min-height: 100dvh;
-    background-color: var(--tenant-background, #f4eae3);
-    color: var(--tenant-text, #2b2528);
+    background-color: var(--tenant-background, #09090b);
+    color: var(--tenant-text, #fafafa);
   }
   .tenant-app .bg-zinc-950,
   .tenant-app .bg-zinc-900 {
-    background-color: var(--tenant-surface, #fff9f6);
+    background-color: var(--tenant-surface, #18181b);
   }
   .tenant-app [class~="bg-zinc-950/90"] {
-    background-color: color-mix(in srgb, var(--tenant-surface, #fff9f6) 94%, transparent);
+    background-color: color-mix(in srgb, var(--tenant-surface, #18181b) 94%, transparent);
   }
   .tenant-app [class~="bg-zinc-950/30"],
   .tenant-app [class~="bg-zinc-900/60"],
   .tenant-app [class~="bg-zinc-800/60"] {
-    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 20%, var(--tenant-surface, #fff9f6));
+    background-color: color-mix(in srgb, var(--tenant-accent, #a1a1aa) 20%, var(--tenant-surface, #18181b));
   }
   .tenant-app .bg-zinc-800 {
-    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 24%, var(--tenant-surface, #fff9f6));
+    background-color: color-mix(in srgb, var(--tenant-accent, #a1a1aa) 24%, var(--tenant-surface, #18181b));
   }
   .tenant-app .bg-zinc-700 {
-    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 34%, var(--tenant-surface, #fff9f6));
+    background-color: color-mix(in srgb, var(--tenant-accent, #a1a1aa) 34%, var(--tenant-surface, #18181b));
   }
-  .tenant-app .text-white {
-    color: var(--tenant-text, #2b2528);
-  }
-  .tenant-app .text-zinc-900 {
-    color: var(--tenant-text, #2b2528);
-  }
+  .tenant-app .text-white,
+  .tenant-app .text-zinc-900,
   .tenant-app .text-zinc-100,
   .tenant-app .text-zinc-200,
   .tenant-app .text-zinc-300 {
-    color: var(--tenant-text, #2b2528);
+    color: var(--tenant-text, #fafafa);
   }
   .tenant-app .text-zinc-400,
   .tenant-app .text-zinc-500,
   .tenant-app .text-zinc-600,
   .tenant-app .text-zinc-700,
   .tenant-app .text-zinc-800 {
-    color: var(--tenant-muted, #76696d);
+    color: var(--tenant-muted, #a1a1aa);
   }
   .tenant-app .border-zinc-700,
   .tenant-app .border-zinc-800,
   .tenant-app [class~="border-zinc-800/60"] {
-    border-color: var(--tenant-border, #e5d8d2);
+    border-color: var(--tenant-border, #27272a);
   }
   .tenant-app .divide-zinc-800 > :not([hidden]) ~ :not([hidden]) {
-    border-color: var(--tenant-border, #e5d8d2);
+    border-color: var(--tenant-border, #27272a);
   }
   .tenant-app .from-zinc-900 {
-    --tw-gradient-from: var(--tenant-surface, #fff9f6) var(--tw-gradient-from-position);
-    --tw-gradient-to: color-mix(in srgb, var(--tenant-accent, #d8bac4) 18%, var(--tenant-surface, #fff9f6)) var(--tw-gradient-to-position);
+    --tw-gradient-from: var(--tenant-surface, #18181b) var(--tw-gradient-from-position);
+    --tw-gradient-to: color-mix(in srgb, var(--tenant-accent, #a1a1aa) 18%, var(--tenant-surface, #18181b)) var(--tw-gradient-to-position);
   }
   .tenant-app .to-zinc-950 {
-    --tw-gradient-to: color-mix(in srgb, var(--tenant-accent, #d8bac4) 18%, var(--tenant-surface, #fff9f6)) var(--tw-gradient-to-position);
+    --tw-gradient-to: color-mix(in srgb, var(--tenant-accent, #a1a1aa) 18%, var(--tenant-surface, #18181b)) var(--tw-gradient-to-position);
   }
   .tenant-app .bg-brand-950,
   .tenant-app .bg-brand-900,
@@ -78,7 +74,7 @@
   .tenant-app [class~="bg-brand-950/40"],
   .tenant-app [class~="bg-brand-950/50"],
   .tenant-app [class~="bg-brand-900/30"] {
-    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 30%, var(--tenant-surface, #fff9f6));
+    background-color: color-mix(in srgb, var(--tenant-accent, #a1a1aa) 30%, var(--tenant-surface, #18181b));
   }
   .tenant-app [class~="hover:bg-brand-950/20"]:hover,
   .tenant-app [class~="hover:bg-brand-950/30"]:hover,
@@ -86,7 +82,7 @@
   .tenant-app [class~="hover:bg-zinc-800/60"]:hover,
   .tenant-app [class~="hover:bg-zinc-800"]:hover,
   .tenant-app [class~="hover:bg-zinc-900"]:hover {
-    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 30%, var(--tenant-surface, #fff9f6));
+    background-color: color-mix(in srgb, var(--tenant-accent, #a1a1aa) 30%, var(--tenant-surface, #18181b));
   }
   .tenant-app .border-brand-500,
   .tenant-app .border-brand-700,
@@ -97,7 +93,7 @@
   .tenant-app [class~="border-brand-800/70"],
   .tenant-app [class~="border-brand-900/40"],
   .tenant-app [class~="border-brand-900/50"] {
-    border-color: color-mix(in srgb, var(--tenant-primary, #7b2545) 24%, var(--tenant-border, #e5d8d2));
+    border-color: color-mix(in srgb, var(--tenant-primary, #71717a) 24%, var(--tenant-border, #27272a));
   }
   .tenant-app input[class~="focus:border-brand-500"]:focus,
   .tenant-app textarea[class~="focus:border-brand-500"]:focus,
@@ -105,16 +101,16 @@
   .tenant-app [class~="hover:border-brand-500"]:hover,
   .tenant-app [class~="hover:border-brand-700"]:hover,
   .tenant-app [class~="hover:border-brand-800"]:hover {
-    border-color: var(--tenant-primary, #7b2545);
+    border-color: var(--tenant-primary, #71717a);
   }
   .tenant-app .text-brand-100,
   .tenant-app .text-brand-200,
   .tenant-app .text-brand-300,
   .tenant-app .text-brand-400 {
-    color: var(--tenant-primary, #7b2545);
+    color: var(--tenant-primary, #71717a);
   }
   .tenant-app .bg-gradient-to-br.from-brand-600.to-brand-800 .text-brand-100 {
-    color: var(--tenant-background, #f4eae3);
+    color: var(--tenant-on-primary, var(--tenant-text, #fafafa));
   }
   .tenant-app .text-emerald-300,
   .tenant-app .text-emerald-400,
@@ -128,28 +124,27 @@
   .tenant-app .text-rose-300,
   .tenant-app .text-rose-400,
   .tenant-app .text-red-300 {
-    color: var(--tenant-secondary, #572239);
+    color: var(--tenant-secondary, #52525b);
   }
   .tenant-app [class~="text-amber-200/70"],
   .tenant-app [class~="text-amber-200/80"] {
-    color: var(--tenant-secondary, #572239);
+    color: var(--tenant-secondary, #52525b);
   }
   .tenant-app [class*="border-emerald-"],
   .tenant-app [class*="border-amber-"],
   .tenant-app [class*="border-sky-"],
   .tenant-app [class*="border-rose-"],
   .tenant-app [class*="border-red-"] {
-    border-color: color-mix(in srgb, var(--tenant-secondary, #572239) 28%, var(--tenant-border, #e5d8d2));
+    border-color: color-mix(in srgb, var(--tenant-secondary, #52525b) 28%, var(--tenant-border, #27272a));
   }
   .tenant-app .workout-cover,
   .tenant-app .workout-cover h2,
   .tenant-app .workout-cover p {
-    color: #fff9f6;
+    color: var(--tenant-on-primary, var(--tenant-text, #fafafa));
   }
   .tenant-app .workout-cover {
     background-image:
-      linear-gradient(90deg, rgb(43 24 32 / 78%), rgb(43 24 32 / 28%) 70%, rgb(43 24 32 / 12%)),
-      url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1400&q=85');
+      linear-gradient(90deg, color-mix(in srgb, var(--tenant-primary, #71717a) 78%, black), color-mix(in srgb, var(--tenant-secondary, #52525b) 28%, transparent) 70%, transparent);
     background-position: center 42%;
     background-size: cover;
   }
@@ -157,22 +152,20 @@
   .tenant-app .bg-brand-500.text-white,
   .tenant-app .bg-brand-700.text-white,
   .tenant-app .from-brand-600.text-white,
-  .tenant-app .from-brand-700.text-white {
-    color: #fff9f6;
-  }
+  .tenant-app .from-brand-700.text-white,
   .tenant-app .bg-brand-600 .text-white,
   .tenant-app .bg-brand-500 .text-white,
   .tenant-app .bg-brand-700 .text-white,
   .tenant-app .from-brand-600 .text-white,
   .tenant-app .from-brand-700 .text-white {
-    color: #fff9f6;
+    color: var(--tenant-on-primary, var(--tenant-text, #fafafa));
   }
   .tenant-app .text-rose-200,
   .tenant-app .text-rose-300 {
-    color: var(--tenant-secondary, #572239);
+    color: var(--tenant-secondary, #52525b);
   }
   .tenant-app .bg-rose-950\/20 {
-    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 30%, var(--tenant-surface, #fff9f6));
+    background-color: color-mix(in srgb, var(--tenant-accent, #a1a1aa) 30%, var(--tenant-surface, #18181b));
   }
   .tenant-app input,
   .tenant-app select,
@@ -181,7 +174,7 @@
   }
   .tenant-app input::placeholder,
   .tenant-app textarea::placeholder {
-    color: var(--tenant-muted, #76696d);
+    color: var(--tenant-muted, #a1a1aa);
     opacity: .8;
   }
   .tenant-app .tenant-date-field {
@@ -195,7 +188,7 @@
   .tenant-app h1,
   .tenant-app h2,
   .tenant-app h3 {
-    color: var(--tenant-secondary, #572239);
+    color: var(--tenant-secondary, #52525b);
   }
 }
 

@@ -9,26 +9,13 @@ import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { useTenantContext } from '@/app/tenant/tenantContext';
 import { useAppNavigation } from '@/app/useAppNavigation';
 import { useAuth } from '@/app/session/authContext';
-import { DEFAULT_TENANT_THEME } from '@/domain/tenant';
+import { DEFAULT_TENANT_THEME, PLATFORM_TENANT_THEME, getContrastingTextColor } from '@/domain/tenant';
 
-const PLATFORM_THEME = {
-  ...DEFAULT_TENANT_THEME,
-  primaryColor: '#71717a',
-  secondaryColor: '#52525b',
-  backgroundColor: '#09090b',
-  accentColor: '#a1a1aa',
-  surfaceColor: '#18181b',
-  textColor: '#fafafa',
-  mutedColor: '#a1a1aa',
-  borderColor: '#27272a',
-  warmAccentColor: '#a1a1aa',
-  softAccentColor: '#52525b',
-  bodyFont: 'DM Sans',
-  displayFont: 'DM Sans',
-};
+const PLATFORM_THEME = PLATFORM_TENANT_THEME;
 
 const tenantThemeStyle = (theme: typeof DEFAULT_TENANT_THEME): CSSProperties => ({
   '--tenant-primary': theme.primaryColor,
+  '--tenant-on-primary': getContrastingTextColor(theme.primaryColor),
   '--tenant-secondary': theme.secondaryColor,
   '--tenant-background': theme.backgroundColor,
   '--tenant-accent': theme.accentColor,

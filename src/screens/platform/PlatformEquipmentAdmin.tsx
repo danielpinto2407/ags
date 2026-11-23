@@ -10,6 +10,7 @@ import {
   type CoachInvitation,
 } from '@/data/platformEquipmentRepository';
 import type { Profile } from '@/domain/profile';
+import { PLATFORM_TENANT_THEME } from '@/domain/tenant';
 
 interface PlatformEquipmentAdminProps {
   profile: Profile;
@@ -263,18 +264,19 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
   };
 
   const platformStyle: CSSProperties = {
-    '--tenant-primary': '#71717a',
-    '--tenant-secondary': '#52525b',
-    '--tenant-background': '#09090b',
-    '--tenant-accent': '#a1a1aa',
-    '--tenant-surface': '#18181b',
-    '--tenant-text': '#fafafa',
-    '--tenant-muted': '#a1a1aa',
-    '--tenant-border': '#27272a',
-    '--tenant-warm-accent': '#a1a1aa',
-    '--tenant-soft-accent': '#52525b',
-    '--tenant-body-font': 'ui-sans-serif, sans-serif',
-    '--tenant-display-font': 'ui-sans-serif, sans-serif',
+    '--tenant-primary': PLATFORM_TENANT_THEME.primaryColor,
+    '--tenant-on-primary': '#FAFAFA',
+    '--tenant-secondary': PLATFORM_TENANT_THEME.secondaryColor,
+    '--tenant-background': PLATFORM_TENANT_THEME.backgroundColor,
+    '--tenant-accent': PLATFORM_TENANT_THEME.accentColor,
+    '--tenant-surface': PLATFORM_TENANT_THEME.surfaceColor,
+    '--tenant-text': PLATFORM_TENANT_THEME.textColor,
+    '--tenant-muted': PLATFORM_TENANT_THEME.mutedColor,
+    '--tenant-border': PLATFORM_TENANT_THEME.borderColor,
+    '--tenant-warm-accent': PLATFORM_TENANT_THEME.warmAccentColor,
+    '--tenant-soft-accent': PLATFORM_TENANT_THEME.softAccentColor,
+    '--tenant-body-font': `"${PLATFORM_TENANT_THEME.bodyFont}"`,
+    '--tenant-display-font': `"${PLATFORM_TENANT_THEME.displayFont}"`,
   } as CSSProperties;
 
   return (
