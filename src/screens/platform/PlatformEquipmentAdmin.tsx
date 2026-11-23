@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { Building2, Dumbbell, LogOut, RefreshCw, Save, Plus, UserPlus } from 'lucide-react';
 import StatusToggle from '@/components/StatusToggle';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
@@ -262,8 +262,23 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
     }
   };
 
+  const platformStyle: CSSProperties = {
+    '--tenant-primary': '#71717a',
+    '--tenant-secondary': '#52525b',
+    '--tenant-background': '#09090b',
+    '--tenant-accent': '#a1a1aa',
+    '--tenant-surface': '#18181b',
+    '--tenant-text': '#fafafa',
+    '--tenant-muted': '#a1a1aa',
+    '--tenant-border': '#27272a',
+    '--tenant-warm-accent': '#a1a1aa',
+    '--tenant-soft-accent': '#52525b',
+    '--tenant-body-font': 'ui-sans-serif, sans-serif',
+    '--tenant-display-font': 'ui-sans-serif, sans-serif',
+  } as CSSProperties;
+
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-5 text-zinc-100 sm:px-6">
+    <main className="platform-admin min-h-screen bg-zinc-950 px-4 py-5 text-zinc-100 sm:px-6" style={platformStyle}>
       <div className="mx-auto max-w-5xl">
         <header className="flex items-center justify-between gap-3 border-b border-zinc-800 pb-4">
           <div>

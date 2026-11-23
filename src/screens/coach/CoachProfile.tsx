@@ -20,6 +20,14 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
   const [description, setDescription] = useState(tenant?.description ?? '');
   const [savingDescription, setSavingDescription] = useState(false);
   const [descriptionFeedback, setDescriptionFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
+  const [branding, setBranding] = useState({
+    primaryColor: tenant?.theme.primaryColor ?? '#7B2545',
+    secondaryColor: tenant?.theme.secondaryColor ?? '#572239',
+    backgroundColor: tenant?.theme.backgroundColor ?? '#F4EAE3',
+    accentColor: tenant?.theme.accentColor ?? '#D8BAC4',
+  });
+  const [savingBranding, setSavingBranding] = useState(false);
+  const [brandingFeedback, setBrandingFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
 
   useEffect(() => {
     setLogoUrl(tenant?.theme.logoUrl ?? null);
@@ -29,12 +37,36 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
     setDescription(tenant?.description ?? '');
   }, [tenant?.description]);
 
+  useEffect(() => {
+    if (!tenant) return;
+    setBranding({
+      primaryColor: tenant.theme.primaryColor,
+      secondaryColor: tenant.theme.secondaryColor,
+      backgroundColor: tenant.theme.backgroundColor,
+      accentColor: tenant.theme.accentColor,
+    });
+  }, [tenant]);
+
   const uploadGymLogo = async (file: File) => {
     if (!profile.tenant_id) throw new Error('No se encontró el gimnasio de esta cuenta.');
     const nextLogoUrl = await profileRepository.uploadGymLogo(file, profile.tenant_id, logoUrl);
     setLogoUrl(nextLogoUrl);
     refreshTenant();
     return nextLogoUrl;
+  };
+
+  const saveBranding = async () => {
+    setSavingBranding(true);
+    setBrandingFeedback(null);
+    try {
+      await profileRepository.setTenantBranding(branding);
+      setBrandingFeedback({ type: 'success', message: 'Paleta guardada.' });
+      refreshTenant();
+    } catch (error) {
+      setBrandingFeedback({ type: 'error', message: error instanceof Error ? error.message : 'No se pudo guardar la paleta.' });
+    } finally {
+      setSavingBranding(false);
+    }
   };
 
   const saveDescription = async () => {
@@ -106,6 +138,50 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
           {descriptionFeedback && (
             <p className={`text-xs ${descriptionFeedback.type === 'error' ? 'text-rose-300' : 'text-brand-300'}`} role={descriptionFeedback.type === 'error' ? 'alert' : 'status'}>
               {descriptionFeedback.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-3 border-t border-zinc-800 pt-4">
+          <div>
+            <p className="text-xs font-semibold text-zinc-300">Paleta del gimnasio</p>
+            <p className="mt-1 text-[10px] text-zinc-500">Estos colores se aplican al entorno de tu gimnasio.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {([
+              ['primaryColor', 'Principal'],
+              ['secondaryColor', 'Secundario'],
+              ['backgroundColor', 'Fondo'],
+              ['accentColor', 'Acento'],
+            ] as const).map(([key, label]) => (
+              <label className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-[11px] text-zinc-400" key={key}>
+                <input
+                  aria-label={label}
+                  className="h-8 w-8 cursor-pointer rounded-lg border-0 bg-transparent"
+                  onChange={(event) => {
+                    setBranding((current) => ({ ...current, [key]: event.target.value.toUpperCase() }));
+                    setBrandingFeedback(null);
+                  }}
+                  type="color"
+                  value={branding[key]}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <button
+              className="min-h-10 rounded-lg bg-brand-500 px-4 text-xs font-bold text-white transition-colors hover:bg-brand-action-hover disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={savingBranding}
+              onClick={() => void saveBranding()}
+              type="button"
+            >
+              {savingBranding ? 'Guardando…' : 'Guardar paleta'}
+            </button>
+          </div>
+          {brandingFeedback && (
+            <p className={`text-xs ${brandingFeedback.type === 'error' ? 'text-rose-300' : 'text-brand-300'}`} role={brandingFeedback.type === 'error' ? 'alert' : 'status'}>
+              {brandingFeedback.message}
             </p>
           )}
         </div>

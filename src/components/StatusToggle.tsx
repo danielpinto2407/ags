@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
 
 interface StatusToggleProps {
@@ -23,6 +24,22 @@ export default function StatusToggle({
   const [confirming, setConfirming] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const titleId = useId();
+
+  useEffect(() => {
+    if (!confirming) return;
+    const scrollContainer = document.querySelector<HTMLElement>('[data-app-scroll-container], main.platform-admin');
+    const previousOverflow = scrollContainer?.style.overflowY;
+    if (scrollContainer) scrollContainer.style.overflowY = 'hidden';
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !updating) setConfirming(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('keydown', closeOnEscape);
+      if (scrollContainer) scrollContainer.style.overflowY = previousOverflow ?? '';
+    };
+  }, [confirming, updating]);
 
   const confirmChange = async () => {
     setUpdating(true);
@@ -59,17 +76,45 @@ export default function StatusToggle({
           <span className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${active ? 'translate-x-4' : 'translate-x-0'}`} />
         </button>
       </div>
-      {confirming && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-52 rounded-xl border border-zinc-700 bg-zinc-950 p-2.5 shadow-xl">
-          <p className="text-[11px] font-medium text-zinc-200">
-            {active ? `${confirmActiveTitle}?` : `${confirmInactiveTitle}?`}
-          </p>
-          {error && <p className="mt-1 text-[10px] text-rose-300" role="alert">{error}</p>}
-          <div className="mt-2 flex justify-end gap-1.5">
-            <button aria-label="Cancelar cambio" className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-800" disabled={updating} onClick={() => setConfirming(false)} type="button"><X size={14} /></button>
-            <button aria-label="Confirmar cambio" className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600 text-white hover:bg-brand-500" disabled={updating} onClick={() => void confirmChange()} type="button"><Check size={14} /></button>
-          </div>
-        </div>
+      {confirming && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 px-4 pb-4 backdrop-blur-sm sm:items-center sm:pb-0"
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget && !updating) setConfirming(false);
+          }}
+          role="presentation"
+        >
+          <section
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className="w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-950 p-5 shadow-2xl"
+            onPointerDown={(event) => event.stopPropagation()}
+            role="dialog"
+          >
+            <h2 id={titleId} className="text-sm font-bold text-white">
+              {active ? `${confirmActiveTitle}?` : `${confirmInactiveTitle}?`}
+            </h2>
+            <p className="mt-2 text-xs leading-relaxed text-zinc-400">{itemName}</p>
+            {error && <p className="mt-3 text-xs text-rose-300" role="alert">{error}</p>}
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                aria-label="Cancelar cambio"
+                className="min-h-10 rounded-xl px-3 text-xs font-semibold text-zinc-300 hover:bg-zinc-900"
+                disabled={updating}
+                onClick={() => setConfirming(false)}
+                type="button"
+              ><X className="mr-1 inline" size={14} />Cancelar</button>
+              <button
+                aria-label="Confirmar cambio"
+                className="min-h-10 rounded-xl bg-brand-500 px-3 text-xs font-semibold text-white hover:bg-brand-action-hover disabled:opacity-50"
+                disabled={updating}
+                onClick={() => void confirmChange()}
+                type="button"
+              ><Check className="mr-1 inline" size={14} />{updating ? 'Guardando…' : 'Confirmar'}</button>
+            </div>
+          </section>
+        </div>,
+        document.body
       )}
     </div>
   );

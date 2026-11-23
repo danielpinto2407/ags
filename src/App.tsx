@@ -11,6 +11,22 @@ import { useAppNavigation } from '@/app/useAppNavigation';
 import { useAuth } from '@/app/session/authContext';
 import { DEFAULT_TENANT_THEME } from '@/domain/tenant';
 
+const PLATFORM_THEME = {
+  ...DEFAULT_TENANT_THEME,
+  primaryColor: '#71717a',
+  secondaryColor: '#52525b',
+  backgroundColor: '#09090b',
+  accentColor: '#a1a1aa',
+  surfaceColor: '#18181b',
+  textColor: '#fafafa',
+  mutedColor: '#a1a1aa',
+  borderColor: '#27272a',
+  warmAccentColor: '#a1a1aa',
+  softAccentColor: '#52525b',
+  bodyFont: 'DM Sans',
+  displayFont: 'DM Sans',
+};
+
 const tenantThemeStyle = (theme: typeof DEFAULT_TENANT_THEME): CSSProperties => ({
   '--tenant-primary': theme.primaryColor,
   '--tenant-secondary': theme.secondaryColor,
@@ -56,7 +72,11 @@ export default function App() {
   const isPasswordRecoveryCallback = new URLSearchParams(window.location.search).get('password_recovery') === '1';
   const role = authState.status === 'authenticated' ? authState.productRole : null;
   const navigation = useAppNavigation(role);
-  const fontTheme = tenantState.status === 'tenant' ? tenantState.tenant.theme : DEFAULT_TENANT_THEME;
+  const fontTheme = tenantState.status === 'tenant'
+    ? tenantState.tenant.theme
+    : tenantState.status === 'platform'
+      ? PLATFORM_THEME
+      : DEFAULT_TENANT_THEME;
 
   useEffect(() => {
     const families = [
@@ -104,7 +124,7 @@ export default function App() {
 
   const tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
   const isPlatform = tenantState.status === 'platform';
-  const theme = tenant?.theme ?? DEFAULT_TENANT_THEME;
+  const theme = isPlatform ? PLATFORM_THEME : tenant?.theme ?? DEFAULT_TENANT_THEME;
 
   if (authState.status === 'unconfigured') {
     return (
