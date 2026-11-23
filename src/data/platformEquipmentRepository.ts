@@ -8,6 +8,26 @@ export interface PlatformTenant {
   status: 'ACTIVE' | 'SUSPENDED';
 }
 
+export interface CoachProfile {
+  id: string;
+  tenantId: string;
+  role: 'coach_admin';
+  status: 'ACTIVE' | 'SUSPENDED';
+  fullName: string;
+}
+
+export interface CoachInvitation {
+  id: string;
+  email: string;
+  status: 'PENDING' | 'ACCEPTED' | 'CANCELLED' | 'EXPIRED' | 'FAILED';
+  createdAt: string;
+  expiresAt: string;
+  acceptedAt: string | null;
+  authUserId: string | null;
+  lastSentAt: string | null;
+  resendCount: number;
+}
+
 export interface TenantEquipmentOption {
   id: string;
   tenantId: string;
@@ -50,9 +70,38 @@ export const platformEquipmentRepository = {
 
   async provisionCoach(input: { tenantId: string; email: string; fullName: string }): Promise<void> {
     const { error } = await requireClient().functions.invoke('platform-provision-coach', {
-      body: { tenant_id: input.tenantId, email: input.email, full_name: input.fullName },
+      body: { action: 'provision', tenant_id: input.tenantId, email: input.email, full_name: input.fullName },
     });
-    if (error) throw new Error('No se pudo crear el coach.');
+    if (error) throw new Error(error.message.includes('coach_invitation_pending') ? 'Ya existe una invitación pendiente para este correo.' : 'No se pudo crear el coach.');
+  },
+
+  async listCoachInvitations(tenantId: string): Promise<{ coaches: CoachProfile[]; invitations: CoachInvitation[] }> {
+    const { data, error } = await requireClient().functions.invoke('platform-provision-coach', {
+      body: { action: 'list', tenant_id: tenantId },
+    });
+    if (error) throw new Error('No se pudo cargar el estado de los coaches.');
+    const payload = data as {
+      coaches?: Array<{ id: string; tenant_id: string; role: 'coach_admin'; status: 'ACTIVE' | 'SUSPENDED'; full_name: string }>;
+      invitations?: Array<{ id: string; email: string; status: CoachInvitation['status']; created_at: string; expires_at: string; accepted_at: string | null; auth_user_id: string | null; last_sent_at: string | null; resend_count: number }>;
+    };
+    return {
+      coaches: (payload?.coaches ?? []).map((coach) => ({ id: coach.id, tenantId: coach.tenant_id, role: coach.role, status: coach.status, fullName: coach.full_name })),
+      invitations: (payload?.invitations ?? []).map((invitation) => ({ id: invitation.id, email: invitation.email, status: invitation.status, createdAt: invitation.created_at, expiresAt: invitation.expires_at, acceptedAt: invitation.accepted_at, authUserId: invitation.auth_user_id, lastSentAt: invitation.last_sent_at, resendCount: invitation.resend_count ?? 0 })),
+    };
+  },
+
+  async resendCoachInvitation(tenantId: string, invitationId: string): Promise<void> {
+    const { error } = await requireClient().functions.invoke('platform-provision-coach', {
+      body: { action: 'resend', tenant_id: tenantId, invitation_id: invitationId, email: '', full_name: '' },
+    });
+    if (error) throw new Error('No se pudo reenviar la invitación.');
+  },
+
+  async cancelCoachInvitation(tenantId: string, invitationId: string): Promise<void> {
+    const { error } = await requireClient().functions.invoke('platform-provision-coach', {
+      body: { action: 'cancel', tenant_id: tenantId, invitation_id: invitationId, email: '', full_name: '' },
+    });
+    if (error) throw new Error('No se pudo cancelar la invitación.');
   },
 
   async listTenants(): Promise<PlatformTenant[]> {

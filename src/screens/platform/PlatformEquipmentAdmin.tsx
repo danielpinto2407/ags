@@ -5,6 +5,8 @@ import {
   platformEquipmentRepository,
   type PlatformTenant,
   type TenantEquipmentOption,
+  type CoachProfile,
+  type CoachInvitation,
 } from '@/data/platformEquipmentRepository';
 import type { Profile } from '@/domain/profile';
 
@@ -27,6 +29,8 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
   const [tenantDraft, setTenantDraft] = useState({ name: '', subdomain: '', description: '', status: 'ACTIVE' as 'ACTIVE' | 'SUSPENDED' });
   const [editingTenantId, setEditingTenantId] = useState<string | null>(null);
   const [coachDraft, setCoachDraft] = useState({ fullName: '', email: '' });
+  const [coachProfiles, setCoachProfiles] = useState<CoachProfile[]>([]);
+  const [coachInvitations, setCoachInvitations] = useState<CoachInvitation[]>([]);
 
   const loadTenants = async () => {
     setLoading(true);
@@ -43,6 +47,23 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
   };
 
   useEffect(() => { void loadTenants(); }, []);
+
+  useEffect(() => {
+    if (activeSection !== 'coaches' || !selectedTenantId) return;
+    let cancelled = false;
+    setLoading(true);
+    platformEquipmentRepository.listCoachInvitations(selectedTenantId)
+      .then((result) => {
+        if (cancelled) return;
+        setCoachProfiles(result.coaches);
+        setCoachInvitations(result.invitations);
+      })
+      .catch((loadError) => {
+        if (!cancelled) setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar el estado de los coaches.');
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [activeSection, selectedTenantId]);
 
   useEffect(() => {
     if (!selectedTenantId) {
@@ -181,8 +202,45 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
       });
       setCoachDraft({ fullName: '', email: '' });
       setNotice('Coach invitado. Recibirá un correo para activar su acceso.');
+      const lifecycle = await platformEquipmentRepository.listCoachInvitations(selectedTenantId);
+      setCoachProfiles(lifecycle.coaches);
+      setCoachInvitations(lifecycle.invitations);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : 'No se pudo crear el coach.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const resendCoachInvitation = async (invitationId: string) => {
+    setSavingId(invitationId);
+    setError(null);
+    setNotice(null);
+    try {
+      await platformEquipmentRepository.resendCoachInvitation(selectedTenantId, invitationId);
+      const lifecycle = await platformEquipmentRepository.listCoachInvitations(selectedTenantId);
+      setCoachProfiles(lifecycle.coaches);
+      setCoachInvitations(lifecycle.invitations);
+      setNotice('Invitación reenviada.');
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudo reenviar la invitación.');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const cancelCoachInvitation = async (invitationId: string) => {
+    setSavingId(invitationId);
+    setError(null);
+    setNotice(null);
+    try {
+      await platformEquipmentRepository.cancelCoachInvitation(selectedTenantId, invitationId);
+      const lifecycle = await platformEquipmentRepository.listCoachInvitations(selectedTenantId);
+      setCoachProfiles(lifecycle.coaches);
+      setCoachInvitations(lifecycle.invitations);
+      setNotice('Invitación cancelada.');
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'No se pudo cancelar la invitación.');
     } finally {
       setSavingId(null);
     }
@@ -264,6 +322,50 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
               <input aria-label="Correo del coach" className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white sm:col-span-2" type="email" placeholder="correo@ejemplo.com" value={coachDraft.email} onChange={(event) => setCoachDraft((current) => ({ ...current, email: event.target.value }))} />
               <button className="min-h-11 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover disabled:opacity-50 sm:col-span-2" disabled={!selectedTenantId || savingId === 'coach' || coachDraft.fullName.trim().length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(coachDraft.email)} type="submit"><UserPlus className="mr-2 inline" size={16} />Enviar invitación</button>
             </form>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-zinc-400">Invitaciones</h3>
+                {coachInvitations.length === 0 ? (
+                  <p className="py-5 text-center text-xs text-zinc-500">No hay invitaciones registradas.</p>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {coachInvitations.map((invitation) => (
+                      <div className="rounded-lg border border-zinc-800 p-3" key={invitation.id}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-white">{invitation.email}</p>
+                            <p className="mt-1 text-[10px] text-zinc-500">{invitation.status} · {invitation.resendCount} reenvío(s)</p>
+                          </div>
+                          {invitation.status === 'PENDING' && (
+                            <div className="flex shrink-0 gap-1">
+                              <button className="rounded-lg border border-zinc-700 px-2 py-1 text-[11px] text-zinc-300 hover:bg-zinc-800 disabled:opacity-50" disabled={savingId !== null} onClick={() => void resendCoachInvitation(invitation.id)} type="button"><RefreshCw className="mr-1 inline" size={11} />Reenviar</button>
+                              <button className="rounded-lg border border-rose-900/70 px-2 py-1 text-[11px] text-rose-300 hover:bg-rose-950/30 disabled:opacity-50" disabled={savingId !== null} onClick={() => void cancelCoachInvitation(invitation.id)} type="button">Cancelar</button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-zinc-400">Coaches</h3>
+                {coachProfiles.length === 0 ? (
+                  <p className="py-5 text-center text-xs text-zinc-500">No hay coaches registrados.</p>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {coachProfiles.map((coach) => (
+                      <div className="flex items-center justify-between rounded-lg border border-zinc-800 p-3" key={coach.id}>
+                        <p className="text-sm font-semibold text-white">{coach.fullName}</p>
+                        <span className={`rounded-lg px-2 py-1 text-[10px] font-bold ${coach.status === 'ACTIVE' ? 'bg-emerald-950/40 text-emerald-300' : 'bg-rose-950/40 text-rose-300'}`}>{coach.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </section>
         )}
 
