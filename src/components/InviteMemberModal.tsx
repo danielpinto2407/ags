@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Check, MailPlus, X } from 'lucide-react';
 import { invitationRepository, type InvitationDeliveryStatus } from '@/data/invitationRepository';
+import ModalShell from '@/components/ModalShell';
 
 interface InviteMemberModalProps {
   onClose: () => void;
@@ -28,33 +29,14 @@ export default function InviteMemberModal({ onClose }: InviteMemberModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fade-in sm:items-center sm:px-5">
-      <section
-        aria-labelledby="invite-member-title"
-        aria-modal="true"
-        className="w-full max-w-md rounded-t-3xl border border-zinc-800 bg-zinc-950 p-5 text-zinc-100 shadow-2xl animate-slide-up sm:rounded-2xl"
-        role="dialog"
-      >
-        <div className="mb-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-950 text-brand-400">
-              <MailPlus size={19} />
-            </span>
-            <div>
-              <h2 id="invite-member-title" className="font-display text-lg font-bold text-white">Invitar alumna</h2>
-              <p className="text-xs text-zinc-500">Entrenamiento personalizado</p>
-            </div>
-          </div>
-          <button
-            aria-label="Cerrar"
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-900 text-zinc-400 hover:text-white"
-            onClick={onClose}
-            type="button"
-          >
-            <X size={17} />
-          </button>
-        </div>
-
+    <ModalShell
+      title="Invitar alumna"
+      subtitle="Entrenamiento personalizado"
+      onClose={onClose}
+      size="md"
+      form
+      onSubmit={handleSubmit}
+    >
         {deliveryStatus ? (
           <div className="space-y-4" role="status">
             <div className="flex gap-3 rounded-xl border border-emerald-900/70 bg-emerald-950/30 p-4">
@@ -117,7 +99,6 @@ export default function InviteMemberModal({ onClose }: InviteMemberModalProps) {
             </div>
           </form>
         )}
-      </section>
-    </div>
+    </ModalShell>
   );
 }

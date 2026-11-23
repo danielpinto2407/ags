@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { X, Clock, Repeat, Target, Timer, Dumbbell, Lightbulb } from 'lucide-react';
 import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
 import type { Exercise } from '@/types';
+import ModalShell from '@/components/ModalShell';
 
 interface ExerciseDetailModalProps {
   exercise: Exercise;
@@ -45,21 +46,12 @@ export default function ExerciseDetailModal({ exercise, onClose }: ExerciseDetai
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end justify-center z-50 animate-fade-in">
-      <div className="w-full max-w-[390px] bg-zinc-900 border border-zinc-800 rounded-t-[32px] p-5 text-zinc-100 animate-slide-up max-h-[90vh] overflow-y-auto no-scrollbar">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${difficultyColors[exercise.difficulty]}`}>
-              {exercise.difficulty}
-            </span>
-          </div>
-          <button onClick={onClose} className="text-zinc-400 hover:text-white bg-zinc-800 w-8 h-8 rounded-full flex items-center justify-center transition-colors">
-            <X size={16} />
-          </button>
-        </div>
-
-        <h3 className="font-display font-bold text-xl text-white mb-1">{exercise.name}</h3>
-        <p className="text-xs text-zinc-500 mb-4">{exercise.muscles}</p>
+    <ModalShell title={exercise.name} subtitle={exercise.muscles} onClose={onClose} closeLabel="Cerrar detalle" size="lg">
+      <div className="mb-4">
+        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${difficultyColors[exercise.difficulty]}`}>
+          {exercise.difficulty}
+        </span>
+      </div>
 
         {/* Video */}
         <ExerciseVideoPreview className="mb-4" title={exercise.name} videoUrl={exercise.videoUrl} />
@@ -131,7 +123,6 @@ export default function ExerciseDetailModal({ exercise, onClose }: ExerciseDetai
           <Timer size={16} />
           {timer ? `Descanso: ${timer}s — Tocar para detener` : 'Iniciar Temporizador de Descanso'}
         </button>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

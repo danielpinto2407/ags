@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
-import { Check, ChevronDown, X } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
+import ModalShell from '@/components/ModalShell';
 
 export interface SelectModalOption {
   value: string;
@@ -141,35 +142,15 @@ export default function SelectModalField({
       </button>
 
       {open && (
-        <div
-          className="fixed inset-0 z-[70] flex items-end justify-center overscroll-none bg-black/75 px-3 pb-3 backdrop-blur-sm sm:items-center sm:px-5"
-          onClick={() => setOpen(false)}
-          role="presentation"
+        <ModalShell
+          title={modalTitle}
+          subtitle={`${options.length} opciones`}
+          closeLabel="Cerrar selector"
+          onClose={() => setOpen(false)}
+          size="lg"
+          contentRef={dialogRef}
+          onKeyDown={handleDialogKeyDown}
         >
-          <section
-            aria-labelledby={titleId}
-            aria-modal="true"
-            className="max-h-[min(78vh,620px)] w-full max-w-lg overscroll-none overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/60 animate-slide-up sm:animate-scale-in"
-            onClick={(event) => event.stopPropagation()}
-          onPointerDown={(event) => event.stopPropagation()}
-            onKeyDown={handleDialogKeyDown}
-            ref={dialogRef}
-            role="dialog"
-          >
-            <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-3.5">
-              <div className="min-w-0 flex-1">
-                <h2 className="truncate font-display text-sm font-bold text-white" id={titleId}>{modalTitle}</h2>
-                <p className="mt-0.5 text-[10px] text-zinc-500">{options.length} opciones</p>
-              </div>
-              <button
-                aria-label="Cerrar selector"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400"
-                onClick={() => setOpen(false)}
-                type="button"
-              >
-                <X size={16} />
-              </button>
-            </div>
             <div className="max-h-[calc(min(78vh,620px)-68px)] overscroll-contain overflow-y-auto p-2" onKeyDown={handleListboxKeyDown} role="listbox" aria-label={ariaLabel}>
               {options.map((option, index) => {
                 const selected = option.value === value;
@@ -205,8 +186,7 @@ export default function SelectModalField({
               })}
               {options.length === 0 && <p className="px-3 py-8 text-center text-xs text-zinc-500">No hay opciones disponibles.</p>}
             </div>
-          </section>
-        </div>
+        </ModalShell>
       )}
     </>
   );
