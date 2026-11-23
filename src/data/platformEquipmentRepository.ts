@@ -90,6 +90,13 @@ export const platformEquipmentRepository = {
     };
   },
 
+  async setCoachStatus(coachId: string, active: boolean): Promise<void> {
+    const { error } = await requireClient().functions.invoke('platform-provision-coach', {
+      body: { action: 'set_status', tenant_id: '', coach_id: coachId, status: active ? 'ACTIVE' : 'SUSPENDED' },
+    });
+    if (error) throw new Error('No se pudo actualizar el acceso del coach.');
+  },
+
   async resendCoachInvitation(tenantId: string, invitationId: string): Promise<void> {
     const { error } = await requireClient().functions.invoke('platform-provision-coach', {
       body: { action: 'resend', tenant_id: tenantId, invitation_id: invitationId, email: '', full_name: '' },

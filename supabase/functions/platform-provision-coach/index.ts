@@ -30,7 +30,7 @@ Deno.serve(async (request) => {
   if (typeof body.tenant_id !== 'string') {
     return jsonResponse(request, 400, { error: 'invalid_request' });
   }
-  if (!['list', 'provision', 'resend', 'cancel'].includes(action)) {
+  if (!['list', 'provision', 'resend', 'cancel', 'set_status'].includes(action)) {
     return jsonResponse(request, 400, { error: 'invalid_request' });
   }
 
@@ -39,6 +39,12 @@ Deno.serve(async (request) => {
   const tenantId = body.tenant_id;
   const invitationId = typeof body.invitation_id === 'string' ? body.invitation_id : null;
 
+  if (action === 'set_status' && typeof body.coach_id !== 'string') {
+    return jsonResponse(request, 400, { error: 'invalid_request' });
+  }
+  if (action === 'set_status' && body.status !== 'ACTIVE' && body.status !== 'SUSPENDED') {
+    return jsonResponse(request, 400, { error: 'invalid_request' });
+  }
   if (action === 'provision' && (!email || !fullName)) {
     return jsonResponse(request, 400, { error: 'invalid_request' });
   }
@@ -79,6 +85,21 @@ Deno.serve(async (request) => {
   if (!tenant || tenant.status !== 'ACTIVE') return jsonResponse(request, 404, { error: 'tenant_not_available' });
 
   await adminClient.rpc('expire_coach_invitations', {});
+
+  if (action === 'set_status') {
+    const { error: statusError } = await adminClient.rpc('set_platform_coach_status', {
+      p_actor_id: callerData.user.id,
+      p_coach_id: body.coach_id,
+      p_status: body.status,
+    });
+    if (statusError) {
+      const code = statusError.message.includes('coach_not_found') ? 'coach_not_found'
+        : statusError.message.includes('super_admin_required') ? 'super_admin_required'
+        : 'coach_status_update_failed';
+      return jsonResponse(request, code === 'coach_not_found' ? 404 : 400, { error: code });
+    }
+    return jsonResponse(request, 200, { coach_id: body.coach_id, status: body.status });
+  }
 
   if (action === 'list') {
     const [{ data: profiles, error: profilesError }, { data: invitations, error: invitationsError }] = await Promise.all([

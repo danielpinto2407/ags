@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Archive, Building2, Dumbbell, LogOut, RefreshCw, Save, Plus, UserPlus } from 'lucide-react';
+import CoachStatusToggle from '@/components/CoachStatusToggle';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import {
   platformEquipmentRepository,
@@ -229,6 +230,21 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
     }
   };
 
+  const setCoachStatus = async (coachId: string, active: boolean) => {
+    await platformEquipmentRepository.setCoachStatus(coachId, active);
+    const lifecycle = await platformEquipmentRepository.listCoachInvitations(selectedTenantId);
+    setCoachProfiles(lifecycle.coaches);
+    setCoachInvitations(lifecycle.invitations);
+  };
+
+  const latestInvitationsByEmail = Array.from(
+    new Map(
+      [...coachInvitations]
+        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+        .map((invitation) => [invitation.email.toLowerCase(), invitation])
+    ).values()
+  );
+
   const cancelCoachInvitation = async (invitationId: string) => {
     setSavingId(invitationId);
     setError(null);
@@ -334,7 +350,7 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
                   <p className="py-5 text-center text-xs text-zinc-500">No hay invitaciones registradas.</p>
                 ) : (
                   <div className="mt-3 space-y-2">
-                    {coachInvitations.map((invitation) => (
+                    {latestInvitationsByEmail.map((invitation) => (
                       <div className="rounded-lg border border-zinc-800 p-3" key={invitation.id}>
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -362,8 +378,11 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
                   <div className="mt-3 space-y-2">
                     {coachProfiles.map((coach) => (
                       <div className="flex items-center justify-between rounded-lg border border-zinc-800 p-3" key={coach.id}>
-                        <p className="text-sm font-semibold text-white">{coach.fullName}</p>
-                        <span className={`rounded-lg px-2 py-1 text-[10px] font-bold ${coach.status === 'ACTIVE' ? 'bg-emerald-950/40 text-emerald-300' : 'bg-rose-950/40 text-rose-300'}`}>{coach.status}</span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-white">{coach.fullName}</p>
+                          <span className={`mt-1 block text-[10px] font-bold ${coach.status === 'ACTIVE' ? 'text-emerald-300' : 'text-rose-300'}`}>{coach.status === 'ACTIVE' ? 'Activo' : 'Suspendido'}</span>
+                        </div>
+                        <CoachStatusToggle coachId={coach.id} coachName={coach.fullName} active={coach.status === 'ACTIVE'} onChange={setCoachStatus} />
                       </div>
                     ))}
                   </div>
