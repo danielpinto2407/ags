@@ -5,7 +5,7 @@ import EmptyState from '@/components/EmptyState';
 import FeedbackMessage from '@/components/FeedbackMessage';
 import Header from '@/components/Header';
 import AppInput from '@/components/AppInput';
-import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
+import LoadingState from '@/components/LoadingState';
 import CreateExerciseModal from '@/components/CreateExerciseModal';
 import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
 import SelectModalField from '@/components/SelectModalField';
@@ -193,8 +193,8 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
       </div>
 
       {loadError && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-900/60 bg-rose-950/20 p-3" role="alert">
-          <p className="text-xs text-rose-300">{loadError}</p>
+        <div className="flex items-center justify-between gap-3">
+          <FeedbackMessage kind="error" message={loadError} />
           <button aria-label="Reintentar carga" className="rounded-lg p-2 text-rose-300 hover:bg-rose-950/50" onClick={library.reload} type="button">
             <RefreshCw size={15} />
           </button>
@@ -204,9 +204,7 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
       {notice && <FeedbackMessage kind="success" message={notice} />}
 
       {loading && exercises.length === 0 && !loadError && (
-        <p className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-500" role="status">
-          <TenantLoadingIndicator size={17} /> Cargando biblioteca…
-        </p>
+        <LoadingState message="Cargando biblioteca…" />
       )}
 
       {!loading && !loadError && filteredExercises.length > 0 && (

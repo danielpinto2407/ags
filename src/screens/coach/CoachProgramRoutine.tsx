@@ -5,7 +5,7 @@ import ConfirmModal from '@/components/ConfirmModal';
 import FeedbackMessage from '@/components/FeedbackMessage';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Dumbbell, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
-import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
+import LoadingState from '@/components/LoadingState';
 import DateField from '@/components/DateField';
 import SelectModalField from '@/components/SelectModalField';
 import { useCoachMembers } from '@/app/useCoachMembers';
@@ -397,9 +397,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
       {selectedStudentId && (
         <>
           {assignmentsQuery.state.status === 'loading' && (
-            <p className="flex items-center justify-center gap-2 py-4 text-xs text-zinc-500" role="status">
-              <TenantLoadingIndicator size={15} /> Cargando programación…
-            </p>
+            <LoadingState compact message="Cargando programación…" />
           )}
 
           {isPublished && (

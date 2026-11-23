@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronRight, RefreshCw, Send } from 'lucide-react';
-import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import LoadingState from '@/components/LoadingState';
 import { routineAssignmentRepository } from '@/data/routineAssignmentRepository';
 import { formatLocalDate } from '@/domain/localDate';
@@ -205,9 +204,7 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
 
                   <div className="border-t border-zinc-700 bg-zinc-800 p-3 text-zinc-100" hidden={!isSelected} id={`coach-workout-review-${entry.id}`}>
                     {isSelected && reviewState.status === 'loading' && (
-                      <p className="flex items-center justify-center gap-2 py-5 text-sm text-zinc-400" role="status">
-                        <TenantLoadingIndicator size={16} /> Cargando detalle…
-                      </p>
+                      <LoadingState compact message="Cargando detalle…" />
                     )}
                     {isSelected && reviewState.status === 'error' && (
                       <div className="flex items-center justify-between gap-3 py-2" role="alert">

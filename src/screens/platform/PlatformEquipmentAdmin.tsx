@@ -1,5 +1,8 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { Building2, Dumbbell, LogOut, Mail, RefreshCw, Save, Plus, UserPlus } from 'lucide-react';
+import AppInput from '@/components/AppInput';
+import AppTextarea from '@/components/AppTextarea';
+import AppSelect from '@/components/AppSelect';
 import StatusToggle from '@/components/StatusToggle';
 import FeedbackMessage from '@/components/FeedbackMessage';
 import EmptyState from '@/components/EmptyState';
@@ -340,9 +343,9 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
               {notice && <FeedbackMessage kind="info" message={notice} className="mb-3" />}
               <form className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4" onSubmit={(event) => void createOrUpdateTenant(event)}>
                 <div className="flex items-center justify-between gap-3"><h2 className="text-sm font-bold text-white">{editingTenantId ? 'Editar gimnasio' : 'Nuevo gimnasio'}</h2>{editingTenantId && <button className="text-xs text-zinc-400 hover:text-white" onClick={() => { setEditingTenantId(null); setTenantDraft({ name:'', subdomain:'', description:'', status:'ACTIVE' }); }} type="button">Cancelar</button>}</div>
-                <input aria-label="Nombre del gimnasio" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none" maxLength={120} placeholder="Nombre del gimnasio" value={tenantDraft.name} onChange={(event) => setTenantDraft((current) => ({ ...current, name: event.target.value }))} />
-                <input aria-label="Subdominio" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none" maxLength={63} placeholder="subdominio" value={tenantDraft.subdomain} onChange={(event) => setTenantDraft((current) => ({ ...current, subdomain: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'') }))} />
-                <textarea aria-label="Descripción" className="min-h-24 w-full resize-y rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none" maxLength={280} placeholder="Descripción" value={tenantDraft.description} onChange={(event) => setTenantDraft((current) => ({ ...current, description: event.target.value }))} />
+                <AppInput aria-label="Nombre del gimnasio" className="w-full px-3 py-2.5" maxLength={120} placeholder="Nombre del gimnasio" value={tenantDraft.name} onChange={(event) => setTenantDraft((current) => ({ ...current, name: event.target.value }))} />
+                <AppInput aria-label="Subdominio" className="w-full px-3 py-2.5" maxLength={63} placeholder="subdominio" value={tenantDraft.subdomain} onChange={(event) => setTenantDraft((current) => ({ ...current, subdomain: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'') }))} />
+                <AppTextarea aria-label="Descripción" className="min-h-24 w-full resize-y px-3 py-2.5" maxLength={280} placeholder="Descripción" value={tenantDraft.description} onChange={(event) => setTenantDraft((current) => ({ ...current, description: event.target.value }))} />
                 {editingTenantId && <label className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-xs text-zinc-300">Estado<select className="rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-white" value={tenantDraft.status} onChange={(event) => setTenantDraft((current) => ({ ...current, status: event.target.value as 'ACTIVE' | 'SUSPENDED' }))}><option value="ACTIVE">Activo</option><option value="SUSPENDED">Suspendido</option></select></label>}
                 <button className="min-h-11 w-full rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover disabled:opacity-50" disabled={savingId === 'tenant' || !tenantDraft.name.trim() || !tenantDraft.subdomain.trim()} type="submit">{editingTenantId ? 'Guardar cambios' : 'Crear gimnasio'}</button>
               </form>
@@ -356,9 +359,9 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
             {error && <FeedbackMessage kind="error" message={error} className="mt-3" />}
             {notice && <FeedbackMessage kind="info" message={notice} className="mt-3" />}
             <form className="mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(event) => void provisionCoach(event)}>
-              <label className="text-xs font-semibold text-zinc-400">Gimnasio<select className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white" value={selectedTenantId} onChange={(event) => setSelectedTenantId(event.target.value)}><option value="">Selecciona un gimnasio</option>{tenants.map((tenant) => <option key={tenant.id} value={tenant.id}>{tenant.name}</option>)}</select></label>
-              <input aria-label="Nombre del coach" className="mt-0 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white sm:mt-[18px]" placeholder="Nombre completo" value={coachDraft.fullName} onChange={(event) => setCoachDraft((current) => ({ ...current, fullName: event.target.value }))} />
-              <input aria-label="Correo del coach" className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white sm:col-span-2" type="email" placeholder="correo@ejemplo.com" value={coachDraft.email} onChange={(event) => setCoachDraft((current) => ({ ...current, email: event.target.value }))} />
+              <label className="text-xs font-semibold text-zinc-400">Gimnasio<AppSelect className="mt-1.5 w-full px-3 py-2.5" value={selectedTenantId} onChange={(event) => setSelectedTenantId(event.target.value)}><option value="">Selecciona un gimnasio</option>{tenants.map((tenant) => <option key={tenant.id} value={tenant.id}>{tenant.name}</option>)}</AppSelect></label>
+              <AppInput aria-label="Nombre del coach" className="mt-0 px-3 py-2.5 sm:mt-[18px]" placeholder="Nombre completo" value={coachDraft.fullName} onChange={(event) => setCoachDraft((current) => ({ ...current, fullName: event.target.value }))} />
+              <AppInput aria-label="Correo del coach" className="px-3 py-2.5 sm:col-span-2" type="email" placeholder="correo@ejemplo.com" value={coachDraft.email} onChange={(event) => setCoachDraft((current) => ({ ...current, email: event.target.value }))} />
               <button className="min-h-11 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover disabled:opacity-50 sm:col-span-2" disabled={!selectedTenantId || savingId === 'coach' || coachDraft.fullName.trim().length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(coachDraft.email)} type="submit"><UserPlus className="mr-2 inline" size={16} />Enviar invitación</button>
             </form>
 

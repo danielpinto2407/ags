@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { ArrowLeft, LoaderCircle, Save } from 'lucide-react';
 import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
-import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
+import LoadingState from '@/components/LoadingState';
+import FeedbackMessage from '@/components/FeedbackMessage';
 import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
 import { formatEquipmentLabel, exerciseFocusLabels, exerciseMovementLabels } from '@/domain/exerciseDefinition';
 import { formatLocalDate, utcDateInputValue } from '@/domain/localDate';
@@ -119,9 +120,7 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
 
   if (state.status === 'loading' && !assignment) {
     return (
-      <div className="flex min-h-[55vh] items-center justify-center text-sm text-zinc-400" role="status">
-        <TenantLoadingIndicator className="mr-2" size={17} /> Cargando entrenamiento…
-      </div>
+      <LoadingState className="min-h-[55vh]" message="Cargando entrenamiento…" />
     );
   }
 
@@ -131,9 +130,10 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
         <button className="flex min-h-11 items-center gap-2 text-sm font-semibold text-zinc-300" onClick={onBack} type="button">
           <ArrowLeft aria-hidden="true" size={17} /> Entrenar
         </button>
-        <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-4 text-sm text-rose-300" role="alert">
-          {state.status === 'error' ? state.message : 'Este entrenamiento ya no está disponible.'}
-        </p>
+        <FeedbackMessage
+          kind="error"
+          message={state.status === 'error' ? state.message : 'Este entrenamiento ya no está disponible.'}
+        />
       </div>
     );
   }

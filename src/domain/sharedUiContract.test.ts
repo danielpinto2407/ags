@@ -30,6 +30,8 @@ describe('shared UI contract', () => {
     expect(readProjectFile('src/components/AppInput.tsx')).toContain('tenant-surface');
     expect(readProjectFile('src/components/AppTextarea.tsx')).toContain('tenant-surface');
     expect(readProjectFile('src/components/AppSelect.tsx')).toContain('tenant-surface');
+    expect(existsSync(resolve(process.cwd(), 'src/components/PasswordField.tsx'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/components/SelectModalField.tsx'))).toBe(true);
   });
 
   it('uses shared empty and loading state components', () => {

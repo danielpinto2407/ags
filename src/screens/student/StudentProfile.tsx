@@ -3,7 +3,6 @@ import { LogOut, Heart, UserRound } from 'lucide-react';
 import Header from '@/components/Header';
 import { profileRepository } from '@/data/profileRepository';
 import ProfileImagePicker from '@/components/ProfileImagePicker';
-import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import type { Profile } from '@/domain/profile';
 
 interface StudentProfileProps {
@@ -76,7 +75,7 @@ export default function StudentProfile({ profile, onLogout }: StudentProfileProp
             <p className="text-[10px] text-zinc-500">Coach asignada</p>
             <p className="truncate text-sm font-bold text-white" aria-live="polite" role={coachInfoStatus === 'error' ? 'alert' : 'status'}>
               {coachInfoStatus === 'loading'
-                ? <span className="inline-flex items-center gap-1.5"><TenantLoadingIndicator size={14} /> Cargando…</span>
+                ? 'Cargando…'
                 : coachInfoStatus === 'error'
                   ? 'Información no disponible'
                   : coachName ?? 'Sin coach asignado'}

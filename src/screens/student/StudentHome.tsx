@@ -1,6 +1,7 @@
 import { ChevronRight, Clock3, Dumbbell } from 'lucide-react';
 import Header from '@/components/Header';
-import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
+import LoadingState from '@/components/LoadingState';
+import FeedbackMessage from '@/components/FeedbackMessage';
 import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
 import type { Screen } from '@/types';
 import type { Profile } from '@/domain/profile';
@@ -23,14 +24,12 @@ export default function StudentHome({ onNavigate, profile }: StudentHomeProps) {
       <Header title={`Hola, ${profile.full_name}`} subtitle="Tu espacio personal" />
 
       {state.status === 'loading' && (
-        <p className="flex items-center justify-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-sm text-zinc-500" role="status">
-          <TenantLoadingIndicator size={17} /> Cargando programación de hoy…
-        </p>
+        <LoadingState compact message="Cargando programación de hoy…" />
       )}
 
       {state.status === 'error' && (
-        <div className="rounded-2xl border border-rose-900/60 bg-rose-950/20 p-4" role="alert">
-          <p className="text-sm text-rose-300">{state.message}</p>
+        <div>
+          <FeedbackMessage kind="error" message={state.message} />
           <button className="mt-2 text-xs font-semibold text-rose-200 underline underline-offset-2" onClick={reload} type="button">Reintentar</button>
         </div>
       )}
