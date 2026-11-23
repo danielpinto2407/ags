@@ -54,6 +54,22 @@ export const invitationRepository = {
     return data.status;
   },
 
+  async acceptCoachInvitation(invitationId: string, fullName: string, password: string): Promise<void> {
+    const client = requireSupabaseClient();
+    const { error: passwordError } = await client.auth.updateUser({ password });
+    if (passwordError) {
+      throw new Error('No se pudo guardar tu contraseña. Revisa el enlace e inténtalo nuevamente.');
+    }
+
+    const { error } = await client.functions.invoke('accept-coach-invitation', {
+      body: { invitation_id: invitationId, full_name: fullName.trim() },
+    });
+    if (error) {
+      const code = await getFunctionErrorCode(error);
+      throw new Error(invitationErrorMessage(code));
+    }
+  },
+
   async acceptPersonalizedInvitation(
     invitationId: string,
     fullName: string,

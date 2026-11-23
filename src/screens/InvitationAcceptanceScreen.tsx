@@ -7,12 +7,14 @@ interface InvitationAcceptanceScreenProps {
   invitationId: string;
   gymName: string;
   onAccepted: () => void;
+  acceptanceKind?: 'personalized_member' | 'coach_admin';
 }
 
 export default function InvitationAcceptanceScreen({
   invitationId,
   gymName,
   onAccepted,
+  acceptanceKind = 'personalized_member',
 }: InvitationAcceptanceScreenProps) {
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
@@ -34,9 +36,14 @@ export default function InvitationAcceptanceScreen({
     setIsSubmitting(true);
 
     try {
-      await invitationRepository.acceptPersonalizedInvitation(invitationId, fullName, password);
+      if (acceptanceKind === 'coach_admin') {
+        await invitationRepository.acceptCoachInvitation(invitationId, fullName, password);
+      } else {
+        await invitationRepository.acceptPersonalizedInvitation(invitationId, fullName, password);
+      }
       const url = new URL(window.location.href);
       url.searchParams.delete('invitation_id');
+      url.searchParams.delete('invitation_role');
       window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
       onAccepted();
     } catch (acceptError) {
@@ -52,10 +59,10 @@ export default function InvitationAcceptanceScreen({
         <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-950 text-brand-400">
           <UserRound size={22} />
         </div>
-        <p className="mb-1 text-xs font-semibold uppercase text-brand-400">Invitación al gimnasio</p>
+        <p className="mb-1 text-xs font-semibold uppercase text-brand-400">{acceptanceKind === 'coach_admin' ? 'Invitación al equipo de coaching' : 'Invitación al gimnasio'}</p>
         <h1 className="font-display text-2xl font-bold text-white">Completa tu acceso</h1>
         <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-          Estás a un paso de entrar a <span className="text-zinc-200">{gymName}</span>. Confirma tu nombre para activar tu cuenta.
+          Estás a un paso de entrar a <span className="text-zinc-200">{gymName}</span>. Confirma tu nombre completo y crea tu contraseña para activar tu cuenta.
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -109,7 +116,7 @@ export default function InvitationAcceptanceScreen({
             disabled={isSubmitting || fullName.trim().length < 2 || password.length < 10 || password !== passwordConfirmation}
             type="submit"
           >
-            {isSubmitting ? 'Activando acceso…' : 'Entrar a mi gimnasio'}
+            {isSubmitting ? 'Activando acceso…' : acceptanceKind === 'coach_admin' ? 'Entrar a mi equipo' : 'Entrar a mi gimnasio'}
             {!isSubmitting && <ArrowRight size={16} />}
           </button>
         </form>

@@ -116,10 +116,13 @@ Deno.serve(async (request) => {
     if (invitationError) return jsonResponse(request, 500, { error: 'invitation_lookup_failed' });
     if (!invitation) return jsonResponse(request, 404, { error: 'invitation_not_pending' });
 
-    const resendUrl = Deno.env.get('COACH_ONBOARDING_REDIRECT_URL')
+    const resendBaseUrl = Deno.env.get('COACH_ONBOARDING_REDIRECT_URL')
       ?? Deno.env.get('INVITATION_REDIRECT_URL')
       ?? 'http://ags.localhost:5174/';
-    const resendResult = await adminClient.auth.admin.inviteUserByEmail(invitation.email, { redirectTo: resendUrl });
+    const resendUrl = new URL(resendBaseUrl);
+    resendUrl.searchParams.set('invitation_id', invitation.id);
+    resendUrl.searchParams.set('invitation_role', 'coach_admin');
+    const resendResult = await adminClient.auth.admin.inviteUserByEmail(invitation.email, { redirectTo: resendUrl.toString() });
     if (resendResult.error) {
       return jsonResponse(request, resendResult.error.status === 422 ? 409 : 500, { error: 'coach_invite_failed' });
     }
@@ -220,7 +223,11 @@ Deno.serve(async (request) => {
     return jsonResponse(request, 409, { error: invitationError.message.includes('tenant_invitations_one_pending_email_idx') ? 'coach_invitation_pending' : 'invitation_create_failed' });
   }
 
-  const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, { redirectTo: redirectUrl, data });
+  const invitationUrl = new URL(redirectUrl);
+  invitationUrl.searchParams.set('invitation_id', invitation.id);
+  invitationUrl.searchParams.set('invitation_role', 'coach_admin');
+
+  const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, { redirectTo: invitationUrl.toString(), data });
   if (inviteError || !invited.user) {
     await adminClient.from('tenant_invitations').update({ status: 'FAILED', expires_at: new Date().toISOString() }).eq('id', invitation.id);
     return jsonResponse(request, inviteError?.status === 422 ? 409 : 500, { error: 'coach_invite_failed' });
@@ -230,16 +237,6 @@ Deno.serve(async (request) => {
     .from('tenant_invitations')
     .update({ auth_user_id: invited.user.id })
     .eq('id', invitation.id);
-
-  const { error: profileError } = await adminClient
-    .from('profiles')
-    .insert({ id: invited.user.id, tenant_id: tenant.id, role: 'coach_admin', status: 'ACTIVE', full_name: fullName });
-
-  if (profileError) {
-    await adminClient.auth.admin.deleteUser(invited.user.id);
-    await adminClient.from('tenant_invitations').update({ status: 'FAILED', expires_at: new Date().toISOString(), auth_user_id: null }).eq('id', invitation.id);
-    return jsonResponse(request, 500, { error: 'coach_profile_failed' });
-  }
 
   return jsonResponse(request, 200, { user_id: invited.user.id, tenant_id: tenant.id, email, full_name: fullName, invitation_id: invitation.id });
 });

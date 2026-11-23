@@ -50,7 +50,9 @@ export default function App() {
     returnToSignIn,
   } = useAuth();
   const { state: tenantState, retry } = useTenantContext();
-  const invitationId = new URLSearchParams(window.location.search).get('invitation_id');
+  const invitationParams = new URLSearchParams(window.location.search);
+  const invitationId = invitationParams.get('invitation_id');
+  const invitationRole = invitationParams.get('invitation_role');
   const isPasswordRecoveryCallback = new URLSearchParams(window.location.search).get('password_recovery') === '1';
   const role = authState.status === 'authenticated' ? authState.productRole : null;
   const navigation = useAppNavigation(role);
@@ -166,6 +168,7 @@ export default function App() {
           <InvitationAcceptanceScreen
             invitationId={invitationId}
             gymName={tenant?.name ?? 'GluteHouse'}
+            acceptanceKind={invitationRole === 'coach_admin' ? 'coach_admin' : 'personalized_member'}
             onAccepted={retryProfile}
           />
         </div>
