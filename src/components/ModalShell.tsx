@@ -1,4 +1,4 @@
-import { useEffect, useId, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -46,10 +46,22 @@ export default function ModalShell({
   }, [onClose]);
 
   const maxWidth = size === 'sm' ? 'max-w-sm' : size === 'lg' ? 'max-w-[520px]' : 'max-w-lg';
-  const panelStyle = {
-    backgroundColor: 'var(--tenant-surface, #18181B)',
-    borderColor: 'var(--tenant-border, #27272A)',
-    color: 'var(--tenant-text, #FAFAFA)',
+  const themeRoot = document.querySelector<HTMLElement>('.tenant-app, main.platform-admin');
+  const themeStyles = getComputedStyle(themeRoot ?? document.documentElement);
+  const themeVariableNames = [
+    '--tenant-primary', '--tenant-on-primary', '--tenant-secondary', '--tenant-background',
+    '--tenant-accent', '--tenant-surface', '--tenant-text', '--tenant-muted', '--tenant-border',
+    '--tenant-warm-accent', '--tenant-soft-accent', '--tenant-body-font', '--tenant-display-font',
+  ] as const;
+  const portalTheme = Object.fromEntries(
+    themeVariableNames.map((name) => [name, themeStyles.getPropertyValue(name).trim()])
+  ) as CSSProperties;
+  const panelStyle: CSSProperties = {
+    ...portalTheme,
+    backgroundColor: 'var(--tenant-surface, #FFF9F6)',
+    borderColor: 'var(--tenant-border, #E5D8D2)',
+    color: 'var(--tenant-text, #2B2528)',
+    fontFamily: 'var(--tenant-body-font, "DM Sans")',
   };
 
   const panel = form ? (
@@ -68,7 +80,7 @@ export default function ModalShell({
           <h2 className="truncate font-display text-sm font-bold" id={titleId} style={{ color: 'var(--tenant-secondary, var(--tenant-text, #FAFAFA))' }}>{title}</h2>
           {subtitle && <p className="mt-0.5 text-[10px]" style={{ color: 'var(--tenant-muted, #A1A1AA)' }}>{subtitle}</p>}
         </div>
-        <button aria-label={closeLabel} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors" style={{ color: 'var(--tenant-muted, #A1A1AA)' }} onClick={onClose} type="button"><X size={16} /></button>
+        <button aria-label={closeLabel} className="modal-close-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors" onClick={onClose} type="button"><X size={16} /></button>
       </div>
       <div className="pt-4">{children}</div>
     </form>
@@ -87,7 +99,7 @@ export default function ModalShell({
           <h2 className="truncate font-display text-sm font-bold" id={titleId} style={{ color: 'var(--tenant-secondary, var(--tenant-text, #FAFAFA))' }}>{title}</h2>
           {subtitle && <p className="mt-0.5 text-[10px]" style={{ color: 'var(--tenant-muted, #A1A1AA)' }}>{subtitle}</p>}
         </div>
-        <button aria-label={closeLabel} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors" style={{ color: 'var(--tenant-muted, #A1A1AA)' }} onClick={onClose} type="button"><X size={16} /></button>
+        <button aria-label={closeLabel} className="modal-close-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors" onClick={onClose} type="button"><X size={16} /></button>
       </div>
       <div className="pt-4">{children}</div>
     </section>
@@ -100,7 +112,10 @@ export default function ModalShell({
         if (event.target === event.currentTarget) onClose();
       }}
       role="presentation"
-      style={{ backgroundColor: 'color-mix(in srgb, var(--tenant-primary, #71717A) 18%, transparent)' }}
+      style={{
+        ...portalTheme,
+        backgroundColor: 'color-mix(in srgb, var(--tenant-primary, #71717A) 18%, transparent)',
+      }}
     >
       {panel}
     </div>,

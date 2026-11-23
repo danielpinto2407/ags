@@ -192,6 +192,18 @@
   }
 }
 
+@layer components {
+  .modal-close-button {
+    color: var(--tenant-muted, #76696d);
+    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 18%, var(--tenant-surface, #fff9f6));
+  }
+
+  .modal-close-button:hover {
+    color: var(--tenant-text, #2b2528);
+    background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 30%, var(--tenant-surface, #fff9f6));
+  }
+}
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
