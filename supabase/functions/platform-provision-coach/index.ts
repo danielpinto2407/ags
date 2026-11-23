@@ -123,7 +123,7 @@ Deno.serve(async (request) => {
   }
 
   if (action === 'resend') {
-    let invitationQuery = adminClient
+    const invitationQuery = adminClient
       .from('tenant_invitations')
       .select('id, email, auth_user_id, status, resend_count')
       .eq('tenant_id', tenantId)
@@ -162,7 +162,7 @@ Deno.serve(async (request) => {
   }
 
   if (action === 'cancel') {
-    let invitationQuery = adminClient
+    const invitationQuery = adminClient
       .from('tenant_invitations')
       .select('id, auth_user_id, status')
       .eq('tenant_id', tenantId)

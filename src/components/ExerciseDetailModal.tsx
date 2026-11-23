@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { X, Clock, Repeat, Target, Timer, Dumbbell, Lightbulb } from 'lucide-react';
+import { Clock, Repeat, Target, Timer, Dumbbell, Lightbulb } from 'lucide-react';
 import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
 import type { Exercise } from '@/types';
 import ModalShell from '@/components/ModalShell';

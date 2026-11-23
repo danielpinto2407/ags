@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import { Building2, Dumbbell, LogOut, RefreshCw, Save, Plus, UserPlus } from 'lucide-react';
 import StatusToggle from '@/components/StatusToggle';
+import FeedbackMessage from '@/components/FeedbackMessage';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import {
   platformEquipmentRepository,
@@ -334,8 +335,8 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
               ))}
             </aside>
             <div>
-              {error && <p className="mb-3 rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{error}</p>}
-              {notice && <p className="mb-3 rounded-xl border border-brand-800/60 bg-brand-950/30 p-3 text-xs text-brand-200" role="status">{notice}</p>}
+              {error && <FeedbackMessage kind="error" message={error} className="mb-3" />}
+              {notice && <FeedbackMessage kind="info" message={notice} className="mb-3" />}
               <form className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4" onSubmit={(event) => void createOrUpdateTenant(event)}>
                 <div className="flex items-center justify-between gap-3"><h2 className="text-sm font-bold text-white">{editingTenantId ? 'Editar gimnasio' : 'Nuevo gimnasio'}</h2>{editingTenantId && <button className="text-xs text-zinc-400 hover:text-white" onClick={() => { setEditingTenantId(null); setTenantDraft({ name:'', subdomain:'', description:'', status:'ACTIVE' }); }} type="button">Cancelar</button>}</div>
                 <input aria-label="Nombre del gimnasio" className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white focus:border-brand-500 focus:outline-none" maxLength={120} placeholder="Nombre del gimnasio" value={tenantDraft.name} onChange={(event) => setTenantDraft((current) => ({ ...current, name: event.target.value }))} />
@@ -351,8 +352,8 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
         {activeSection === 'coaches' && (
           <section className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
             <h2 className="text-sm font-bold text-white">Invitar coach administrador</h2>
-            {error && <p className="mt-3 rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{error}</p>}
-            {notice && <p className="mt-3 rounded-xl border border-brand-800/60 bg-brand-950/30 p-3 text-xs text-brand-200" role="status">{notice}</p>}
+            {error && <FeedbackMessage kind="error" message={error} className="mt-3" />}
+            {notice && <FeedbackMessage kind="info" message={notice} className="mt-3" />}
             <form className="mt-3 grid gap-3 sm:grid-cols-2" onSubmit={(event) => void provisionCoach(event)}>
               <label className="text-xs font-semibold text-zinc-400">Gimnasio<select className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white" value={selectedTenantId} onChange={(event) => setSelectedTenantId(event.target.value)}><option value="">Selecciona un gimnasio</option>{tenants.map((tenant) => <option key={tenant.id} value={tenant.id}>{tenant.name}</option>)}</select></label>
               <input aria-label="Nombre del coach" className="mt-0 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-white sm:mt-[18px]" placeholder="Nombre completo" value={coachDraft.fullName} onChange={(event) => setCoachDraft((current) => ({ ...current, fullName: event.target.value }))} />
@@ -456,8 +457,8 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
                 </div>
               )}
 
-              {error && <p className="mb-3 rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{error}</p>}
-              {notice && <p className="mb-3 rounded-xl border border-brand-800/60 bg-brand-950/30 p-3 text-xs text-brand-200" role="status">{notice}</p>}
+              {error && <FeedbackMessage kind="error" message={error} className="mb-3" />}
+              {notice && <FeedbackMessage kind="info" message={notice} className="mb-3" />}
 
               <form className="mb-3 flex gap-2" onSubmit={(event) => void createOption(event)}>
                 <input

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { X, Check, Dumbbell } from 'lucide-react';
+import { Check } from 'lucide-react';
 import SelectModalField from '@/components/SelectModalField';
 import ModalShell from '@/components/ModalShell';
 import {

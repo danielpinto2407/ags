@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Check, MailPlus, X } from 'lucide-react';
+import { Check, MailPlus } from 'lucide-react';
 import { invitationRepository, type InvitationDeliveryStatus } from '@/data/invitationRepository';
 import ModalShell from '@/components/ModalShell';
 

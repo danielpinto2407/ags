@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import ConfirmModal from '@/components/ConfirmModal';
+import FeedbackMessage from '@/components/FeedbackMessage';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Dumbbell, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
@@ -98,6 +100,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [cycleReduction, setCycleReduction] = useState<{ count: number; message: string } | null>(null);
 
   const membersQuery = useCoachMembers(profile.id);
   const library = useExerciseLibrary(tenantId ?? '', profile.id);
@@ -159,12 +162,17 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
   const setCycleDayCount = (count: number) => {
     const safeCount = Math.min(20, Math.max(1, count));
     const removedDaysWithExercises = days.filter((day) => day.position > safeCount && day.items.length > 0);
-    if (removedDaysWithExercises.length > 0 && !window.confirm(
-      `Reducir el ciclo a ${safeCount} ${safeCount === 1 ? 'rutina' : 'rutinas'} eliminará los ejercicios de ${removedDaysWithExercises.length === 1 ? 'una rutina' : `${removedDaysWithExercises.length} rutinas`}. ¿Deseas continuar?`
-    )) {
-      setCycleDayCountDraft(String(days.length));
+    if (removedDaysWithExercises.length > 0) {
+      setCycleReduction({
+        count: safeCount,
+        message: `Reducir el ciclo a ${safeCount} ${safeCount === 1 ? 'rutina' : 'rutinas'} eliminará los ejercicios de ${removedDaysWithExercises.length === 1 ? 'una rutina' : `${removedDaysWithExercises.length} rutinas`}.`,
+      });
       return;
     }
+    applyCycleDayCount(safeCount);
+  };
+
+  const applyCycleDayCount = (safeCount: number) => {
     setCycleDayCountDraft(String(safeCount));
     setDays((current) => Array.from({ length: safeCount }, (_, index) => {
       const position = index + 1;
@@ -579,8 +587,8 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
             )}
           </section>
 
-          {actionError && <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{actionError}</p>}
-          {notice && <p className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-3 text-xs text-emerald-300" role="status">{notice}</p>}
+          {actionError && <FeedbackMessage kind="error" message={actionError} />}
+          {notice && <FeedbackMessage kind="success" message={notice} />}
 
           {!isPublished && (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -605,6 +613,22 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
             </div>
           )}
         </>
+      )}
+      {cycleReduction && (
+        <ConfirmModal
+          title="Reducir el ciclo"
+          message={cycleReduction.message}
+          confirmLabel="Reducir ciclo"
+          danger
+          onClose={() => {
+            setCycleReduction(null);
+            setCycleDayCountDraft(String(days.length));
+          }}
+          onConfirm={() => {
+            applyCycleDayCount(cycleReduction.count);
+            setCycleReduction(null);
+          }}
+        />
       )}
     </div>
   );

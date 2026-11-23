@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import ModalShell from '@/components/ModalShell';
 
@@ -32,7 +32,6 @@ export default function SelectModalField({
 }: SelectModalFieldProps) {
   const [open, setOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
-  const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);

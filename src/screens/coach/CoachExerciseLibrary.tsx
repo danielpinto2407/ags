@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Copy, Dumbbell, Pencil, Plus, RefreshCw, Search } from 'lucide-react';
 import StatusToggle from '@/components/StatusToggle';
+import FeedbackMessage from '@/components/FeedbackMessage';
 import Header from '@/components/Header';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import CreateExerciseModal from '@/components/CreateExerciseModal';
@@ -197,8 +198,8 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
           </button>
         </div>
       )}
-      {actionError && <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{actionError}</p>}
-      {notice && <p className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-3 text-xs text-emerald-300" role="status">{notice}</p>}
+      {actionError && <FeedbackMessage kind="error" message={actionError} />}
+      {notice && <FeedbackMessage kind="success" message={notice} />}
 
       {loading && exercises.length === 0 && !loadError && (
         <p className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-500" role="status">

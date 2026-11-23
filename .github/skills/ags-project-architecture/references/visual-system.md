@@ -10,6 +10,18 @@
 - Motion: `slide-up`, `fade-in`, and `scale-in`.
 - Global primitives and responsive helpers: `src/index.css`.
 
+## Shared Component Rules
+
+- `ModalShell` is the only overlay shell for dialogs, selectors and confirmation screens. Mobile uses a bottom sheet and desktop uses a centered panel; both use the tenant/platform CSS variables, not hardcoded zinc/black surfaces.
+- `StatusToggle` is the standard reversible active/archived/suspended control. It must use confirm-before-change behavior and close after success or cancellation.
+- `ConfirmModal` wraps destructive or bulk confirmations and must replace `window.confirm`, native alerts and independent confirmation markup.
+- `FeedbackMessage` is the standard inline success/error/warning/info state. It must carry `role="alert"` or `role="status"` and tenant/theme-compatible colors.
+- `AppButton` owns primary, secondary, danger and ghost command variants. Screens should not redefine the same button geometry and state classes repeatedly.
+- `SelectModalField`, `PasswordField`, `ProfileImagePicker`, `ModalShell`, `StatusToggle`, `FeedbackMessage`, `AppButton` and future shared fields are first-choice primitives. Search these components before adding a new modal, toggle, message or form control.
+- A confirmation must show the item/action affected, allow cancel, disable repeat submission, expose an explicit busy label, and never mutate data before confirmation.
+- All modals must close by X, backdrop, confirmed/cancelled action or Escape. They must lock the app scroll while open and restore it afterward.
+- Background/overlay opacity must derive from tenant/platform variables. Dialogs must not use fixed black surfaces or AGS-only copy/colors; use `tenant-surface`, `tenant-border`, `tenant-text`, `tenant-muted`, `tenant-primary` and `tenant-on-primary`.
+
 ## Rules For New Components
 
 - Reuse existing Tailwind tokens and component patterns before adding arbitrary values.
