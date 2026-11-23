@@ -29,6 +29,11 @@ describe('shared UI contract', () => {
     expect(readProjectFile('src/components/FeedbackMessage.tsx')).toContain('role');
   });
 
+  it('uses shared empty and loading state components', () => {
+    expect(readProjectFile('src/components/EmptyState.tsx')).toContain('role="status"');
+    expect(readProjectFile('src/components/LoadingState.tsx')).toContain('role="status"');
+  });
+
   it('uses the shared modal shell for overlay dialogs', () => {
     const modalShell = readProjectFile('src/components/ModalShell.tsx');
     const statusToggle = readProjectFile('src/components/StatusToggle.tsx');
@@ -36,7 +41,7 @@ describe('shared UI contract', () => {
 
     expect(modalShell).toContain('createPortal');
     expect(modalShell).toContain("var(--tenant-surface");
-    expect(statusToggle).toContain('ModalShell');
+    expect(statusToggle).toContain('ConfirmModal');
     expect(confirmModal).toContain('ModalShell');
   });
 });

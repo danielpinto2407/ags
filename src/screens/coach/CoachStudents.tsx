@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Search, Plus, RefreshCw, Users } from 'lucide-react';
+import EmptyState from '@/components/EmptyState';
 import Header from '@/components/Header';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import InviteMemberModal from '@/components/InviteMemberModal';
@@ -78,11 +79,11 @@ export default function CoachStudents({ coachId, onStudentSelect }: CoachStudent
             <p className="flex items-center justify-center gap-2 py-8 text-center text-sm text-zinc-500" role="status"><TenantLoadingIndicator size={16} /> Cargando alumnas invitadas…</p>
           )}
           {state.status === 'loaded' && members.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-zinc-800 px-5 py-10 text-center">
-              <Users className="mx-auto mb-3 text-zinc-600" size={24} />
-              <p className="text-sm font-semibold text-zinc-300">Aún no tienes alumnas</p>
-              <p className="mt-1 text-xs text-zinc-500">Las alumnas aparecerán aquí cuando acepten tu invitación.</p>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="Aún no tienes alumnas"
+              description="Las alumnas aparecerán aquí cuando acepten tu invitación."
+            />
           )}
         {filtered.map((member) => (
           <CoachMemberCard key={member.id} member={member} onSelect={onStudentSelect} onStatusChange={setMemberStatus} />

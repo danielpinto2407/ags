@@ -1,8 +1,9 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
-import { Building2, Dumbbell, LogOut, RefreshCw, Save, Plus, UserPlus } from 'lucide-react';
+import { Building2, Dumbbell, LogOut, Mail, RefreshCw, Save, Plus, UserPlus } from 'lucide-react';
 import StatusToggle from '@/components/StatusToggle';
 import FeedbackMessage from '@/components/FeedbackMessage';
-import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
+import EmptyState from '@/components/EmptyState';
+import LoadingState from '@/components/LoadingState';
 import {
   platformEquipmentRepository,
   type PlatformTenant,
@@ -365,7 +366,7 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
               <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3">
                 <h3 className="text-xs font-bold uppercase tracking-wide text-zinc-400">Invitaciones</h3>
                 {coachInvitations.length === 0 ? (
-                  <p className="py-5 text-center text-xs text-zinc-500">No hay invitaciones registradas.</p>
+                  <EmptyState icon={Mail} title="No hay invitaciones registradas" compact />
                 ) : (
                   <div className="mt-3 space-y-2">
                     {latestInvitationsByEmail.map((invitation) => (
@@ -391,7 +392,7 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
               <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3">
                 <h3 className="text-xs font-bold uppercase tracking-wide text-zinc-400">Coaches</h3>
                 {coachProfiles.length === 0 ? (
-                  <p className="py-5 text-center text-xs text-zinc-500">No hay coaches registrados.</p>
+                  <EmptyState icon={UserPlus} title="No hay coaches registrados" compact />
                 ) : (
                   <div className="mt-3 space-y-2">
                     {coachProfiles.map((coach) => (
@@ -420,7 +421,7 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
 
         {activeSection === 'equipment' && (
           loading && tenants.length === 0 ? (
-          <p className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-400"><TenantLoadingIndicator size={16} /> Cargando gimnasios…</p>
+          <LoadingState message="Cargando gimnasios…" />
         ) : (
           <div className="mt-5 grid gap-4 lg:grid-cols-[220px_1fr]">
             <aside className="rounded-xl border border-zinc-800 bg-zinc-900 p-2">
@@ -480,7 +481,7 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
               </form>
 
               {loading ? (
-                <p className="flex items-center justify-center gap-2 py-8 text-sm text-zinc-400"><TenantLoadingIndicator size={16} /> Cargando equipos…</p>
+                <LoadingState compact message="Cargando equipos…" />
               ) : (
                 <div className="space-y-2">
                   {options.map((option) => (
@@ -513,7 +514,7 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
                       />
                     </article>
                   ))}
-                  {options.length === 0 && <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-xs text-zinc-500">Este gimnasio no tiene opciones configuradas.</p>}
+                  {options.length === 0 && <EmptyState icon={Dumbbell} title="Este gimnasio no tiene opciones configuradas" compact />}
                 </div>
               )}
             </section>

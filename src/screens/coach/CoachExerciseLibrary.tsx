@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Copy, Dumbbell, Pencil, Plus, RefreshCw, Search } from 'lucide-react';
 import StatusToggle from '@/components/StatusToggle';
+import EmptyState from '@/components/EmptyState';
 import FeedbackMessage from '@/components/FeedbackMessage';
 import Header from '@/components/Header';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
@@ -272,11 +273,11 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
       )}
 
       {!loading && !loadError && filteredExercises.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-zinc-800 px-5 py-10 text-center">
-          <Dumbbell className="mx-auto mb-2 text-zinc-600" size={25} />
-          <p className="text-sm font-semibold text-zinc-300">{query || focusFilter !== 'ALL' || equipmentFilter !== 'ALL' || difficultyFilter !== 'ALL' ? 'No hay resultados' : source === 'catalog' ? 'El catálogo está vacío' : 'Aún no hay ejercicios del gimnasio'}</p>
-          <p className="mt-1 text-xs text-zinc-600">{source === 'gym' && !query ? 'Crea un ejercicio o copia uno del catálogo general.' : 'Prueba otros filtros o términos de búsqueda.'}</p>
-        </div>
+        <EmptyState
+          icon={Dumbbell}
+          title={query || focusFilter !== 'ALL' || equipmentFilter !== 'ALL' || difficultyFilter !== 'ALL' ? 'No hay resultados' : source === 'catalog' ? 'El catálogo está vacío' : 'Aún no hay ejercicios del gimnasio'}
+          description={source === 'gym' && !query ? 'Crea un ejercicio o copia uno del catálogo general.' : 'Prueba otros filtros o términos de búsqueda.'}
+        />
       )}
 
       {source === 'gym' && (

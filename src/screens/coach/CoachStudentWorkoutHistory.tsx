@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronRight, RefreshCw, Send } from 'lucide-react';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
+import LoadingState from '@/components/LoadingState';
 import { routineAssignmentRepository } from '@/data/routineAssignmentRepository';
 import { formatLocalDate } from '@/domain/localDate';
 import type { CoachMember } from '@/domain/coachMember';
@@ -139,9 +140,7 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
           El historial no está disponible mientras la cuenta de la alumna esté inactiva.
         </p>
       ) : historyState.status === 'loading' && historyState.entries.length === 0 ? (
-        <p className="flex items-center justify-center gap-2 py-6 text-sm text-zinc-400" role="status">
-          <TenantLoadingIndicator size={16} /> Cargando entrenamientos…
-        </p>
+        <LoadingState compact message="Cargando entrenamientos…" />
       ) : historyState.status === 'error' ? (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-900/60 bg-rose-950/20 p-3" role="alert">
           <p className="text-sm text-rose-200">{historyState.message}</p>

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, CalendarDays, ChartNoAxesColumnIncreasing, ChevronDown, Send } from 'lucide-react';
 import Header from '@/components/Header';
-import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { routineAssignmentRepository } from '@/data/routineAssignmentRepository';
 import type { StudentRoutineHistoryEntry, WorkoutComment } from '@/domain/workoutExecution';
 import { formatLocalDate } from '@/domain/localDate';
 import type { Profile } from '@/domain/profile';
 import type { Screen } from '@/types';
+import EmptyState from '@/components/EmptyState';
+import LoadingState from '@/components/LoadingState';
 
 interface StudentProgressProps {
   profile: Profile;
@@ -101,9 +102,7 @@ export default function StudentProgress({ profile, onNavigate }: StudentProgress
       <Header title="Mi Progreso" subtitle="Historial de entrenamientos" showBell={false} />
 
       {state.status === 'loading' && (
-        <p className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-500" role="status">
-          <TenantLoadingIndicator size={17} /> Cargando tu historial…
-        </p>
+        <LoadingState message="Cargando tu historial…" />
       )}
 
       {state.status === 'error' && (
@@ -116,12 +115,12 @@ export default function StudentProgress({ profile, onNavigate }: StudentProgress
       )}
 
       {state.status === 'loaded' && state.entries.length === 0 && (
-        <div className="max-w-lg rounded-2xl border border-dashed border-zinc-800 px-5 py-10 text-center">
-          <ChartNoAxesColumnIncreasing aria-hidden="true" className="mx-auto mb-3 text-zinc-600" size={27} />
-          <p className="text-sm font-semibold text-zinc-300">Aún no tienes entrenamientos registrados</p>
-          <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-zinc-500">
-            Cuando registres tu primer ejercicio, tus entrenamientos aparecerán aquí.
-          </p>
+        <div className="max-w-lg">
+          <EmptyState
+            icon={ChartNoAxesColumnIncreasing}
+            title="Aún no tienes entrenamientos registrados"
+            description="Cuando registres tu primer ejercicio, tus entrenamientos aparecerán aquí."
+          />
           <button className="mx-auto mt-4 flex min-h-10 items-center justify-center gap-2 rounded-lg bg-brand-500 px-4 text-xs font-bold text-white hover:bg-brand-action-hover" onClick={() => onNavigate('routines')} type="button">
             Ir a entrenar <ArrowRight aria-hidden="true" size={14} />
           </button>

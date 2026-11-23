@@ -2,6 +2,7 @@ import { ArrowLeft, CalendarDays, UserRound } from 'lucide-react';
 import ProfileMediaImage from '@/components/ProfileMediaImage';
 import type { CoachMember } from '@/domain/coachMember';
 import CoachStudentWorkoutHistory from '@/screens/coach/CoachStudentWorkoutHistory';
+import EmptyState from '@/components/EmptyState';
 
 interface StudentDetailProps {
   member: CoachMember;
@@ -40,17 +41,19 @@ export default function StudentDetail({ member, coachId, tenantId, onBack }: Stu
         </div>
       </div>
 
-      <div className="rounded-2xl border border-dashed border-zinc-800 p-5 text-center">
+      <div>
         {member.hasActiveProgramming ? (
           <>
             <p className="text-sm font-semibold text-zinc-300">Tiene programación activa</p>
             <p className="mt-1 text-xs text-zinc-500">La alumna puede consultar sus fechas y ciclos disponibles en Mis Rutinas.</p>
           </>
         ) : (
-          <>
-            <p className="text-sm font-semibold text-zinc-300">Aún no hay una rutina personalizada asignada</p>
-            <p className="mt-1 text-xs text-zinc-500">Cuando publiques una rutina o ciclo para esta alumna, aparecerá en Mis Rutinas.</p>
-          </>
+          <EmptyState
+            icon={CalendarDays}
+            title="Aún no hay una rutina personalizada asignada"
+            description="Cuando publiques una rutina o ciclo para esta alumna, aparecerá en Mis Rutinas."
+            compact
+          />
         )}
       </div>
 

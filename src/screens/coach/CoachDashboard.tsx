@@ -5,6 +5,7 @@ import type { Screen } from '@/types';
 import type { Profile } from '@/domain/profile';
 import { useCoachMembers } from '@/app/useCoachMembers';
 import type { CoachMember } from '@/domain/coachMember';
+import EmptyState from '@/components/EmptyState';
 
 interface CoachDashboardProps {
   profile: Profile;
@@ -71,9 +72,12 @@ export default function CoachDashboard({ profile, onNavigate, onStudentSelect }:
           ))}
           {state.status === 'error' && <p className="text-xs text-rose-400">No se pudieron cargar las alumnas.</p>}
           {state.status === 'loaded' && members.length === 0 && (
-            <p className="rounded-xl border border-dashed border-zinc-800 p-4 text-xs text-zinc-500">
-              Las alumnas aparecerán aquí cuando acepten tu invitación.
-            </p>
+            <EmptyState
+              icon={Users}
+              title="Aún no tienes alumnas"
+              description="Las alumnas aparecerán aquí cuando acepten tu invitación."
+              compact
+            />
           )}
         </div>
       </div>

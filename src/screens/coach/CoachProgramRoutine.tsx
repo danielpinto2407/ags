@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Users } from 'lucide-react';
+import EmptyState from '@/components/EmptyState';
 import ConfirmModal from '@/components/ConfirmModal';
 import FeedbackMessage from '@/components/FeedbackMessage';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Dumbbell, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
@@ -389,7 +391,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
       </div>
 
       {membersQuery.state.status === 'loaded' && activeMembers.length === 0 && (
-        <div className="rounded-xl border border-dashed border-zinc-800 p-4 text-sm text-zinc-500">No hay alumnas activas disponibles para programar.</div>
+        <EmptyState icon={Users} title="No hay alumnas activas disponibles" description="Invita o reactiva una alumna para continuar." compact />
       )}
 
       {selectedStudentId && (
@@ -494,7 +496,7 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
             </div>
 
             {items.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-zinc-800 p-4 text-center text-xs text-zinc-500">Aún no agregas ejercicios a esta rutina.</p>
+              <EmptyState icon={Dumbbell} title="Aún no agregas ejercicios" description="Selecciona ejercicios del catálogo para completar esta rutina." compact />
             ) : (
               <div className="space-y-2">
                 {items.map((item, index) => (

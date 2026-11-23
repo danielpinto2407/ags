@@ -1,7 +1,8 @@
 import { CalendarDays, ChevronLeft, ChevronRight, CircleCheck, Dumbbell, Eye, Play } from 'lucide-react';
 import { useState } from 'react';
 import Header from '@/components/Header';
-import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
+import EmptyState from '@/components/EmptyState';
+import LoadingState from '@/components/LoadingState';
 import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
 import { formatLocalDate, shiftUtcDate, utcDateInputValue, utcWeekInputValues } from '@/domain/localDate';
 import { getCurrentCycleIteration, getCycleIterationCount, isCycleSlotAvailable } from '@/domain/trainingCycle';
@@ -130,9 +131,7 @@ export default function StudentRoutines({ profile, initialDate, onStartTraining 
       </section>
 
       {state.status === 'loading' && (
-        <p className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-400" role="status">
-          <TenantLoadingIndicator size={17} /> Cargando entrenamientos…
-        </p>
+        <LoadingState message="Cargando entrenamientos…" />
       )}
 
       {state.status === 'error' && (
@@ -143,11 +142,11 @@ export default function StudentRoutines({ profile, initialDate, onStartTraining 
       )}
 
       {state.status === 'loaded' && assignments.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-zinc-800 px-5 py-10 text-center">
-          <CalendarDays aria-hidden="true" className="mx-auto mb-3 text-zinc-500" size={25} />
-          <p className="text-sm font-semibold text-zinc-200">No hay un entrenamiento asignado para este día</p>
-          <p className="mt-1 text-xs text-zinc-400">Tu coach puede asignarte una rutina.</p>
-        </div>
+        <EmptyState
+          icon={CalendarDays}
+          title="No hay un entrenamiento asignado para este día"
+          description="Tu coach puede asignarte una rutina."
+        />
       )}
 
       {state.status === 'loaded' && assignments.length > 0 && (
