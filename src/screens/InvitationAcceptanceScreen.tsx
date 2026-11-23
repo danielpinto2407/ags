@@ -2,6 +2,7 @@ import { ArrowRight, UserRound } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import PasswordField from '@/components/PasswordField';
 import { invitationRepository } from '@/data/invitationRepository';
+import AppInput from '@/components/AppInput';
 
 interface InvitationAcceptanceScreenProps {
   invitationId: string;
@@ -70,10 +71,10 @@ export default function InvitationAcceptanceScreen({
             <label className="mb-1.5 block text-xs font-semibold text-zinc-300" htmlFor="invite-full-name">
               Nombre completo
             </label>
-            <input
+            <AppInput
               autoComplete="name"
               autoFocus
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-brand-500"
+              className="px-3.5 py-3"
               id="invite-full-name"
               onChange={(event) => setFullName(event.target.value)}
               placeholder="Tu nombre"

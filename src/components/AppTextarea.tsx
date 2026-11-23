@@ -1,0 +1,20 @@
+import type { TextareaHTMLAttributes } from 'react';
+
+interface AppTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  invalid?: boolean;
+}
+
+export default function AppTextarea({ invalid = false, className = '', ...props }: AppTextareaProps) {
+  return (
+    <textarea
+      aria-invalid={invalid || undefined}
+      className={`w-full rounded-xl border px-3.5 py-3 text-sm outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${invalid ? 'border-rose-500' : 'border-zinc-800 focus:border-brand-500'} ${className}`}
+      style={{
+        backgroundColor: 'var(--tenant-surface, #18181B)',
+        borderColor: invalid ? undefined : 'var(--tenant-border, #27272A)',
+        color: 'var(--tenant-text, #FAFAFA)',
+      }}
+      {...props}
+    />
+  );
+}

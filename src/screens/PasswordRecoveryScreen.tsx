@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import AppButton from '@/components/AppButton';
 import FeedbackMessage from '@/components/FeedbackMessage';
+import AppInput from '@/components/AppInput';
 import { ArrowLeft, ArrowRight, KeyRound, MailCheck } from 'lucide-react';
 import PasswordField from '@/components/PasswordField';
 
@@ -117,10 +118,10 @@ export default function PasswordRecoveryScreen({
                 <label className="mb-1.5 block text-xs font-semibold text-zinc-300" htmlFor="recovery-email">
                   Correo electrónico
                 </label>
-                <input
+                <AppInput
                   autoComplete="email"
                   autoFocus
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-brand-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="px-3.5 py-3"
                   disabled={isSubmitting}
                   id="recovery-email"
                   onChange={(event) => setEmail(event.target.value)}

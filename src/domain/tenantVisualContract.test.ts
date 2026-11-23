@@ -9,8 +9,10 @@ describe('tenant visual contract', () => {
     const login = readProjectFile('src/screens/LoginScreen.tsx');
     const recovery = readProjectFile('src/screens/PasswordRecoveryScreen.tsx');
 
-    expect(login).toContain('bg-brand-500 hover:bg-brand-action-hover');
-    expect(recovery.match(/bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover/g)).toHaveLength(2);
+    expect(login).toContain("import AppButton from '@/components/AppButton'");
+    expect(login).toContain('variant="primary"');
+    expect(recovery).toContain("import AppButton from '@/components/AppButton'");
+    expect(recovery).toContain('variant="primary"');
     const tailwind = readProjectFile('tailwind.config.js');
     expect(tailwind).toContain("500: 'var(--tenant-primary,");
     expect(tailwind).toContain("600: 'var(--tenant-secondary,");

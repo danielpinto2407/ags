@@ -3,6 +3,7 @@ import { Check } from 'lucide-react';
 import { invitationRepository, type InvitationDeliveryStatus } from '@/data/invitationRepository';
 import ModalShell from '@/components/ModalShell';
 import AppButton from '@/components/AppButton';
+import AppInput from '@/components/AppInput';
 
 interface InviteMemberModalProps {
   onClose: () => void;
@@ -65,10 +66,10 @@ export default function InviteMemberModal({ onClose }: InviteMemberModalProps) {
               <label className="mb-1.5 block text-xs font-semibold text-zinc-300" htmlFor="invite-email">
                 Correo electrónico
               </label>
-              <input
+              <AppInput
                 autoComplete="email"
                 autoFocus
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-brand-500"
+                className="px-3.5 py-3"
                 id="invite-email"
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="persona@correo.com"

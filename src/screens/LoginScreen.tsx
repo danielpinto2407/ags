@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react';
 import PasswordRecoveryScreen from '@/screens/PasswordRecoveryScreen';
 import AppButton from '@/components/AppButton';
 import FeedbackMessage from '@/components/FeedbackMessage';
+import AppInput from '@/components/AppInput';
 
 interface LoginScreenProps {
   tenantName: string;
@@ -75,7 +76,7 @@ export default function LoginScreen({
           <label htmlFor="login-email" className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
             Correo electrónico
           </label>
-          <input
+          <AppInput
             id="login-email"
             type="email"
             autoComplete="username"
@@ -83,7 +84,7 @@ export default function LoginScreen({
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="correo@ejemplo.com"
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
+            className="rounded-2xl px-4 py-3"
           />
         </div>
         <div>
@@ -91,7 +92,7 @@ export default function LoginScreen({
             Contraseña
           </label>
           <div className="relative">
-            <input
+            <AppInput
               id="login-password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
@@ -99,7 +100,7 @@ export default function LoginScreen({
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
-              className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 pr-11 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
+              className="rounded-2xl px-4 py-3 pr-11"
             />
             <button
               type="button"

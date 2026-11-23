@@ -4,6 +4,7 @@ import StatusToggle from '@/components/StatusToggle';
 import EmptyState from '@/components/EmptyState';
 import FeedbackMessage from '@/components/FeedbackMessage';
 import Header from '@/components/Header';
+import AppInput from '@/components/AppInput';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import CreateExerciseModal from '@/components/CreateExerciseModal';
 import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
@@ -146,12 +147,12 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
 
       <div className="relative">
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600" />
-        <input
+        <AppInput
           type="search"
           placeholder="Buscar ejercicio, músculo o equipo..."
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 py-3 pl-10 pr-4 text-sm text-zinc-200 placeholder-zinc-600 transition-colors focus:border-brand-500 focus:outline-none"
+          className="rounded-2xl py-3 pl-10 pr-4"
         />
       </div>
 

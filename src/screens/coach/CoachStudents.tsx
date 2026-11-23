@@ -4,6 +4,7 @@ import EmptyState from '@/components/EmptyState';
 import Header from '@/components/Header';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import InviteMemberModal from '@/components/InviteMemberModal';
+import AppInput from '@/components/AppInput';
 import CoachMemberCard from '@/components/CoachMemberCard';
 import { useCoachMembers } from '@/app/useCoachMembers';
 import type { CoachMember, CoachMemberStatus } from '@/domain/coachMember';
@@ -47,12 +48,12 @@ export default function CoachStudents({ coachId, onStudentSelect }: CoachStudent
       {/* Search */}
       <div className="relative">
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-600" />
-        <input
+        <AppInput
           type="text"
           placeholder="Buscar alumna..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl pl-10 pr-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-colors"
+          className="rounded-2xl pl-10 pr-4"
         />
       </div>
 

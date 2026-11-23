@@ -6,6 +6,8 @@ import { profileRepository } from '@/data/profileRepository';
 import { useTenantContext } from '@/app/tenant/tenantContext';
 import type { Profile } from '@/domain/profile';
 import { useCoachMembers } from '@/app/useCoachMembers';
+import AppTextarea from '@/components/AppTextarea';
+import AppSelect from '@/components/AppSelect';
 
 interface CoachProfileProps {
   profile: Profile;
@@ -132,8 +134,8 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
           <label className="block text-xs font-semibold text-zinc-300" htmlFor="tenant-login-description">
             Descripción del inicio de sesión
           </label>
-          <textarea
-            className="w-full resize-y rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-brand-500 focus:outline-none"
+          <AppTextarea
+            className="resize-y px-3 py-2.5"
             id="tenant-login-description"
             maxLength={280}
             onChange={(event) => {
@@ -216,8 +218,8 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
             ] as const).map(([key, label]) => (
               <label className="grid gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-[11px] text-zinc-400" key={key}>
                 <span>{label}</span>
-                <select
-                  className="min-h-10 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 text-xs text-zinc-200 outline-none focus:border-brand-500"
+                <AppSelect
+                  className="min-h-10 px-2.5 text-xs"
                   onChange={(event) => {
                     setBranding((current) => ({ ...current, [key]: event.target.value }));
                     setBrandingFeedback(null);
@@ -227,7 +229,7 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
                   {['DM Sans', 'Fraunces', 'Inter', 'Sora', 'Roboto', 'Montserrat', 'Poppins', 'Manrope', 'Lato', 'Nunito', 'Merriweather', 'Playfair Display', 'Source Serif 4', 'Raleway', 'Work Sans'].map((font) => (
                     <option key={font} value={font}>{font}</option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
             ))}
           </div>
