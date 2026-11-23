@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
-import ModalShell from '@/components/ModalShell';
-import { Check, X } from 'lucide-react';
+import { useState } from 'react';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface StatusToggleProps {
   itemName: string;
@@ -24,21 +23,6 @@ export default function StatusToggle({
   const [confirming, setConfirming] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    if (!confirming) return;
-    const scrollContainer = document.querySelector<HTMLElement>('[data-app-scroll-container], main.platform-admin');
-    const previousOverflow = scrollContainer?.style.overflowY;
-    if (scrollContainer) scrollContainer.style.overflowY = 'hidden';
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !updating) setConfirming(false);
-    };
-    window.addEventListener('keydown', closeOnEscape);
-    return () => {
-      window.removeEventListener('keydown', closeOnEscape);
-      if (scrollContainer) scrollContainer.style.overflowY = previousOverflow ?? '';
-    };
-  }, [confirming, updating]);
-
   const confirmChange = async () => {
     setUpdating(true);
     setError(null);
@@ -75,33 +59,14 @@ export default function StatusToggle({
         </button>
       </div>
       {confirming && (
-        <ModalShell
-          title={active ? `${confirmActiveTitle}?` : `${confirmInactiveTitle}?`}
-          subtitle={itemName}
-          closeLabel="Cancelar cambio"
-          onClose={() => { if (!updating) setConfirming(false); }}
-          size="sm"
-        >
-          {error && <p className="mb-3 text-xs text-rose-300" role="alert">{error}</p>}
-          <div className="flex justify-end gap-2">
-            <button
-              aria-label="Cancelar cambio"
-              className="min-h-10 rounded-xl px-3 text-xs font-semibold"
-              style={{ color: 'var(--tenant-text, #FAFAFA)' }}
-              disabled={updating}
-              onClick={() => setConfirming(false)}
-              type="button"
-            ><X className="mr-1 inline" size={14} />Cancelar</button>
-            <button
-              aria-label="Confirmar cambio"
-              className="min-h-10 rounded-xl px-3 text-xs font-semibold disabled:opacity-50"
-              style={{ backgroundColor: 'var(--tenant-primary, #71717A)', color: 'var(--tenant-on-primary, #FAFAFA)' }}
-              disabled={updating}
-              onClick={() => void confirmChange()}
-              type="button"
-            ><Check className="mr-1 inline" size={14} />{updating ? 'Guardando…' : 'Confirmar'}</button>
-          </div>
-        </ModalShell>
+        <ConfirmModal
+          title={active ? confirmActiveTitle : confirmInactiveTitle}
+          message={error ?? itemName}
+          confirmLabel={active ? 'Desactivar' : 'Activar'}
+          busy={updating}
+          onClose={() => setConfirming(false)}
+          onConfirm={confirmChange}
+        />
       )}
     </div>
   );

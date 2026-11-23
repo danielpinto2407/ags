@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -20,6 +20,13 @@ describe('shared UI contract', () => {
       .filter((path) => !path.includes('sharedUiContract.test.ts'))
       .filter((path) => /window\.confirm|window\.alert|confirm\s*\(/.test(readFileSync(path, 'utf8')));
     expect(violations).toEqual([]);
+  });
+
+  it('keeps only the shared UI primitives for common states', () => {
+    expect(existsSync(resolve(process.cwd(), 'src/components/CoachStatusToggle.tsx'))).toBe(false);
+    expect(existsSync(resolve(process.cwd(), 'src/components/MemberStatusToggle.tsx'))).toBe(false);
+    expect(readProjectFile('src/components/AppButton.tsx')).toContain('variant');
+    expect(readProjectFile('src/components/FeedbackMessage.tsx')).toContain('role');
   });
 
   it('uses the shared modal shell for overlay dialogs', () => {

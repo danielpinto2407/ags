@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { Check, MailPlus } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { invitationRepository, type InvitationDeliveryStatus } from '@/data/invitationRepository';
 import ModalShell from '@/components/ModalShell';
+import AppButton from '@/components/AppButton';
 
 interface InviteMemberModalProps {
   onClose: () => void;
@@ -80,22 +81,12 @@ export default function InviteMemberModal({ onClose }: InviteMemberModalProps) {
             {error && <p className="text-sm text-rose-400" role="alert">{error}</p>}
 
             <div className="flex gap-3 pt-1">
-              <button
-                className="flex-1 rounded-xl border border-zinc-800 px-4 py-3 text-sm font-semibold text-zinc-300 hover:bg-zinc-900"
-                disabled={isSubmitting}
-                onClick={onClose}
-                type="button"
-              >
+              <AppButton variant="secondary" className="flex-1" disabled={isSubmitting} onClick={onClose} type="button">
                 Cancelar
-              </button>
-              <button
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 text-sm font-bold text-white hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-60"
-                disabled={isSubmitting || !email.trim()}
-                type="submit"
-              >
-                <MailPlus size={16} />
+              </AppButton>
+              <AppButton variant="primary" className="flex-1" disabled={isSubmitting || !email.trim()} type="submit">
                 {isSubmitting ? 'Enviando…' : 'Enviar invitación'}
-              </button>
+              </AppButton>
             </div>
           </form>
         )}

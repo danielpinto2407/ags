@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { Check } from 'lucide-react';
 import SelectModalField from '@/components/SelectModalField';
 import ModalShell from '@/components/ModalShell';
+import AppButton from '@/components/AppButton';
 import {
   EXERCISE_DIFFICULTIES,
   EXERCISE_EQUIPMENT,
@@ -281,22 +282,18 @@ export default function CreateExerciseModal({ onClose, onSave, exercise, equipme
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button
+          <AppButton
+            variant="secondary"
             onClick={onClose}
             disabled={saving}
             type="button"
-            className="flex-1 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold rounded-2xl text-sm transition-colors"
+            className="flex-1"
           >
             Cancelar
-          </button>
-          <button
-            disabled={saving}
-            type="submit"
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-brand-500 py-3.5 text-sm font-bold text-white transition-colors hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-60"
-          >
-            <Check size={16} />
+          </AppButton>
+          <AppButton variant="primary" className="flex-1" disabled={saving} icon={<Check size={16} />} type="submit">
             {saving ? 'Guardando…' : exercise ? 'Guardar cambios' : 'Crear ejercicio'}
-          </button>
+          </AppButton>
         </div>
     </ModalShell>
   );

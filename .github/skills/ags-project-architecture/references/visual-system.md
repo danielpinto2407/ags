@@ -16,7 +16,8 @@
 - `StatusToggle` is the standard reversible active/archived/suspended control. It must use confirm-before-change behavior and close after success or cancellation.
 - `ConfirmModal` wraps destructive or bulk confirmations and must replace `window.confirm`, native alerts and independent confirmation markup.
 - `FeedbackMessage` is the standard inline success/error/warning/info state. It must carry `role="alert"` or `role="status"` and tenant/theme-compatible colors.
-- `AppButton` owns primary, secondary, danger and ghost command variants. Screens should not redefine the same button geometry and state classes repeatedly.
+- `AppButton` owns primary, secondary, danger and ghost command variants. Screens should not redefine the same button geometry and state classes repeatedly. It must be adopted instead of preserving parallel command components.
+- Add no fallback/legacy component while migrating a shared primitive. Remove obsolete variants and imports in the same edit, and prove usage with search/typecheck/lint/tests. A new shared component must be reachable from real UI, not retained as speculative dead code.
 - `SelectModalField`, `PasswordField`, `ProfileImagePicker`, `ModalShell`, `StatusToggle`, `FeedbackMessage`, `AppButton` and future shared fields are first-choice primitives. Search these components before adding a new modal, toggle, message or form control.
 - A confirmation must show the item/action affected, allow cancel, disable repeat submission, expose an explicit busy label, and never mutate data before confirmation.
 - All modals must close by X, backdrop, confirmed/cancelled action or Escape. They must lock the app scroll while open and restore it afterward.

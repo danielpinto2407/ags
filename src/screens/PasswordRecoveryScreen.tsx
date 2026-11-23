@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react';
+import AppButton from '@/components/AppButton';
+import FeedbackMessage from '@/components/FeedbackMessage';
 import { ArrowLeft, ArrowRight, KeyRound, MailCheck } from 'lucide-react';
 import PasswordField from '@/components/PasswordField';
 
@@ -97,13 +99,14 @@ export default function PasswordRecoveryScreen({
               <p className="text-sm leading-relaxed text-zinc-400">
                 Si el correo está asociado a una cuenta, recibirás un enlace para continuar. Revisa también la carpeta de correo no deseado.
               </p>
-              <button
-                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:bg-zinc-900"
+              <AppButton
+                variant="secondary"
+                className="w-full"
                 onClick={handleReturn}
                 type="button"
               >
                 <ArrowLeft aria-hidden="true" size={16} /> Volver al inicio de sesión
-              </button>
+              </AppButton>
             </div>
           ) : (
             <form className="mt-5 space-y-4" onSubmit={handleRequest}>
@@ -126,23 +129,25 @@ export default function PasswordRecoveryScreen({
                   value={email}
                 />
               </div>
-              {error && <p className="text-sm text-rose-400" role="alert">{error}</p>}
-              <button
-                className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-60"
+              {error && <FeedbackMessage kind="error" message={error} />}
+              <AppButton
+                variant="primary"
+                className="w-full"
                 disabled={isSubmitting}
                 type="submit"
               >
                 {isSubmitting ? 'Enviando…' : 'Enviar instrucciones'}
                 {!isSubmitting && <ArrowRight aria-hidden="true" size={16} />}
-              </button>
-              <button
-                className="min-h-11 w-full rounded-xl px-4 text-sm font-semibold text-zinc-400 hover:text-white disabled:opacity-60"
+              </AppButton>
+              <AppButton
+                variant="ghost"
+                className="w-full"
                 disabled={isSubmitting}
                 onClick={handleReturn}
                 type="button"
               >
                 Volver al inicio de sesión
-              </button>
+              </AppButton>
             </form>
           )
         )}
@@ -177,14 +182,15 @@ export default function PasswordRecoveryScreen({
                 Las contraseñas no coinciden todavía.
               </p>
             )}
-            {error && <p className="text-sm text-rose-400" role="alert">{error}</p>}
-            <button
-              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 text-sm font-bold text-white hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-60"
+            {error && <FeedbackMessage kind="error" message={error} />}
+            <AppButton
+              variant="primary"
+              className="w-full"
               disabled={isSubmitting || password.length < 10 || password !== passwordConfirmation}
               type="submit"
             >
               {isSubmitting ? 'Actualizando…' : 'Guardar nueva contraseña'}
-            </button>
+            </AppButton>
           </form>
         )}
 
@@ -195,16 +201,17 @@ export default function PasswordRecoveryScreen({
                 ? 'Tu contraseña se actualizó. Ya puedes iniciar sesión con la nueva contraseña.'
                 : 'El enlace puede haber caducado o ya se utilizó. Solicita uno nuevo para continuar.'}
             </p>
-            {error && <p className="text-sm text-rose-400" role="alert">{error}</p>}
-            <button
-              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:bg-zinc-900 disabled:cursor-wait disabled:opacity-60"
+            {error && <FeedbackMessage kind="error" message={error} />}
+            <AppButton
+              variant="secondary"
+              className="w-full"
               disabled={isSubmitting}
               onClick={handleReturn}
               type="button"
             >
               {isSubmitting ? 'Volviendo…' : 'Ir al inicio de sesión'}
               {!isSubmitting && <ArrowRight aria-hidden="true" size={16} />}
-            </button>
+            </AppButton>
           </div>
         )}
     </section>

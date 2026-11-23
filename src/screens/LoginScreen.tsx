@@ -1,6 +1,8 @@
 import { Dumbbell, Eye, EyeOff } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import PasswordRecoveryScreen from '@/screens/PasswordRecoveryScreen';
+import AppButton from '@/components/AppButton';
+import FeedbackMessage from '@/components/FeedbackMessage';
 
 interface LoginScreenProps {
   tenantName: string;
@@ -110,27 +112,25 @@ export default function LoginScreen({
           </div>
         </div>
 
-        {error && (
-          <p role="alert" aria-live="polite" className="rounded-xl border border-red-900/60 bg-red-950/30 px-3 py-2 text-sm text-red-300">
-            {error}
-          </p>
-        )}
+        {error && <FeedbackMessage kind="error" message={error} />}
 
-        <button
+        <AppButton
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3.5 font-bold rounded-2xl text-sm transition-all bg-brand-500 hover:bg-brand-action-hover text-white shadow-neon disabled:cursor-not-allowed disabled:opacity-60"
+          variant="primary"
+          className="w-full shadow-neon"
         >
           {isSubmitting ? 'Ingresando…' : 'Ingresar'}
-        </button>
-        <button
-          className="min-h-11 w-full rounded-xl px-4 text-sm font-semibold text-zinc-400 hover:text-white disabled:opacity-60"
+        </AppButton>
+        <AppButton
+          variant="ghost"
+          className="w-full"
           disabled={isSubmitting}
           onClick={() => setShowRecovery(true)}
           type="button"
         >
           Olvidé mi contraseña
-        </button>
+        </AppButton>
       </form>
       )}
     </main>
