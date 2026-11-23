@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Archive, Check, Copy, Dumbbell, Pencil, Plus, RefreshCw, Search, Undo2 } from 'lucide-react';
+import { Copy, Dumbbell, Pencil, Plus, RefreshCw, Search } from 'lucide-react';
+import StatusToggle from '@/components/StatusToggle';
 import Header from '@/components/Header';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import CreateExerciseModal from '@/components/CreateExerciseModal';
@@ -40,7 +41,6 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
   const [difficultyFilter, setDifficultyFilter] = useState<'ALL' | ExerciseDefinitionDifficulty>('ALL');
   const [editorExercise, setEditorExercise] = useState<ExerciseDefinition | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [archivingExercise, setArchivingExercise] = useState<ExerciseDefinition | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -81,13 +81,11 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
     }
   };
 
-  const confirmArchive = async () => {
-    if (!archivingExercise) return;
+  const setExerciseActive = async (exercise: ExerciseDefinition, active: boolean) => {
     await runAction(
-      () => library.archive(archivingExercise.id, true),
-      'Ejercicio archivado. Ya no estará disponible para nuevas programaciones.'
+      () => library.archive(exercise.id, !active),
+      active ? 'Ejercicio activado.' : 'Ejercicio archivado. Ya no estará disponible para nuevas programaciones.'
     );
-    setArchivingExercise(null);
   };
 
   if (!tenantId) {
@@ -250,18 +248,20 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
                   >
                     <Copy size={12} /> Copiar al gimnasio
                   </button>
-                ) : exercise.archivedAt ? (
-                  <button className="flex min-h-8 items-center gap-1.5 rounded-lg px-2 text-[10px] font-semibold text-zinc-300 hover:bg-zinc-800" onClick={() => void runAction(() => library.archive(exercise.id, false), 'Ejercicio restaurado.')} type="button">
-                    <Undo2 size={12} /> Restaurar
-                  </button>
                 ) : (
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <button aria-label={`Editar ${exercise.name}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white" onClick={() => { setEditorExercise(exercise); setShowCreateModal(true); }} title="Editar" type="button">
                       <Pencil size={14} />
                     </button>
-                    <button aria-label={`Archivar ${exercise.name}`} className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 hover:bg-rose-950/40 hover:text-rose-300" onClick={() => setArchivingExercise(exercise)} title="Archivar" type="button">
-                      <Archive size={14} />
-                    </button>
+                    <StatusToggle
+                      itemName={exercise.name}
+                      active={!exercise.archivedAt}
+                      activeLabel="Activo"
+                      inactiveLabel="Archivado"
+                      confirmActiveTitle="Archivar ejercicio"
+                      confirmInactiveTitle="Restaurar ejercicio"
+                      onChange={(active) => setExerciseActive(exercise, active)}
+                    />
                   </div>
                 )}
               </div>
@@ -297,20 +297,6 @@ export default function CoachExerciseLibrary({ profile }: CoachExerciseLibraryPr
         />
       )}
 
-      {archivingExercise && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 px-5 backdrop-blur-sm" role="presentation">
-          <section aria-labelledby="archive-title" aria-modal="true" className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl" role="dialog">
-            <h2 id="archive-title" className="font-display text-sm font-bold text-white">¿Archivar ejercicio?</h2>
-            <p className="mt-2 text-xs leading-relaxed text-zinc-400">{archivingExercise.name} dejará de aparecer para nuevas programaciones. Podrás restaurarlo después.</p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button className="rounded-xl px-3 py-2 text-xs font-semibold text-zinc-400 hover:bg-zinc-900" onClick={() => setArchivingExercise(null)} type="button">Cancelar</button>
-              <button className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-500" onClick={() => void confirmArchive()} type="button">
-                <Check size={13} /> Archivar
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { Mail, UserRound } from 'lucide-react';
-import MemberStatusToggle from '@/components/MemberStatusToggle';
+import StatusToggle from '@/components/StatusToggle';
 import ProfileMediaImage from '@/components/ProfileMediaImage';
 import type { CoachMember, CoachMemberStatus } from '@/domain/coachMember';
 
@@ -43,7 +43,15 @@ export default function CoachMemberCard({ member, onSelect, onStatusChange }: Co
           </span>
         </span>
       </button>
-      <MemberStatusToggle member={member} onChange={onStatusChange} />
+      <StatusToggle
+        itemName={member.fullName}
+        active={member.status === 'ACTIVE'}
+        activeLabel="Activo"
+        inactiveLabel="Inactivo"
+        confirmActiveTitle="Desactivar acceso"
+        confirmInactiveTitle="Reactivar acceso"
+        onChange={(active) => onStatusChange(member.id, active ? 'ACTIVE' : 'INACTIVE')}
+      />
     </article>
   );
 }

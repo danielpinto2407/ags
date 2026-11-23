@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Archive, Building2, Dumbbell, LogOut, RefreshCw, Save, Plus, UserPlus } from 'lucide-react';
-import CoachStatusToggle from '@/components/CoachStatusToggle';
+import { Building2, Dumbbell, LogOut, RefreshCw, Save, Plus, UserPlus } from 'lucide-react';
+import StatusToggle from '@/components/StatusToggle';
 import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import {
   platformEquipmentRepository,
@@ -382,7 +382,15 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
                           <p className="truncate text-sm font-semibold text-white">{coach.fullName}</p>
                           <span className={`mt-1 block text-[10px] font-bold ${coach.status === 'ACTIVE' ? 'text-emerald-300' : 'text-rose-300'}`}>{coach.status === 'ACTIVE' ? 'Activo' : 'Suspendido'}</span>
                         </div>
-                        <CoachStatusToggle coachId={coach.id} coachName={coach.fullName} active={coach.status === 'ACTIVE'} onChange={setCoachStatus} />
+                        <StatusToggle
+                          itemName={coach.fullName}
+                          active={coach.status === 'ACTIVE'}
+                          activeLabel="Activo"
+                          inactiveLabel="Suspendido"
+                          confirmActiveTitle="Desactivar coach"
+                          confirmInactiveTitle="Reactivar coach"
+                          onChange={(active) => setCoachStatus(coach.id, active)}
+                        />
                       </div>
                     ))}
                   </div>
@@ -476,15 +484,15 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
                       >
                         <Save size={14} />
                       </button>
-                      <button
-                        aria-label={option.archivedAt ? `Restaurar ${option.name}` : `Archivar ${option.name}`}
-                        className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white"
-                        disabled={savingId === option.id}
-                        onClick={() => void setArchived(option, !option.archivedAt)}
-                        type="button"
-                      >
-                        {option.archivedAt ? <RefreshCw size={14} /> : <Archive size={14} />}
-                      </button>
+                      <StatusToggle
+                        itemName={option.name}
+                        active={!option.archivedAt}
+                        activeLabel="Activo"
+                        inactiveLabel="Archivado"
+                        confirmActiveTitle="Archivar equipo"
+                        confirmInactiveTitle="Restaurar equipo"
+                        onChange={(active) => setArchived(option, !active)}
+                      />
                     </article>
                   ))}
                   {options.length === 0 && <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-xs text-zinc-500">Este gimnasio no tiene opciones configuradas.</p>}
