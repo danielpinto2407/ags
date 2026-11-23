@@ -15,6 +15,13 @@ interface ModalShellProps {
   onKeyDown?: (event: React.KeyboardEvent<HTMLElement>) => void;
 }
 
+let activeModalLocks = 0;
+let lockedScrollContainer: HTMLElement | null = null;
+let lockedPreviousOverflowY = '';
+let lockedPreviousOverflowX = '';
+let lockedScrollTop = 0;
+let lockedScrollLeft = 0;
+
 export default function ModalShell({
   title,
   subtitle,
@@ -31,8 +38,19 @@ export default function ModalShell({
 
   useEffect(() => {
     const scrollContainer = document.querySelector<HTMLElement>('[data-app-scroll-container], main.platform-admin');
-    const previousOverflow = scrollContainer?.style.overflowY;
-    if (scrollContainer) scrollContainer.style.overflowY = 'hidden';
+
+    if (activeModalLocks === 0) {
+      lockedScrollContainer = scrollContainer;
+      lockedPreviousOverflowY = scrollContainer?.style.overflowY ?? '';
+      lockedPreviousOverflowX = scrollContainer?.style.overflowX ?? '';
+      lockedScrollTop = scrollContainer?.scrollTop ?? 0;
+      lockedScrollLeft = scrollContainer?.scrollLeft ?? 0;
+      if (scrollContainer) {
+        scrollContainer.style.overflowY = 'hidden';
+        scrollContainer.style.overflowX = 'hidden';
+      }
+    }
+    activeModalLocks += 1;
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
@@ -41,7 +59,14 @@ export default function ModalShell({
 
     return () => {
       window.removeEventListener('keydown', closeOnEscape);
-      if (scrollContainer) scrollContainer.style.overflowY = previousOverflow ?? '';
+      activeModalLocks = Math.max(0, activeModalLocks - 1);
+      if (activeModalLocks === 0 && lockedScrollContainer) {
+        lockedScrollContainer.style.overflowY = lockedPreviousOverflowY;
+        lockedScrollContainer.style.overflowX = lockedPreviousOverflowX;
+        lockedScrollContainer.scrollTop = lockedScrollTop;
+        lockedScrollContainer.scrollLeft = lockedScrollLeft;
+        lockedScrollContainer = null;
+      }
     };
   }, [onClose]);
 
