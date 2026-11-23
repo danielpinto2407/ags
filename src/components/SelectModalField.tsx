@@ -76,8 +76,8 @@ export default function SelectModalField({
 
   const selectOption = (option: SelectModalOption) => {
     if (option.disabled) return;
-    onChange(option.value);
     setOpen(false);
+    onChange(option.value);
   };
 
   const handleListboxKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -151,6 +151,7 @@ export default function SelectModalField({
             aria-modal="true"
             className="max-h-[min(78vh,620px)] w-full max-w-lg overscroll-none overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl shadow-black/60 animate-slide-up sm:animate-scale-in"
             onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
             onKeyDown={handleDialogKeyDown}
             ref={dialogRef}
             role="dialog"
@@ -183,7 +184,11 @@ export default function SelectModalField({
                         : 'text-zinc-300 hover:bg-zinc-900'
                     } ${option.disabled ? 'cursor-not-allowed opacity-40' : ''}`}
                     disabled={option.disabled}
-                    onClick={() => selectOption(option)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      selectOption(option);
+                    }}
+                    onPointerDown={(event) => event.stopPropagation()}
                     role="option"
                     ref={(element) => { optionRefs.current[index] = element; }}
                     style={selected ? { backgroundColor: 'var(--tenant-primary)', color: 'var(--tenant-background)' } : undefined}

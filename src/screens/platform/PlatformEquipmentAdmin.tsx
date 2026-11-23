@@ -274,7 +274,11 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
             <button
               className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 text-xs font-semibold ${activeSection === section ? 'bg-brand-600 text-white' : 'text-zinc-400 hover:bg-zinc-900'}`}
               key={section}
-              onClick={() => setActiveSection(section)}
+              onClick={() => {
+                setActiveSection(section);
+                setError(null);
+                setNotice(null);
+              }}
               type="button"
             >
               <Icon aria-hidden="true" size={14} /> {label}
