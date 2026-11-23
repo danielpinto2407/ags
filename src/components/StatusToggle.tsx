@@ -89,7 +89,8 @@ export default function StatusToggle({
       </div>
       {confirming && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 px-4 pb-4 backdrop-blur-sm sm:items-center sm:pb-0"
+          className="fixed inset-0 z-[100] flex items-end justify-center px-4 pb-4 backdrop-blur-sm sm:items-center sm:pb-0"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--tenant-background, #09090B) 72%, transparent)' }}
           onPointerDown={(event) => {
             if (event.target === event.currentTarget && !updating) setConfirming(false);
           }}
@@ -98,27 +99,34 @@ export default function StatusToggle({
           <section
             aria-modal="true"
             aria-labelledby={titleId}
-            className="w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-950 p-5 shadow-2xl"
-            style={portalTheme}
+            className="w-full max-w-sm rounded-2xl p-5 shadow-2xl"
+            style={{
+              ...portalTheme,
+              backgroundColor: 'var(--tenant-surface, #18181B)',
+              border: '1px solid var(--tenant-border, #27272A)',
+              color: 'var(--tenant-text, #FAFAFA)',
+            }}
             onPointerDown={(event) => event.stopPropagation()}
             role="dialog"
           >
-            <h2 id={titleId} className="text-sm font-bold text-white">
+            <h2 id={titleId} className="text-sm font-bold" style={{ color: 'var(--tenant-text, #FAFAFA)' }}>
               {active ? `${confirmActiveTitle}?` : `${confirmInactiveTitle}?`}
             </h2>
-            <p className="mt-2 text-xs leading-relaxed text-zinc-400">{itemName}</p>
+            <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--tenant-muted, #A1A1AA)' }}>{itemName}</p>
             {error && <p className="mt-3 text-xs text-rose-300" role="alert">{error}</p>}
             <div className="mt-5 flex justify-end gap-2">
               <button
                 aria-label="Cancelar cambio"
-                className="min-h-10 rounded-xl px-3 text-xs font-semibold text-zinc-300 hover:bg-zinc-900"
+                className="min-h-10 rounded-xl px-3 text-xs font-semibold"
+                style={{ color: 'var(--tenant-text, #FAFAFA)' }}
                 disabled={updating}
                 onClick={() => setConfirming(false)}
                 type="button"
               ><X className="mr-1 inline" size={14} />Cancelar</button>
               <button
                 aria-label="Confirmar cambio"
-                className="min-h-10 rounded-xl bg-brand-500 px-3 text-xs font-semibold text-white hover:bg-brand-action-hover disabled:opacity-50"
+                className="min-h-10 rounded-xl px-3 text-xs font-semibold disabled:opacity-50"
+                style={{ backgroundColor: 'var(--tenant-primary, #71717A)', color: 'var(--tenant-on-primary, #FAFAFA)' }}
                 disabled={updating}
                 onClick={() => void confirmChange()}
                 type="button"
