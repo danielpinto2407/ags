@@ -123,7 +123,13 @@ export default function SelectModalField({
       <button
         aria-haspopup="dialog"
         aria-label={`${ariaLabel}: ${selectedOption?.label ?? placeholder}`}
-        className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-left text-sm text-zinc-200 shadow-sm transition-colors hover:border-brand-700 hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border px-3 text-left text-sm shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        style={{
+          backgroundColor: 'var(--tenant-surface)',
+          borderColor: 'var(--tenant-border)',
+          color: 'var(--tenant-text)',
+          outlineColor: 'var(--tenant-primary)',
+        }}
         disabled={disabled}
         onClick={() => {
           const selectedIndex = options.findIndex((option) => option.value === value && !option.disabled);
@@ -134,10 +140,10 @@ export default function SelectModalField({
         ref={triggerRef}
         type="button"
       >
-        <span className={`min-w-0 flex-1 truncate ${selectedOption ? 'text-zinc-100' : 'text-zinc-500'}`}>
+        <span className="min-w-0 flex-1 truncate" style={{ color: selectedOption ? 'var(--tenant-text)' : 'var(--tenant-muted)' }}>
           {selectedOption?.label ?? placeholder}
         </span>
-        <ChevronDown aria-hidden="true" className="shrink-0 text-brand-400" size={16} />
+        <ChevronDown aria-hidden="true" className="shrink-0" size={16} style={{ color: 'var(--tenant-primary)' }} />
       </button>
 
       {open && (
@@ -158,11 +164,10 @@ export default function SelectModalField({
                     key={option.value}
                     aria-disabled={option.disabled || undefined}
                     aria-selected={selected}
-                    className={`flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-brand-400 ${
-                      selected
-                        ? 'font-semibold'
-                        : 'text-zinc-300 hover:bg-zinc-900'
-                    } ${option.disabled ? 'cursor-not-allowed opacity-40' : ''}`}
+                    className={`flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset ${option.disabled ? 'cursor-not-allowed opacity-40' : ''}`}
+                    style={selected
+                      ? { backgroundColor: 'var(--tenant-primary)', color: 'var(--tenant-on-primary, var(--tenant-background))', fontWeight: 600 }
+                      : { backgroundColor: 'transparent', color: 'var(--tenant-text)' }}
                     disabled={option.disabled}
                     onClick={(event) => {
                       event.stopPropagation();
@@ -171,19 +176,18 @@ export default function SelectModalField({
                     onPointerDown={(event) => event.stopPropagation()}
                     role="option"
                     ref={(element) => { optionRefs.current[index] = element; }}
-                    style={selected ? { backgroundColor: 'var(--tenant-primary)', color: 'var(--tenant-background)' } : undefined}
                     tabIndex={focusedIndex === index ? 0 : -1}
                     type="button"
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{option.label}</span>
-                      {option.description && <span className={`mt-0.5 block truncate text-[10px] ${selected ? 'text-white/80' : 'text-zinc-500'}`}>{option.description}</span>}
+                      {option.description && <span className="mt-0.5 block truncate text-[10px]" style={{ color: selected ? 'var(--tenant-on-primary, var(--tenant-background))' : 'var(--tenant-muted)' }}>{option.description}</span>}
                     </span>
-                    {selected && <Check aria-hidden="true" className="shrink-0" size={16} style={{ color: 'var(--tenant-background)' }} />}
+                    {selected && <Check aria-hidden="true" className="shrink-0" size={16} style={{ color: 'var(--tenant-on-primary, var(--tenant-background))' }} />}
                   </button>
                 );
               })}
-              {options.length === 0 && <p className="px-3 py-8 text-center text-xs text-zinc-500">No hay opciones disponibles.</p>}
+              {options.length === 0 && <p className="px-3 py-8 text-center text-xs" style={{ color: 'var(--tenant-muted)' }}>No hay opciones disponibles.</p>}
             </div>
         </ModalShell>
       )}

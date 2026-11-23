@@ -100,7 +100,7 @@ export default function ModalShell({
         if (event.target === event.currentTarget) onClose();
       }}
       role="presentation"
-      style={{ backgroundColor: 'color-mix(in srgb, var(--tenant-background, #09090B) 72%, transparent)' }}
+      style={{ backgroundColor: 'color-mix(in srgb, var(--tenant-primary, #71717A) 18%, transparent)' }}
     >
       {panel}
     </div>,
