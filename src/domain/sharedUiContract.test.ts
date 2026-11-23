@@ -44,11 +44,9 @@ describe('shared UI contract', () => {
     const statusToggle = readProjectFile('src/components/StatusToggle.tsx');
     const confirmModal = readProjectFile('src/components/ConfirmModal.tsx');
 
-    expect(modalShell).toContain('activeModalLocks');
-    expect(modalShell).toContain('lockedScrollTop');
-    expect(modalShell).toContain('lockedScrollLeft');
-    expect(modalShell).toContain('lockedBodyOverflowY');
-    expect(modalShell).toContain('onCloseRef');
+    expect(modalShell).not.toContain('activeModalLocks');
+    expect(modalShell).not.toContain('lockedScrollTop');
+    expect(modalShell).toContain('touch-none');
     expect(modalShell).toContain('createPortal');
     expect(modalShell).toContain("var(--tenant-surface");
     expect(statusToggle).toContain('ConfirmModal');
