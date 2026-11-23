@@ -27,6 +27,9 @@ describe('shared UI contract', () => {
     expect(existsSync(resolve(process.cwd(), 'src/components/MemberStatusToggle.tsx'))).toBe(false);
     expect(readProjectFile('src/components/AppButton.tsx')).toContain('variant');
     expect(readProjectFile('src/components/FeedbackMessage.tsx')).toContain('role');
+    expect(readProjectFile('src/components/AppInput.tsx')).toContain('tenant-surface');
+    expect(readProjectFile('src/components/AppTextarea.tsx')).toContain('tenant-surface');
+    expect(readProjectFile('src/components/AppSelect.tsx')).toContain('tenant-surface');
   });
 
   it('uses shared empty and loading state components', () => {
