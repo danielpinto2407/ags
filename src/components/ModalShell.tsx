@@ -1,4 +1,4 @@
-import { useEffect, useId, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { useEffect, useId, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -21,6 +21,8 @@ let lockedPreviousOverflowY = '';
 let lockedPreviousOverflowX = '';
 let lockedScrollTop = 0;
 let lockedScrollLeft = 0;
+let lockedBodyOverflowY = '';
+let lockedBodyOverflowX = '';
 
 export default function ModalShell({
   title,
@@ -35,6 +37,11 @@ export default function ModalShell({
   onKeyDown,
 }: ModalShellProps) {
   const titleId = useId();
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const scrollContainer = document.querySelector<HTMLElement>('[data-app-scroll-container], main.platform-admin');
@@ -45,15 +52,19 @@ export default function ModalShell({
       lockedPreviousOverflowX = scrollContainer?.style.overflowX ?? '';
       lockedScrollTop = scrollContainer?.scrollTop ?? 0;
       lockedScrollLeft = scrollContainer?.scrollLeft ?? 0;
+      lockedBodyOverflowY = document.body.style.overflowY;
+      lockedBodyOverflowX = document.body.style.overflowX;
       if (scrollContainer) {
         scrollContainer.style.overflowY = 'hidden';
         scrollContainer.style.overflowX = 'hidden';
       }
+      document.body.style.overflowY = 'hidden';
+      document.body.style.overflowX = 'hidden';
     }
     activeModalLocks += 1;
 
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') onCloseRef.current();
     };
     window.addEventListener('keydown', closeOnEscape);
 
@@ -65,10 +76,12 @@ export default function ModalShell({
         lockedScrollContainer.style.overflowX = lockedPreviousOverflowX;
         lockedScrollContainer.scrollTop = lockedScrollTop;
         lockedScrollContainer.scrollLeft = lockedScrollLeft;
+        document.body.style.overflowY = lockedBodyOverflowY;
+        document.body.style.overflowX = lockedBodyOverflowX;
         lockedScrollContainer = null;
       }
     };
-  }, [onClose]);
+  }, []);
 
   const maxWidth = size === 'sm' ? 'max-w-sm' : size === 'lg' ? 'max-w-[520px]' : 'max-w-lg';
   const themeRoot = document.querySelector<HTMLElement>('.tenant-app, main.platform-admin');

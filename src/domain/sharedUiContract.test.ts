@@ -47,6 +47,8 @@ describe('shared UI contract', () => {
     expect(modalShell).toContain('activeModalLocks');
     expect(modalShell).toContain('lockedScrollTop');
     expect(modalShell).toContain('lockedScrollLeft');
+    expect(modalShell).toContain('lockedBodyOverflowY');
+    expect(modalShell).toContain('onCloseRef');
     expect(modalShell).toContain('createPortal');
     expect(modalShell).toContain("var(--tenant-surface");
     expect(statusToggle).toContain('ConfirmModal');
