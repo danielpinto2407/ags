@@ -3,6 +3,8 @@ import { Check } from 'lucide-react';
 import SelectModalField from '@/components/SelectModalField';
 import ModalShell from '@/components/ModalShell';
 import AppButton from '@/components/AppButton';
+import AppInput from '@/components/AppInput';
+import AppTextarea from '@/components/AppTextarea';
 import {
   EXERCISE_DIFFICULTIES,
   EXERCISE_EQUIPMENT,
@@ -42,8 +44,6 @@ const DEFAULT_EXERCISE: ExerciseDefinitionInput = {
   tips: '',
   videoUrl: null,
 };
-
-const fieldClass = 'w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-sm text-zinc-200 placeholder-zinc-600 transition-colors focus:border-brand-500 focus:outline-none';
 
 export default function CreateExerciseModal({ onClose, onSave, exercise, equipmentOptions }: CreateExerciseModalProps) {
   const equipmentByLabel = new Map<string, string>();
@@ -154,22 +154,21 @@ export default function CreateExerciseModal({ onClose, onSave, exercise, equipme
     >
         {/* Name */}
         <div className="mb-4">
-          <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
+          <label className="text-[11px] uppercase tracking-wide font-semibold mb-1.5 block" style={{ color: 'var(--tenant-muted)' }}>
             Nombre <span className="text-brand-500">*</span>
           </label>
-          <input
+          <AppInput
             type="text"
             maxLength={120}
             required
             value={form.name}
             onChange={(event) => update('name', event.target.value)}
             placeholder="Ej: Hip Thrust con Barra"
-            className={fieldClass}
           />
         </div>
 
         <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+          <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--tenant-muted)' }}>
             Enfoque
             <SelectModalField
               ariaLabel="Enfoque del ejercicio"
@@ -180,7 +179,7 @@ export default function CreateExerciseModal({ onClose, onSave, exercise, equipme
               value={form.focus}
             />
           </label>
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+          <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--tenant-muted)' }}>
             Patrón de movimiento
             <SelectModalField
               ariaLabel="Patrón de movimiento"
@@ -194,25 +193,31 @@ export default function CreateExerciseModal({ onClose, onSave, exercise, equipme
         </div>
 
         <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+          <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--tenant-muted)' }}>
             Músculos principales <span className="text-brand-400">*</span>
-            <input className={`${fieldClass} mt-1.5 normal-case`} value={primaryMuscles} onChange={(event) => setPrimaryMuscles(event.target.value)} placeholder="Glúteo mayor, isquiotibiales" />
-            <span className="mt-1 block text-[10px] normal-case text-zinc-600">Separa cada músculo con coma.</span>
+            <AppInput className="mt-1.5 normal-case" value={primaryMuscles} onChange={(event) => setPrimaryMuscles(event.target.value)} placeholder="Glúteo mayor, isquiotibiales" />
+            <span className="mt-1 block text-[10px] normal-case" style={{ color: 'var(--tenant-muted)' }}>Separa cada músculo con coma.</span>
           </label>
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+          <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--tenant-muted)' }}>
             Músculos secundarios
-            <input className={`${fieldClass} mt-1.5 normal-case`} value={secondaryMuscles} onChange={(event) => setSecondaryMuscles(event.target.value)} placeholder="Core, cuádriceps" />
-            <span className="mt-1 block text-[10px] normal-case text-zinc-600">Separa cada músculo con coma.</span>
+            <AppInput className="mt-1.5 normal-case" value={secondaryMuscles} onChange={(event) => setSecondaryMuscles(event.target.value)} placeholder="Core, cuádriceps" />
+            <span className="mt-1 block text-[10px] normal-case" style={{ color: 'var(--tenant-muted)' }}>Separa cada músculo con coma.</span>
           </label>
         </div>
 
         <fieldset className="mb-4">
-          <legend className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+          <legend className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--tenant-muted)' }}>
             Equipo <span className="text-brand-400">*</span>
           </legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {availableEquipment.map((equipment) => (
-              <label key={equipment} className={`flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs transition-colors ${form.equipment.includes(equipment) ? 'border-brand-700 bg-brand-950/40 text-brand-200' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}>
+              <label
+                key={equipment}
+                className="flex min-h-10 items-center gap-2 rounded-xl border px-3 text-xs transition-colors"
+                style={form.equipment.includes(equipment)
+                  ? { borderColor: 'var(--tenant-primary)', backgroundColor: 'var(--tenant-soft-accent)', color: 'var(--tenant-primary)' }
+                  : { borderColor: 'var(--tenant-border)', backgroundColor: 'var(--tenant-surface)', color: 'var(--tenant-muted)' }}
+              >
                 <input
                   checked={form.equipment.includes(equipment)}
                   className="accent-brand-500"
@@ -226,13 +231,16 @@ export default function CreateExerciseModal({ onClose, onSave, exercise, equipme
         </fieldset>
 
         <div className="mb-4">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Dificultad</p>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--tenant-muted)' }}>Dificultad</p>
           <div className="grid grid-cols-3 gap-2">
             {EXERCISE_DIFFICULTIES.map((difficulty: ExerciseDefinitionDifficulty) => (
               <button
                 key={difficulty}
                 aria-pressed={form.difficulty === difficulty}
-                className={`rounded-xl border py-2.5 text-xs font-semibold transition-colors ${form.difficulty === difficulty ? 'border-brand-700 bg-brand-950/40 text-brand-200' : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-zinc-700'}`}
+                className="rounded-xl border py-2.5 text-xs font-semibold transition-colors"
+                style={form.difficulty === difficulty
+                  ? { borderColor: 'var(--tenant-primary)', backgroundColor: 'var(--tenant-soft-accent)', color: 'var(--tenant-primary)' }
+                  : { borderColor: 'var(--tenant-border)', backgroundColor: 'var(--tenant-surface)', color: 'var(--tenant-muted)' }}
                 onClick={() => update('difficulty', difficulty)}
                 type="button"
               >
@@ -244,37 +252,37 @@ export default function CreateExerciseModal({ onClose, onSave, exercise, equipme
 
         {/* Instructions */}
         <div className="mb-4">
-          <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
+          <label className="text-[11px] uppercase tracking-wide font-semibold mb-1.5 block" style={{ color: 'var(--tenant-muted)' }}>
             Descripción / Instrucciones
           </label>
-          <textarea
+          <AppTextarea
             required
             value={form.instructions}
             onChange={(event) => update('instructions', event.target.value)}
             placeholder="Describe cómo se ejecuta el ejercicio paso a paso..."
             rows={3}
-            className={`${fieldClass} resize-none`}
+            className="resize-none"
           />
         </div>
 
         {/* Tips */}
         <div className="mb-5">
-          <label className="text-[11px] text-zinc-500 uppercase tracking-wide font-semibold mb-1.5 block">
+          <label className="text-[11px] uppercase tracking-wide font-semibold mb-1.5 block" style={{ color: 'var(--tenant-muted)' }}>
             Sugerencias / Puntos a cuidar
           </label>
-          <textarea
+          <AppTextarea
             value={form.tips}
             onChange={(event) => update('tips', event.target.value)}
             placeholder="Ej: No arques la espalda baja. Mantén el core activado..."
             rows={3}
-            className={`${fieldClass} resize-none`}
+            className="resize-none"
           />
         </div>
 
         <div className="mb-5">
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            Video HTTPS <span className="font-normal normal-case text-zinc-600">(opcional)</span>
-            <input className={`${fieldClass} mt-1.5 normal-case`} type="url" value={form.videoUrl ?? ''} onChange={(event) => update('videoUrl', event.target.value || null)} placeholder="https://..." />
+          <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--tenant-muted)' }}>
+            Video HTTPS <span className="font-normal normal-case" style={{ color: 'var(--tenant-muted)' }}>(opcional)</span>
+            <AppInput className="mt-1.5 normal-case" type="url" value={form.videoUrl ?? ''} onChange={(event) => update('videoUrl', event.target.value || null)} placeholder="https://..." />
           </label>
         </div>
 

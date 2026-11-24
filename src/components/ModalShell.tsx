@@ -60,7 +60,7 @@ export default function ModalShell({
     <form
       aria-labelledby={titleId}
       aria-modal="true"
-      className={`max-h-[92vh] w-full ${maxWidth} overscroll-none overflow-y-auto rounded-t-2xl border p-5 shadow-2xl sm:mb-0 sm:rounded-2xl`}
+      className={`modal-shell max-h-[92vh] w-full ${maxWidth} overscroll-none overflow-y-auto rounded-t-2xl border p-5 shadow-2xl sm:mb-0 sm:rounded-2xl`}
       onSubmit={onSubmit}
       onKeyDown={onKeyDown}
       ref={contentRef as RefObject<HTMLFormElement>}
@@ -74,13 +74,13 @@ export default function ModalShell({
         </div>
         <button aria-label={closeLabel} className="modal-close-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors" onClick={onClose} type="button"><X size={16} /></button>
       </div>
-      <div className="pt-4">{children}</div>
+      <div className="pt-4" onPointerDown={(event) => event.stopPropagation()} onPointerUp={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>{children}</div>
     </form>
   ) : (
     <section
       aria-labelledby={titleId}
       aria-modal="true"
-      className={`max-h-[92vh] w-full ${maxWidth} overscroll-none overflow-y-auto rounded-t-2xl border p-5 shadow-2xl sm:mb-0 sm:rounded-2xl`}
+      className={`modal-shell max-h-[92vh] w-full ${maxWidth} overscroll-none overflow-y-auto rounded-t-2xl border p-5 shadow-2xl sm:mb-0 sm:rounded-2xl`}
       onKeyDown={onKeyDown}
       ref={contentRef as RefObject<HTMLElement>}
       role="dialog"
@@ -93,7 +93,7 @@ export default function ModalShell({
         </div>
         <button aria-label={closeLabel} className="modal-close-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors" onClick={onClose} type="button"><X size={16} /></button>
       </div>
-      <div className="pt-4">{children}</div>
+      <div className="pt-4" onPointerDown={(event) => event.stopPropagation()} onPointerUp={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>{children}</div>
     </section>
   );
 
@@ -101,7 +101,17 @@ export default function ModalShell({
     <div
       className="fixed inset-0 z-[70] flex touch-none items-end justify-center px-3 pb-3 backdrop-blur-sm sm:items-center sm:px-5 sm:pb-0"
       onPointerDown={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
         if (event.target === event.currentTarget) onClose();
+      }}
+      onPointerUp={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
       }}
       role="presentation"
       style={{

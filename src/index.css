@@ -204,6 +204,32 @@
   }
 }
 
+@layer components {
+  .modal-shell,
+  .modal-shell input,
+  .modal-shell textarea,
+  .modal-shell select {
+    color: var(--tenant-text, #2b2528);
+  }
+
+  .modal-shell input,
+  .modal-shell textarea,
+  .modal-shell select {
+    background-color: var(--tenant-surface, #fff9f6);
+    border-color: var(--tenant-border, #e5d8d2);
+  }
+
+  .modal-shell .text-zinc-500,
+  .modal-shell .text-zinc-600,
+  .modal-shell .text-zinc-400,
+  .modal-shell .text-zinc-300,
+  .modal-shell .text-zinc-200,
+  .modal-shell .text-zinc-100,
+  .modal-shell .text-white {
+    color: var(--tenant-text, #2b2528);
+  }
+}
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;

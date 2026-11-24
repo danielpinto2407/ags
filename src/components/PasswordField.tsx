@@ -32,7 +32,7 @@ export default function PasswordField({
 
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-semibold text-zinc-300" htmlFor={id}>
+      <label className="mb-1.5 block text-xs font-semibold" style={{ color: 'var(--tenant-text)' }} htmlFor={id}>
         {label}
       </label>
       <div className="relative">
@@ -41,7 +41,13 @@ export default function PasswordField({
           autoFocus={autoFocus}
           aria-describedby={describedBy}
           aria-invalid={invalid || undefined}
-          className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3.5 py-3 pr-12 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-brand-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl border px-3.5 py-3 pr-12 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          style={{
+            backgroundColor: 'var(--tenant-surface, #FFF9F6)',
+            borderColor: invalid ? 'var(--tenant-secondary, #963D5B)' : 'var(--tenant-border, #E5D8D2)',
+            color: 'var(--tenant-text, #2B2528)',
+            colorScheme: 'light',
+          }}
           disabled={disabled}
           id={id}
           minLength={minLength}
@@ -52,7 +58,8 @@ export default function PasswordField({
         />
         <button
           aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-          className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-zinc-400 hover:text-white"
+          className="absolute inset-y-0 right-0 flex w-12 items-center justify-center"
+          style={{ color: 'var(--tenant-muted)' }}
           disabled={disabled}
           onClick={() => setVisible((current) => !current)}
           type="button"
