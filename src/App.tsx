@@ -9,25 +9,13 @@ import TenantLoadingIndicator from '@/components/TenantLoadingIndicator';
 import { useTenantContext } from '@/app/tenant/tenantContext';
 import { useAppNavigation } from '@/app/useAppNavigation';
 import { useAuth } from '@/app/session/authContext';
-import { DEFAULT_TENANT_THEME, PLATFORM_TENANT_THEME, getContrastingTextColor } from '@/domain/tenant';
+import { DEFAULT_TENANT_THEME, PLATFORM_TENANT_THEME, getTenantThemeCssVariables } from '@/domain/tenant';
 
 const PLATFORM_THEME = PLATFORM_TENANT_THEME;
 
-const tenantThemeStyle = (theme: typeof DEFAULT_TENANT_THEME): CSSProperties => ({
-  '--tenant-primary': theme.primaryColor,
-  '--tenant-on-primary': getContrastingTextColor(theme.primaryColor),
-  '--tenant-secondary': theme.secondaryColor,
-  '--tenant-background': theme.backgroundColor,
-  '--tenant-accent': theme.accentColor,
-  '--tenant-surface': theme.surfaceColor,
-  '--tenant-text': theme.textColor,
-  '--tenant-muted': theme.mutedColor,
-  '--tenant-border': theme.borderColor,
-  '--tenant-warm-accent': theme.warmAccentColor,
-  '--tenant-soft-accent': theme.softAccentColor,
-  '--tenant-body-font': `"${theme.bodyFont}"`,
-  '--tenant-display-font': `"${theme.displayFont}"`,
-} as CSSProperties);
+const tenantThemeStyle = (theme: typeof DEFAULT_TENANT_THEME): CSSProperties => (
+  getTenantThemeCssVariables(theme) as CSSProperties
+);
 
 function TenantMessage({ title, message, action, loading = false, theme = DEFAULT_TENANT_THEME }: { title: string; message: string; action?: ReactNode; loading?: boolean; theme?: typeof DEFAULT_TENANT_THEME }) {
   return (

@@ -193,6 +193,58 @@
 }
 
 @layer components {
+  .app-button {
+    border: 1px solid transparent;
+  }
+
+  .app-button-primary {
+    border-color: var(--tenant-primary, #71717a);
+    background: var(--tenant-primary, #71717a);
+    color: var(--tenant-on-primary, #ffffff);
+  }
+
+  .app-button-primary:hover:not(:disabled) {
+    background: var(--tenant-primary-hover, var(--tenant-primary, #71717a));
+  }
+
+  .app-button-primary:active:not(:disabled) {
+    background: var(--tenant-primary-active, var(--tenant-primary, #71717a));
+  }
+
+  .app-button-secondary {
+    border-color: var(--tenant-border, #e5d8d2);
+    background: var(--tenant-surface, #fff9f6);
+    color: var(--tenant-text, #2b2528);
+  }
+
+  .app-button-secondary:hover:not(:disabled),
+  .app-button-ghost:hover:not(:disabled) {
+    border-color: var(--tenant-primary, #71717a);
+    background: var(--tenant-control-hover, var(--tenant-soft-accent, #e8ddea));
+    color: var(--tenant-text, #2b2528);
+  }
+
+  .app-button-danger {
+    border-color: var(--tenant-danger, #b42318);
+    background: var(--tenant-danger, #b42318);
+    color: var(--tenant-on-danger, #ffffff);
+  }
+
+  .app-button-danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--tenant-danger, #b42318) 82%, #000000);
+  }
+
+  .app-button-ghost {
+    border-color: transparent;
+    background: transparent;
+    color: var(--tenant-muted, #76696d);
+  }
+
+  .app-button:focus-visible {
+    outline: 2px solid var(--tenant-primary, #71717a);
+    outline-offset: 2px;
+  }
+
   .modal-close-button {
     color: var(--tenant-muted, #76696d);
     background-color: color-mix(in srgb, var(--tenant-accent, #d8bac4) 18%, var(--tenant-surface, #fff9f6));

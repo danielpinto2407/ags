@@ -14,10 +14,10 @@ export default function AppButton({
   ...buttonProps
 }: AppButtonProps) {
   const variants = {
-    primary: 'bg-brand-500 text-white hover:bg-brand-action-hover',
-    secondary: 'border border-zinc-700 text-zinc-300 hover:bg-zinc-900',
-    danger: 'border border-rose-900/70 text-rose-300 hover:bg-rose-950/30',
-    ghost: 'text-zinc-400 hover:bg-zinc-900 hover:text-white',
+    primary: 'app-button app-button-primary',
+    secondary: 'app-button app-button-secondary',
+    danger: 'app-button app-button-danger',
+    ghost: 'app-button app-button-ghost',
   };
 
   return (

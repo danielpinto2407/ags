@@ -25,7 +25,13 @@ describe('shared UI contract', () => {
   it('keeps only the shared UI primitives for common states', () => {
     expect(existsSync(resolve(process.cwd(), 'src/components/CoachStatusToggle.tsx'))).toBe(false);
     expect(existsSync(resolve(process.cwd(), 'src/components/MemberStatusToggle.tsx'))).toBe(false);
-    expect(readProjectFile('src/components/AppButton.tsx')).toContain('variant');
+    const appButton = readProjectFile('src/components/AppButton.tsx');
+    expect(appButton).toContain('variant');
+    expect(appButton).not.toMatch(/text-white|text-zinc-|bg-zinc-|border-zinc-/);
+    expect(appButton).toContain('app-button-primary');
+    expect(appButton).toContain('app-button-secondary');
+    expect(appButton).toContain('app-button-danger');
+    expect(appButton).toContain('app-button-ghost');
     expect(readProjectFile('src/components/FeedbackMessage.tsx')).toContain('role');
     expect(readProjectFile('src/components/AppInput.tsx')).toContain('tenant-surface');
     expect(readProjectFile('src/components/AppTextarea.tsx')).toContain('tenant-surface');

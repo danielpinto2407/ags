@@ -1,12 +1,23 @@
 export type TenantStatus = 'ACTIVE' | 'SUSPENDED';
 
-export function getContrastingTextColor(hexColor: string): string {
+function srgbChannelToLinear(channel: number): number {
+  const srgb = channel / 255;
+  return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+}
+
+function relativeLuminance(hexColor: string): number {
   const hex = /^#[0-9A-Fa-f]{6}$/.test(hexColor) ? hexColor.slice(1) : '71717A';
-  const red = parseInt(hex.slice(0, 2), 16);
-  const green = parseInt(hex.slice(2, 4), 16);
-  const blue = parseInt(hex.slice(4, 6), 16);
-  const luminance = (red * 299 + green * 587 + blue * 114) / 1000;
-  return luminance >= 150 ? '#18181B' : '#FAFAFA';
+  const red = srgbChannelToLinear(parseInt(hex.slice(0, 2), 16));
+  const green = srgbChannelToLinear(parseInt(hex.slice(2, 4), 16));
+  const blue = srgbChannelToLinear(parseInt(hex.slice(4, 6), 16));
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+export function getContrastingTextColor(hexColor: string): string {
+  const background = relativeLuminance(hexColor);
+  const whiteContrast = 1.05 / (background + 0.05);
+  const darkContrast = (background + 0.05) / (0.06 + 0.05);
+  return whiteContrast >= darkContrast ? '#FFFFFF' : '#18181B';
 }
 
 export interface TenantTheme {
@@ -23,6 +34,33 @@ export interface TenantTheme {
   softAccentColor: string;
   bodyFont: string;
   displayFont: string;
+}
+
+export type TenantThemeCssVariables = Record<string, string>;
+
+export function getTenantThemeCssVariables(theme: TenantTheme): TenantThemeCssVariables {
+  return {
+    '--tenant-primary': theme.primaryColor,
+    '--tenant-primary-hover': `color-mix(in srgb, ${theme.primaryColor} 82%, #000000)`,
+    '--tenant-primary-active': `color-mix(in srgb, ${theme.primaryColor} 72%, #000000)`,
+    '--tenant-on-primary': getContrastingTextColor(theme.primaryColor),
+    '--tenant-secondary': theme.secondaryColor,
+    '--tenant-on-secondary': getContrastingTextColor(theme.secondaryColor),
+    '--tenant-secondary-hover': `color-mix(in srgb, ${theme.secondaryColor} 82%, #000000)`,
+    '--tenant-background': theme.backgroundColor,
+    '--tenant-accent': theme.accentColor,
+    '--tenant-surface': theme.surfaceColor,
+    '--tenant-text': theme.textColor,
+    '--tenant-muted': theme.mutedColor,
+    '--tenant-border': theme.borderColor,
+    '--tenant-warm-accent': theme.warmAccentColor,
+    '--tenant-soft-accent': theme.softAccentColor,
+    '--tenant-control-hover': `color-mix(in srgb, ${theme.accentColor} 24%, ${theme.surfaceColor})`,
+    '--tenant-danger': '#b42318',
+    '--tenant-on-danger': '#FFFFFF',
+    '--tenant-body-font': `"${theme.bodyFont}"`,
+    '--tenant-display-font': `"${theme.displayFont}"`,
+  };
 }
 
 export type TenantFeatures = Record<string, boolean>;

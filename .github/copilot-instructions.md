@@ -54,3 +54,11 @@ Read `.github/skills/ags-project-architecture/references/project-status.md` befo
 - When changing CU-01 auth/session/profile behavior, run `scripts/smoke-cu01-local.ps1`; it must use local Supabase only, verify signup stays disabled, and clean up its temporary user/profile.
 - For manual browser login checks use `scripts/dev-test-user.ps1 -Action create|delete -Role student|coach` (local Supabase only, throwaway `dev-<role>@example.test` accounts); always delete them afterwards.
 - Never commit secrets, `.env` files, `node_modules`, or `dist`.
+
+## Deployment
+
+- Production deploys through GitHub: commit the validated changes on `main` and push to `origin` (`https://github.com/danielpinto2407/ags.git`). Vercel is connected to that repository and creates the Production deployment automatically.
+- Do not switch deployment methods to Vercel CLI or OAuth unless the user explicitly requests it and the existing GitHub/Vercel integration is unavailable.
+- Do not install `vercel`, link a project, request credentials/login, or run `vercel --prod` for routine deployments.
+- Deploy only source changes from the repository; do not stage or commit `docs/`, `dist/`, `.env*`, or unrelated working-tree files.
+- Before pushing, run `npm run lint`, `npm run typecheck`, `npm run build`, and the relevant tests. Never push if validation fails.

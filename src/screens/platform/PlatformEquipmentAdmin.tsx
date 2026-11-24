@@ -271,7 +271,11 @@ export default function PlatformEquipmentAdmin({ profile, onLogout }: PlatformEq
   const platformStyle: CSSProperties = {
     '--tenant-primary': PLATFORM_TENANT_THEME.primaryColor,
     '--tenant-on-primary': '#FAFAFA',
-    '--tenant-secondary': PLATFORM_TENANT_THEME.secondaryColor,
+    '--tenant-primary-hover': 'color-mix(in srgb, var(--tenant-primary) 82%, #000000)',
+    '--tenant-primary-active': 'color-mix(in srgb, var(--tenant-primary) 72%, #000000)',
+    '--tenant-on-secondary': '#FAFAFA',
+    '--tenant-secondary-hover': 'color-mix(in srgb, var(--tenant-secondary) 82%, #000000)',
+    '--tenant-control-hover': 'color-mix(in srgb, var(--tenant-accent) 24%, var(--tenant-surface))',
     '--tenant-background': PLATFORM_TENANT_THEME.backgroundColor,
     '--tenant-accent': PLATFORM_TENANT_THEME.accentColor,
     '--tenant-surface': PLATFORM_TENANT_THEME.surfaceColor,

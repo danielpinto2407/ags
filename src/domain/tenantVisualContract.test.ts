@@ -18,6 +18,18 @@ describe('tenant visual contract', () => {
     expect(tailwind).toContain("600: 'var(--tenant-secondary,");
   });
 
+  it('derives contrasted and interactive tenant variables for shared controls', () => {
+    const tenant = readProjectFile('src/domain/tenant.ts');
+    const appButtonStyles = readProjectFile('src/index.css');
+
+    expect(tenant).toContain('getTenantThemeCssVariables');
+    expect(tenant).toContain('--tenant-on-primary');
+    expect(tenant).toContain('--tenant-primary-hover');
+    expect(tenant).toContain('--tenant-control-hover');
+    expect(appButtonStyles).toContain('.app-button-primary');
+    expect(appButtonStyles).toContain('var(--tenant-on-primary');
+  });
+
   it('keeps auth email layouts and tenant color fallbacks in sync', () => {
     const invitation = readProjectFile('supabase/templates/invite.html');
     const recovery = readProjectFile('supabase/templates/recovery.html');
