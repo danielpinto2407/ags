@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(13);
+select extensions.plan(9);
 
 insert into public.tenants (id, name, subdomain, status, features)
 values ('f7000000-0000-4000-8000-000000000001', 'Role Gym', 'role-gym', 'ACTIVE', '{"personalizedRoutines":true,"groupClasses":false,"whatsappContact":true}'::jsonb);
@@ -30,21 +30,17 @@ select extensions.is(private.current_profile_has_capability('manage_routines'), 
 select set_config('request.jwt.claim.sub', 'f7100000-0000-4000-8000-000000000002', true);
 select extensions.is(private.current_profile_has_capability('manage_routines'), true, 'coach can manage routines');
 select extensions.is(private.current_profile_has_capability('manage_tenants'), false, 'coach cannot manage tenants');
-select extensions.is(private.current_profile_has_feature('whatsappContact'), true, 'coach reads enabled tenant feature');
 
 select set_config('request.jwt.claim.sub', 'f7100000-0000-4000-8000-000000000003', true);
 select extensions.is(private.current_profile_has_capability('view_assigned_routines'), true, 'personalized student can view assignments');
 select extensions.is(private.current_profile_has_capability('manage_routines'), false, 'personalized student cannot manage routines');
-select extensions.is(private.current_profile_has_feature('personalizedRoutines'), true, 'personalized feature is enabled for tenant');
 
 select set_config('request.jwt.claim.sub', 'f7100000-0000-4000-8000-000000000004', true);
-select extensions.is(private.current_profile_has_capability('discover_group_classes'), true, 'general user can discover group classes');
 select extensions.is(private.current_profile_has_capability('view_assigned_routines'), false, 'general user cannot view personalized assignments');
-select extensions.is(private.current_profile_has_feature('groupClasses'), false, 'disabled group-class feature is denied');
+select extensions.is(private.current_profile_has_capability('manage_routines'), false, 'general user cannot manage routines');
 
 select set_config('request.jwt.claim.sub', 'f7100000-0000-4000-8000-000000000005', true);
 select extensions.is(private.current_profile_has_capability('manage_routines'), false, 'inactive coach has no capabilities');
-select extensions.is(private.current_profile_has_feature('whatsappContact'), false, 'inactive profile cannot read tenant feature flags');
 
 reset role;
 select * from extensions.finish();

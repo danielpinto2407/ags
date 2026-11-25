@@ -22,28 +22,24 @@ export type AppCapability =
   | 'manage_platform'
   | 'manage_tenants'
   | 'manage_all_profiles'
-  | 'manage_coach_profiles'
   | 'manage_tenant_branding'
   | 'manage_tenant_exercises'
   | 'manage_routines'
   | 'manage_assigned_students'
   | 'view_assigned_routines'
   | 'record_own_workouts'
-  | 'contact_assigned_coach'
-  | 'discover_group_classes'
-  | 'book_group_classes';
+  | 'contact_assigned_coach';
 
 export const ROLE_CAPABILITIES: Record<ProfileRole, readonly AppCapability[]> = {
   super_admin: ['manage_platform', 'manage_tenants', 'manage_all_profiles'],
   coach_admin: [
-    'manage_coach_profiles',
     'manage_tenant_branding',
     'manage_tenant_exercises',
     'manage_routines',
     'manage_assigned_students',
   ],
   user_personalized: ['view_assigned_routines', 'record_own_workouts', 'contact_assigned_coach'],
-  user_general: ['discover_group_classes', 'book_group_classes'],
+  user_general: [],
 };
 
 export function getProductRole(role: ProfileRole): ProductRole | null {
@@ -54,10 +50,6 @@ export function getProductRole(role: ProfileRole): ProductRole | null {
 
 export function hasRoleCapability(role: ProfileRole, capability: AppCapability): boolean {
   return ROLE_CAPABILITIES[role].includes(capability);
-}
-
-export function getRoleCapabilities(role: ProfileRole): readonly AppCapability[] {
-  return ROLE_CAPABILITIES[role];
 }
 
 export function isTenantProfileRole(role: ProfileRole): boolean {

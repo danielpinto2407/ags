@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   canRoleOpenScreen,
   getProductRole,
-  getRoleCapabilities,
   hasRoleCapability,
 } from '@/domain/authorization';
 
@@ -21,9 +20,9 @@ describe('role authorization', () => {
     expect(hasRoleCapability('user_personalized', 'manage_routines')).toBe(false);
   });
 
-  it('keeps role capabilities inspectable', () => {
-    expect(getRoleCapabilities('super_admin')).toContain('manage_platform');
-    expect(getRoleCapabilities('user_general')).toContain('discover_group_classes');
+  it('keeps the deferred general role denied', () => {
+    expect(hasRoleCapability('user_general', 'view_assigned_routines')).toBe(false);
+    expect(hasRoleCapability('user_general', 'record_own_workouts')).toBe(false);
   });
 
   it('limits navigation screens by product role', () => {

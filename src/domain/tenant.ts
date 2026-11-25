@@ -63,8 +63,7 @@ export function getTenantThemeCssVariables(theme: TenantTheme): TenantThemeCssVa
   };
 }
 
-export type TenantFeatureKey = 'personalizedRoutines' | 'groupClasses' | 'whatsappContact' | 'coachBiometrics' | 'workoutComments';
-export type TenantFeatures = Partial<Record<TenantFeatureKey, boolean>> & Record<string, boolean | undefined>;
+export type TenantFeatures = Record<string, boolean>;
 
 export interface Tenant {
   id: string;
@@ -166,10 +165,6 @@ export function isTenantTheme(value: unknown): value is TenantTheme {
 export function isTenantFeatures(value: unknown): value is TenantFeatures {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   return Object.values(value).every((flag) => typeof flag === 'boolean');
-}
-
-export function hasTenantFeature(features: TenantFeatures, feature: TenantFeatureKey): boolean {
-  return features[feature] === true;
 }
 
 export function isTenant(value: unknown): value is Tenant {

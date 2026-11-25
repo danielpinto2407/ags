@@ -23,7 +23,6 @@ Use capabilities instead of checking persisted role names in feature UI:
 - `manage_platform`
 - `manage_tenants`
 - `manage_all_profiles`
-- `manage_coach_profiles`
 - `manage_tenant_branding`
 - `manage_tenant_exercises`
 - `manage_routines`
@@ -31,20 +30,12 @@ Use capabilities instead of checking persisted role names in feature UI:
 - `view_assigned_routines`
 - `record_own_workouts`
 - `contact_assigned_coach`
-- `discover_group_classes`
-- `book_group_classes`
 
 Add a capability here and to `ROLE_CAPABILITIES` when a future feature introduces a new independent permission. Do not solve every feature with a role-name switch.
 
 ## Tenant feature flags
 
-Use named flags in `tenant.features` only for availability independent from role:
-
-- `personalizedRoutines`
-- `groupClasses`
-- `whatsappContact`
-- `coachBiometrics`
-- `workoutComments`
+No workflow implemented today depends on `tenant.features` for authorization. Do not add a feature flag until a concrete implemented workflow requires one. When that happens, require both role capability and tenant feature availability server-side.
 
 A feature requires both dimensions:
 
@@ -66,7 +57,7 @@ No feature flag should allow a forbidden role to perform a protected mutation.
 For database work:
 
 1. Use `private.current_profile_has_capability(...)` for a single role-derived server capability.
-2. Use `private.current_profile_has_feature(...)` for tenant feature availability.
+2. If a future implemented workflow introduces tenant feature availability, add a dedicated validated server helper; do not invent it for speculative features.
 3. Preserve tenant ownership checks and profile status checks in RPCs/RLS.
 4. Do not add an RPC or policy that trusts a browser-supplied role or tenant ID.
 5. A future table or function must pass the same actor, tenant, status and ownership test used by existing CU-02/CU-03 data.
