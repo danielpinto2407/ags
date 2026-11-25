@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_TENANT_THEME, type Tenant } from '@/domain/tenant';
-import { isProfile, resolveProfileAccess, type Profile } from '@/domain/profile';
+import { getColombianMobileNumber, isColombianMobileNumber, isProfile, resolveProfileAccess, toColombianWhatsappNumber, type Profile } from '@/domain/profile';
 
 const activeTenant: Tenant = {
   id: 'tenant-ags',
@@ -30,6 +30,15 @@ const profile = (overrides: Partial<Profile> = {}): Profile => ({
 });
 
 describe('profile access rules', () => {
+  it('converts Colombian mobile numbers without changing other stored international numbers', () => {
+    expect(isColombianMobileNumber('3001234567')).toBe(true);
+    expect(toColombianWhatsappNumber('3001234567')).toBe('573001234567');
+    expect(getColombianMobileNumber('573001234567')).toBe('3001234567');
+    expect(getColombianMobileNumber(null)).toBe('');
+    expect(getColombianMobileNumber('15551234567')).toBeNull();
+    expect(() => toColombianWhatsappNumber('1234')).toThrow();
+    expect(isColombianMobileNumber('300abc4567')).toBe(false);
+  });
   it('validates a profile payload', () => {
     expect(isProfile(profile())).toBe(true);
     expect(isProfile(profile({

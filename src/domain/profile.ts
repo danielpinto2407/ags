@@ -4,6 +4,23 @@ export type ProfileRole = 'super_admin' | 'coach_admin' | 'user_personalized' | 
 export type ProfileStatus = 'ACTIVE' | 'INACTIVE';
 export type ProductRole = 'student' | 'coach';
 
+export const COLOMBIA_PHONE_PREFIX = '57';
+
+export function isColombianMobileNumber(value: string): boolean {
+  return /^3[0-9]{9}$/.test(value);
+}
+
+export function toColombianWhatsappNumber(value: string): string {
+  if (!isColombianMobileNumber(value)) throw new Error('Ingresa un celular colombiano de 10 dígitos que empiece por 3.');
+  return `${COLOMBIA_PHONE_PREFIX}${value}`;
+}
+
+export function getColombianMobileNumber(value: string | null): string | null {
+  if (!value) return '';
+  const localNumber = value.startsWith(COLOMBIA_PHONE_PREFIX) ? value.slice(COLOMBIA_PHONE_PREFIX.length) : '';
+  return isColombianMobileNumber(localNumber) ? localNumber : null;
+}
+
 export interface Profile {
   id: string;
   tenant_id: string | null;

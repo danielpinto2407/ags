@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(36);
+select extensions.plan(38);
 
 insert into public.tenants (id, name, subdomain, status)
 values ('f2000000-0000-4000-8000-000000000001', 'Media Gym', 'media-gym', 'ACTIVE');
@@ -98,6 +98,8 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000001', true);
 select extensions.is(public.set_own_coach_whatsapp_number('573001234567'), '573001234567', 'coach can save an international WhatsApp number');
+select extensions.throws_ok($$select public.set_own_coach_whatsapp_number('15551234567')$$, '22023', 'invalid_whatsapp_number', 'new foreign numbers are rejected');
+select extensions.throws_ok($$select public.set_own_coach_whatsapp_number('57300123456')$$, '22023', 'invalid_whatsapp_number', 'incomplete Colombian numbers are rejected');
 select extensions.throws_ok($$select public.set_own_tenant_whatsapp_avatar('whatsapp-avatars/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png')$$, '22023', 'invalid_avatar_path', 'avatar must exist in storage');
 select extensions.is((select count(*) from public.get_own_coach_whatsapp_contact()), 0::bigint, 'coach cannot read student contact');
 select extensions.throws_ok($$select public.set_own_coach_whatsapp_number('+57 300')$$, '22023', 'invalid_whatsapp_number', 'invalid WhatsApp numbers are rejected');

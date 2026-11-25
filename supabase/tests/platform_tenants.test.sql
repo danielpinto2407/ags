@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(10);
+select extensions.plan(11);
 
 insert into public.tenants (id, name, subdomain, status)
 values ('e2000000-0000-4000-8000-000000000001', 'Existing Gym', 'existing-gym', 'ACTIVE');
@@ -21,6 +21,7 @@ insert into public.tenant_invitations (id, tenant_id, email, invited_by, auth_us
 values ('e2200000-0000-4000-8000-000000000001', 'e2000000-0000-4000-8000-000000000001', 'invited-coach@example.test', 'e2100000-0000-4000-8000-000000000001', 'e2100000-0000-4000-8000-000000000003', 'coach_admin');
 
 select extensions.throws_ok($$select public.accept_coach_invitation('e2200000-0000-4000-8000-000000000001', 'e2100000-0000-4000-8000-000000000003', 'Coach Nuevo', '')$$, '22023', 'invalid_whatsapp_number', 'coach invitation requires a valid WhatsApp number');
+select extensions.throws_ok($$select public.accept_coach_invitation('e2200000-0000-4000-8000-000000000001', 'e2100000-0000-4000-8000-000000000003', 'Coach Nuevo', '15551234567')$$, '22023', 'invalid_whatsapp_number', 'coach invitation rejects non-Colombian numbers');
 select extensions.lives_ok($$select public.accept_coach_invitation('e2200000-0000-4000-8000-000000000001', 'e2100000-0000-4000-8000-000000000003', 'Coach Nuevo', '573001234567')$$, 'coach invitation accepts a valid WhatsApp number');
 select extensions.is((select whatsapp_number from public.profiles where id = 'e2100000-0000-4000-8000-000000000003'), '573001234567', 'acceptance persists the number in the coach profile');
 

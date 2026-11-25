@@ -72,7 +72,7 @@ export const profileRepository = {
     const client = requireClient();
     const { data, error } = await client.rpc('set_own_coach_whatsapp_number', { p_number: number });
     if (error) throw new Error(error.message.includes('invalid_whatsapp_number')
-      ? 'Ingresa el número internacional sin espacios ni símbolos.'
+      ? 'Ingresa un celular colombiano de 10 dígitos que empiece por 3.'
       : 'No se pudo guardar tu número de WhatsApp.');
     if (data !== null && typeof data !== 'string') throw new Error('No se pudo confirmar el número guardado.');
     return data;

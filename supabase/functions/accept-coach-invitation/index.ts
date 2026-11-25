@@ -52,7 +52,7 @@ Deno.serve(async (request) => {
     || body.full_name.trim().length < 2
     || body.full_name.trim().length > 120
     || typeof body.whatsapp_number !== 'string'
-    || !/^[1-9][0-9]{7,14}$/.test(body.whatsapp_number.trim())
+    || !/^573[0-9]{9}$/.test(body.whatsapp_number.trim())
   ) {
     return jsonResponse(request, 400, { error: 'invalid_request' });
   }

@@ -4,13 +4,14 @@ import Header from '@/components/Header';
 import ProfileImagePicker from '@/components/ProfileImagePicker';
 import { profileRepository } from '@/data/profileRepository';
 import { useTenantContext } from '@/app/tenant/tenantContext';
-import type { Profile } from '@/domain/profile';
+import { getColombianMobileNumber, isColombianMobileNumber, toColombianWhatsappNumber, type Profile } from '@/domain/profile';
 import { useCoachMembers } from '@/app/useCoachMembers';
 import AppTextarea from '@/components/AppTextarea';
 import AppSelect from '@/components/AppSelect';
 import AppInput from '@/components/AppInput';
 import AppButton from '@/components/AppButton';
 import FeedbackMessage from '@/components/FeedbackMessage';
+import ColombianPhoneField from '@/components/ColombianPhoneField';
 
 interface CoachProfileProps {
   profile: Profile;
@@ -27,6 +28,7 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
   const [descriptionFeedback, setDescriptionFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [savedWhatsappNumber, setSavedWhatsappNumber] = useState('');
+  const [legacyWhatsappNumber, setLegacyWhatsappNumber] = useState<string | null>(null);
   const [loadingWhatsapp, setLoadingWhatsapp] = useState(true);
   const [savingWhatsapp, setSavingWhatsapp] = useState(false);
   const [whatsappFeedback, setWhatsappFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
@@ -61,8 +63,10 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
     profileRepository.getOwnCoachWhatsappNumber(profile.id)
       .then((number) => {
         if (cancelled) return;
-        setWhatsappNumber(number ?? '');
-        setSavedWhatsappNumber(number ?? '');
+        const localNumber = getColombianMobileNumber(number);
+        setWhatsappNumber(localNumber ?? '');
+        setSavedWhatsappNumber(localNumber ?? '');
+        setLegacyWhatsappNumber(localNumber === null ? number : null);
       })
       .catch((error: unknown) => {
         if (!cancelled) setWhatsappFeedback({ type: 'error', message: error instanceof Error ? error.message : 'No se pudo cargar tu número de WhatsApp.' });
@@ -169,13 +173,15 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
     }
   };
 
-  const saveWhatsapp = async () => {
+  const saveWhatsapp = async (remove = false) => {
     setSavingWhatsapp(true);
     setWhatsappFeedback(null);
     try {
-      const number = await profileRepository.setOwnCoachWhatsappNumber(whatsappNumber);
-      setWhatsappNumber(number ?? '');
-      setSavedWhatsappNumber(number ?? '');
+      const number = await profileRepository.setOwnCoachWhatsappNumber(!remove && whatsappNumber ? toColombianWhatsappNumber(whatsappNumber) : '');
+      const localNumber = getColombianMobileNumber(number) ?? '';
+      setWhatsappNumber(localNumber);
+      setSavedWhatsappNumber(localNumber);
+      setLegacyWhatsappNumber(null);
       setWhatsappFeedback({ type: 'success', message: 'Número de WhatsApp guardado.' });
     } catch (error) {
       setWhatsappFeedback({ type: 'error', message: error instanceof Error ? error.message : 'No se pudo guardar tu número de WhatsApp.' });
@@ -206,21 +212,11 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
         </div>
 
         <div className="space-y-2 border-t border-zinc-800 pt-4">
-          <label className="block text-xs font-semibold text-zinc-300" htmlFor="coach-whatsapp">WhatsApp</label>
-          <AppInput
-            autoComplete="tel"
-            disabled={loadingWhatsapp || savingWhatsapp}
-            id="coach-whatsapp"
-            inputMode="numeric"
-            maxLength={15}
-            onChange={(event) => { setWhatsappNumber(event.target.value); setWhatsappFeedback(null); }}
-            placeholder="573001234567"
-            type="tel"
-            value={whatsappNumber}
-          />
-          <p className="text-[10px] text-zinc-500">Incluye el código del país, sin + ni espacios.</p>
-          <div className="flex justify-end">
-            <AppButton disabled={loadingWhatsapp || savingWhatsapp || whatsappNumber === savedWhatsappNumber} onClick={() => void saveWhatsapp()} type="button">
+          <ColombianPhoneField disabled={loadingWhatsapp || savingWhatsapp} id="coach-whatsapp" onChange={(value) => { setWhatsappNumber(value); setWhatsappFeedback(null); }} value={whatsappNumber} />
+          {legacyWhatsappNumber && <FeedbackMessage kind="warning" message={`Tu número guardado (+${legacyWhatsappNumber}) se conserva. Para cambiarlo, ingresa un celular colombiano.`} />}
+          <div className="flex flex-wrap justify-end gap-2">
+            {legacyWhatsappNumber && <AppButton disabled={loadingWhatsapp || savingWhatsapp} onClick={() => void saveWhatsapp(true)} type="button" variant="secondary">Quitar número</AppButton>}
+            <AppButton disabled={loadingWhatsapp || savingWhatsapp || whatsappNumber === savedWhatsappNumber || (whatsappNumber !== '' && !isColombianMobileNumber(whatsappNumber))} onClick={() => void saveWhatsapp()} type="button">
               {savingWhatsapp ? 'Guardando…' : 'Guardar número'}
             </AppButton>
           </div>
