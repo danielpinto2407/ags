@@ -51,6 +51,8 @@ Deno.serve(async (request) => {
     || typeof body.full_name !== 'string'
     || body.full_name.trim().length < 2
     || body.full_name.trim().length > 120
+    || typeof body.whatsapp_number !== 'string'
+    || !/^[1-9][0-9]{7,14}$/.test(body.whatsapp_number.trim())
   ) {
     return jsonResponse(request, 400, { error: 'invalid_request' });
   }
@@ -71,6 +73,7 @@ Deno.serve(async (request) => {
     p_invitation_id: body.invitation_id,
     p_auth_user_id: userData.user.id,
     p_full_name: body.full_name.trim(),
+    p_whatsapp_number: body.whatsapp_number.trim(),
   });
 
   if (error) {

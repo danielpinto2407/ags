@@ -1,20 +1,26 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(17);
+select extensions.plan(36);
 
 insert into public.tenants (id, name, subdomain, status)
 values ('f2000000-0000-4000-8000-000000000001', 'Media Gym', 'media-gym', 'ACTIVE');
+insert into public.tenants (id, name, subdomain, status)
+values ('f2000000-0000-4000-8000-000000000002', 'Other Gym', 'other-media-gym', 'ACTIVE');
 
 insert into auth.users (id, email)
 values
   ('f3000000-0000-4000-8000-000000000001', 'media-coach@example.test'),
-  ('f3000000-0000-4000-8000-000000000002', 'media-student@example.test');
+  ('f3000000-0000-4000-8000-000000000002', 'media-student@example.test'),
+  ('f3000000-0000-4000-8000-000000000003', 'media-coach-two@example.test'),
+  ('f3000000-0000-4000-8000-000000000004', 'other-media-coach@example.test');
 
 insert into public.profiles (id, tenant_id, role, status, full_name, coach_id)
 values
   ('f3000000-0000-4000-8000-000000000001', 'f2000000-0000-4000-8000-000000000001', 'coach_admin', 'ACTIVE', 'Media Coach', null),
-  ('f3000000-0000-4000-8000-000000000002', 'f2000000-0000-4000-8000-000000000001', 'user_personalized', 'ACTIVE', 'Media Student', 'f3000000-0000-4000-8000-000000000001');
+  ('f3000000-0000-4000-8000-000000000002', 'f2000000-0000-4000-8000-000000000001', 'user_personalized', 'ACTIVE', 'Media Student', 'f3000000-0000-4000-8000-000000000001'),
+  ('f3000000-0000-4000-8000-000000000003', 'f2000000-0000-4000-8000-000000000001', 'coach_admin', 'ACTIVE', 'Second Coach', null),
+  ('f3000000-0000-4000-8000-000000000004', 'f2000000-0000-4000-8000-000000000002', 'coach_admin', 'ACTIVE', 'Other Coach', null);
 
 insert into public.routine_assignments (
   id, tenant_id, coach_id, student_id, scheduled_for, title, status, published_at
@@ -90,6 +96,34 @@ select extensions.throws_ok(
 );
 reset role;
 set local role authenticated;
+select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000001', true);
+select extensions.is(public.set_own_coach_whatsapp_number('573001234567'), '573001234567', 'coach can save an international WhatsApp number');
+select extensions.throws_ok($$select public.set_own_tenant_whatsapp_avatar('whatsapp-avatars/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png')$$, '22023', 'invalid_avatar_path', 'avatar must exist in storage');
+select extensions.is((select count(*) from public.get_own_coach_whatsapp_contact()), 0::bigint, 'coach cannot read student contact');
+select extensions.throws_ok($$select public.set_own_coach_whatsapp_number('+57 300')$$, '22023', 'invalid_whatsapp_number', 'invalid WhatsApp numbers are rejected');
+select extensions.is(public.set_own_coach_whatsapp_number(''), null, 'coach can remove their WhatsApp number');
+select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000002', true);
+select extensions.throws_ok($$select public.set_own_coach_whatsapp_number('573001234567')$$, '42501', 'not_authorized', 'students cannot change a coach WhatsApp number');
+select extensions.throws_ok($$select public.set_own_tenant_whatsapp_avatar(null)$$, '42501', 'not_authorized', 'students cannot change a gym avatar');
+select extensions.is((select count(*) from public.get_own_coach_whatsapp_contact()), 0::bigint, 'student sees no contact without a number');
+select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000001', true);
+select public.set_own_coach_whatsapp_number('573001234567');
+select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000002', true);
+select extensions.is((select whatsapp_number from public.get_own_coach_whatsapp_contact()), '573001234567', 'student sees assigned coach number');
+select extensions.is((select coach_name from public.get_own_coach_whatsapp_contact()), 'Media Coach', 'student sees assigned coach name');
+select extensions.is((select avatar_path from public.get_own_coach_whatsapp_contact()), null, 'avatar is optional');
+select extensions.is(public.get_own_tenant_whatsapp_avatar(), null, 'student cannot read coach avatar configuration');
+select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000001', true);
+select extensions.lives_ok($$insert into storage.objects (bucket_id, name) values ('profile-media', 'whatsapp-avatars/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png')$$, 'coach can upload a PNG for their gym');
+select extensions.is(public.set_own_tenant_whatsapp_avatar('whatsapp-avatars/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png'), 'whatsapp-avatars/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png', 'coach can assign the uploaded gym avatar');
+select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000003', true);
+select extensions.is(public.get_own_tenant_whatsapp_avatar(), 'whatsapp-avatars/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png', 'another coach at the same gym sees the shared avatar');
+select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000004', true);
+select extensions.is(public.get_own_tenant_whatsapp_avatar(), null, 'another gym does not inherit the avatar');
+select extensions.throws_ok($$select public.set_own_tenant_whatsapp_avatar('whatsapp-avatars/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png')$$, '22023', 'invalid_avatar_path', 'another gym cannot assign this avatar');
+select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000002', true);
+select extensions.is((select avatar_path from public.get_own_coach_whatsapp_contact()), 'whatsapp-avatars/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000001.png', 'student sees their gym avatar');
+select extensions.throws_ok($$insert into storage.objects (bucket_id, name) values ('profile-media', 'whatsapp-avatars/f2000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000002.png')$$, '42501', null, 'student cannot upload a gym avatar');
 select set_config('request.jwt.claim.sub', 'f3000000-0000-4000-8000-000000000001', true);
 select extensions.throws_ok(
   $$select public.set_own_profile_avatar('avatars/f3000000-0000-4000-8000-000000000002/00000000-0000-4000-8000-000000000001.webp')$$,

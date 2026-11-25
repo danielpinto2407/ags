@@ -13,6 +13,7 @@ interface ModalShellProps {
   form?: boolean;
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
   onKeyDown?: (event: React.KeyboardEvent<HTMLElement>) => void;
+  darkBackdrop?: boolean;
 }
 
 
@@ -27,6 +28,7 @@ export default function ModalShell({
   form = false,
   onSubmit,
   onKeyDown,
+  darkBackdrop = false,
 }: ModalShellProps) {
   const titleId = useId();
   useEffect(() => {
@@ -116,7 +118,7 @@ export default function ModalShell({
       role="presentation"
       style={{
         ...portalTheme,
-        backgroundColor: 'color-mix(in srgb, var(--tenant-primary, #71717A) 18%, transparent)',
+        backgroundColor: darkBackdrop ? 'rgba(0, 0, 0, 0.8)' : 'color-mix(in srgb, var(--tenant-primary, #71717A) 18%, transparent)',
       }}
     >
       {panel}

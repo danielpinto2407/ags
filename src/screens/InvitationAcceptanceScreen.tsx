@@ -18,6 +18,7 @@ export default function InvitationAcceptanceScreen({
   acceptanceKind = 'personalized_member',
 }: InvitationAcceptanceScreenProps) {
   const [fullName, setFullName] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,6 +27,10 @@ export default function InvitationAcceptanceScreen({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    if (acceptanceKind === 'coach_admin' && !/^[1-9][0-9]{7,14}$/.test(whatsappNumber.trim())) {
+      setError('Ingresa tu número de WhatsApp con el código del país, sin espacios ni símbolos.');
+      return;
+    }
     if (password.length < 10) {
       setError('La contraseña debe tener al menos 10 caracteres.');
       return;
@@ -38,7 +43,7 @@ export default function InvitationAcceptanceScreen({
 
     try {
       if (acceptanceKind === 'coach_admin') {
-        await invitationRepository.acceptCoachInvitation(invitationId, fullName, password);
+        await invitationRepository.acceptCoachInvitation(invitationId, fullName, password, whatsappNumber.trim());
       } else {
         await invitationRepository.acceptPersonalizedInvitation(invitationId, fullName, password);
       }
@@ -83,6 +88,14 @@ export default function InvitationAcceptanceScreen({
             />
           </div>
 
+          {acceptanceKind === 'coach_admin' && (
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-300" htmlFor="invite-whatsapp">WhatsApp</label>
+              <AppInput autoComplete="tel" id="invite-whatsapp" inputMode="numeric" maxLength={15} onChange={(event) => setWhatsappNumber(event.target.value)} placeholder="573001234567" required type="tel" value={whatsappNumber} />
+              <p className="mt-1 text-xs text-zinc-400">Incluye el código del país, sin + ni espacios.</p>
+            </div>
+          )}
+
           <PasswordField
             autoComplete="new-password"
             id="invite-password"
@@ -114,7 +127,7 @@ export default function InvitationAcceptanceScreen({
 
           <button
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 text-sm font-bold text-white hover:bg-brand-action-hover disabled:cursor-wait disabled:opacity-60"
-            disabled={isSubmitting || fullName.trim().length < 2 || password.length < 10 || password !== passwordConfirmation}
+            disabled={isSubmitting || fullName.trim().length < 2 || password.length < 10 || password !== passwordConfirmation || (acceptanceKind === 'coach_admin' && !/^[1-9][0-9]{7,14}$/.test(whatsappNumber.trim()))}
             type="submit"
           >
             {isSubmitting ? 'Activando acceso…' : acceptanceKind === 'coach_admin' ? 'Entrar a mi equipo' : 'Entrar a mi gimnasio'}

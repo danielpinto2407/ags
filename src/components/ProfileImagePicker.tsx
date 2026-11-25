@@ -9,6 +9,7 @@ interface ProfileImagePickerProps {
   fallback: ReactNode;
   shape: 'circle' | 'logo';
   onUpload: (file: File) => Promise<string>;
+  pngOnly?: boolean;
 }
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -21,6 +22,7 @@ export default function ProfileImagePicker({
   fallback,
   shape,
   onUpload,
+  pngOnly = false,
 }: ProfileImagePickerProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,8 +35,8 @@ export default function ProfileImagePicker({
     event.target.value = '';
     if (!file) return;
 
-    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-      setError('Elige una imagen JPG, PNG o WebP.');
+    if (!ALLOWED_IMAGE_TYPES.has(file.type) || (pngOnly && file.type !== 'image/png')) {
+      setError(pngOnly ? 'Elige una imagen PNG.' : 'Elige una imagen JPG, PNG o WebP.');
       return;
     }
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
@@ -63,7 +65,7 @@ export default function ProfileImagePicker({
         src={imageUrl}
       />
       <input
-        accept="image/jpeg,image/png,image/webp"
+        accept={pngOnly ? 'image/png' : 'image/jpeg,image/png,image/webp'}
         className="sr-only"
         id={inputId}
         onChange={handleFileChange}

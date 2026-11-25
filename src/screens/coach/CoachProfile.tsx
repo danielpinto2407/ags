@@ -8,6 +8,9 @@ import type { Profile } from '@/domain/profile';
 import { useCoachMembers } from '@/app/useCoachMembers';
 import AppTextarea from '@/components/AppTextarea';
 import AppSelect from '@/components/AppSelect';
+import AppInput from '@/components/AppInput';
+import AppButton from '@/components/AppButton';
+import FeedbackMessage from '@/components/FeedbackMessage';
 
 interface CoachProfileProps {
   profile: Profile;
@@ -22,6 +25,15 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
   const [description, setDescription] = useState(tenant?.description ?? '');
   const [savingDescription, setSavingDescription] = useState(false);
   const [descriptionFeedback, setDescriptionFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [savedWhatsappNumber, setSavedWhatsappNumber] = useState('');
+  const [loadingWhatsapp, setLoadingWhatsapp] = useState(true);
+  const [savingWhatsapp, setSavingWhatsapp] = useState(false);
+  const [whatsappFeedback, setWhatsappFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
+  const [whatsappAvatarPath, setWhatsappAvatarPath] = useState<string | null>(null);
+  const [avatarLoading, setAvatarLoading] = useState(true);
+  const [avatarRemoving, setAvatarRemoving] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
   const [branding, setBranding] = useState({
     primaryColor: tenant?.theme.primaryColor ?? '#71717A',
     secondaryColor: tenant?.theme.secondaryColor ?? '#52525B',
@@ -42,6 +54,32 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
   useEffect(() => {
     setLogoUrl(tenant?.theme.logoUrl ?? null);
   }, [tenant?.theme.logoUrl]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingWhatsapp(true);
+    profileRepository.getOwnCoachWhatsappNumber(profile.id)
+      .then((number) => {
+        if (cancelled) return;
+        setWhatsappNumber(number ?? '');
+        setSavedWhatsappNumber(number ?? '');
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) setWhatsappFeedback({ type: 'error', message: error instanceof Error ? error.message : 'No se pudo cargar tu número de WhatsApp.' });
+      })
+      .finally(() => { if (!cancelled) setLoadingWhatsapp(false); });
+    return () => { cancelled = true; };
+  }, [profile.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setAvatarLoading(true);
+    profileRepository.getTenantWhatsappAvatar()
+      .then((path) => { if (!cancelled) setWhatsappAvatarPath(path); })
+      .catch((error: unknown) => { if (!cancelled) setAvatarError(error instanceof Error ? error.message : 'No se pudo cargar el avatar.'); })
+      .finally(() => { if (!cancelled) setAvatarLoading(false); });
+    return () => { cancelled = true; };
+  }, [profile.tenant_id]);
 
   useEffect(() => {
     setDescription(tenant?.description ?? '');
@@ -71,6 +109,28 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
     setLogoUrl(nextLogoUrl);
     refreshTenant();
     return nextLogoUrl;
+  };
+
+  const uploadWhatsappAvatar = async (file: File) => {
+    if (!profile.tenant_id) throw new Error('No se encontró el gimnasio de esta cuenta.');
+    const path = await profileRepository.setTenantWhatsappAvatar(file, profile.tenant_id, whatsappAvatarPath);
+    setWhatsappAvatarPath(path);
+    setAvatarError(null);
+    return profileRepository.getPublicMediaUrl(path) ?? '';
+  };
+
+  const removeWhatsappAvatar = async () => {
+    if (!profile.tenant_id) return;
+    setAvatarRemoving(true);
+    setAvatarError(null);
+    try {
+      await profileRepository.setTenantWhatsappAvatar(null, profile.tenant_id, whatsappAvatarPath);
+      setWhatsappAvatarPath(null);
+    } catch (error) {
+      setAvatarError(error instanceof Error ? error.message : 'No se pudo quitar el avatar.');
+    } finally {
+      setAvatarRemoving(false);
+    }
   };
 
   const brandingIsValid = Object.entries(branding).every(([key, value]) =>
@@ -109,6 +169,21 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
     }
   };
 
+  const saveWhatsapp = async () => {
+    setSavingWhatsapp(true);
+    setWhatsappFeedback(null);
+    try {
+      const number = await profileRepository.setOwnCoachWhatsappNumber(whatsappNumber);
+      setWhatsappNumber(number ?? '');
+      setSavedWhatsappNumber(number ?? '');
+      setWhatsappFeedback({ type: 'success', message: 'Número de WhatsApp guardado.' });
+    } catch (error) {
+      setWhatsappFeedback({ type: 'error', message: error instanceof Error ? error.message : 'No se pudo guardar tu número de WhatsApp.' });
+    } finally {
+      setSavingWhatsapp(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <Header title="Mi Perfil" showBell={false} showLogo={false} />
@@ -128,6 +203,48 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
             <h2 className="truncate text-lg font-display font-bold text-white">{profile.full_name}</h2>
             <p className="truncate text-xs text-zinc-500">{tenant?.name ?? 'Perfil del gimnasio'}</p>
           </div>
+        </div>
+
+        <div className="space-y-2 border-t border-zinc-800 pt-4">
+          <label className="block text-xs font-semibold text-zinc-300" htmlFor="coach-whatsapp">WhatsApp</label>
+          <AppInput
+            autoComplete="tel"
+            disabled={loadingWhatsapp || savingWhatsapp}
+            id="coach-whatsapp"
+            inputMode="numeric"
+            maxLength={15}
+            onChange={(event) => { setWhatsappNumber(event.target.value); setWhatsappFeedback(null); }}
+            placeholder="573001234567"
+            type="tel"
+            value={whatsappNumber}
+          />
+          <p className="text-[10px] text-zinc-500">Incluye el código del país, sin + ni espacios.</p>
+          <div className="flex justify-end">
+            <AppButton disabled={loadingWhatsapp || savingWhatsapp || whatsappNumber === savedWhatsappNumber} onClick={() => void saveWhatsapp()} type="button">
+              {savingWhatsapp ? 'Guardando…' : 'Guardar número'}
+            </AppButton>
+          </div>
+          {whatsappFeedback && <FeedbackMessage kind={whatsappFeedback.type} message={whatsappFeedback.message} />}
+        </div>
+
+        <div className="space-y-3 border-t border-zinc-800 pt-4">
+          <div>
+            <p className="text-xs font-semibold text-zinc-300">Avatar de WhatsApp del gimnasio</p>
+            <p className="mt-1 text-[10px] text-zinc-500">PNG con fondo transparente, hasta 5 MB.</p>
+          </div>
+          {!avatarLoading && (
+            <ProfileImagePicker
+              alt="Avatar de contacto del gimnasio"
+              fallback={<Users aria-hidden="true" size={27} />}
+              imageUrl={profileRepository.getPublicMediaUrl(whatsappAvatarPath)}
+              label={whatsappAvatarPath ? 'Cambiar avatar' : 'Subir avatar'}
+              onUpload={uploadWhatsappAvatar}
+              pngOnly
+              shape="logo"
+            />
+          )}
+          {whatsappAvatarPath && <AppButton disabled={avatarRemoving} onClick={() => void removeWhatsappAvatar()} type="button" variant="secondary">{avatarRemoving ? 'Quitando…' : 'Quitar avatar'}</AppButton>}
+          {avatarError && <FeedbackMessage kind="error" message={avatarError} />}
         </div>
 
         <div className="space-y-2 border-t border-zinc-800 pt-4">
@@ -169,7 +286,7 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
             <p className="text-xs font-semibold text-zinc-300">Paleta del gimnasio</p>
             <p className="mt-1 text-[10px] text-zinc-500">Estos colores se aplican al entorno de tu gimnasio.</p>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             {([
               ['primaryColor', 'Principal'],
               ['secondaryColor', 'Secundario'],
@@ -182,12 +299,12 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
               ['warmAccentColor', 'Acento cálido'],
               ['softAccentColor', 'Acento suave'],
             ] as const).map(([key, label]) => (
-              <label className="grid gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-[11px] text-zinc-400" key={key}>
+              <label className="grid min-w-0 gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-2 py-2 text-[11px] text-zinc-400 sm:px-3" key={key}>
                 <span>{label}</span>
                 <span className="flex items-center gap-2">
                   <input
                     aria-label={`Selector de ${label.toLowerCase()}`}
-                    className="h-9 w-12 cursor-pointer rounded-lg border-0 bg-transparent"
+                    className="h-9 w-8 shrink-0 cursor-pointer rounded-lg border-0 bg-transparent sm:w-12"
                     onChange={(event) => {
                       setBranding((current) => ({ ...current, [key]: event.target.value.toUpperCase() }));
                       setBrandingFeedback(null);

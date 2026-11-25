@@ -54,7 +54,7 @@ export const invitationRepository = {
     return data.status;
   },
 
-  async acceptCoachInvitation(invitationId: string, fullName: string, password: string): Promise<void> {
+  async acceptCoachInvitation(invitationId: string, fullName: string, password: string, whatsappNumber: string): Promise<void> {
     const client = requireSupabaseClient();
     const { error: passwordError } = await client.auth.updateUser({ password });
     if (passwordError) {
@@ -62,7 +62,7 @@ export const invitationRepository = {
     }
 
     const { error } = await client.functions.invoke('accept-coach-invitation', {
-      body: { invitation_id: invitationId, full_name: fullName.trim() },
+      body: { invitation_id: invitationId, full_name: fullName.trim(), whatsapp_number: whatsappNumber },
     });
     if (error) {
       const code = await getFunctionErrorCode(error);
