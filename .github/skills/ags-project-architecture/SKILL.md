@@ -37,6 +37,7 @@ Target feature areas are introduced incrementally under `src/features/` when a u
 AGS GluteHouse is a multi-tenant fitness SaaS. The product specification defines `CU-00` through `CU-10`; roles, tenant boundaries, and current product scope are documented in the references. For current work, use this source-of-truth order:
 
 - Intended behavior, actors, acceptance criteria, and product decisions: [references/product-context.md](references/product-context.md).
+- Persistent role/capability policy, tenant feature flags and server/UI verification: [references/roles-and-permissions.md](references/roles-and-permissions.md).
 - Persisted entities, ownership, validation, and data lifecycle: [references/data-contracts.md](references/data-contracts.md).
 - UX/UI task analysis, pattern evaluation, official guidance, accessibility, and interaction verification: [references/ux-ui-practice.md](references/ux-ui-practice.md). Read this before implementing or materially changing any user-facing flow.
 - What is actually implemented/deployed and the next milestone: [references/project-status.md](references/project-status.md). Treat deployed/current behavior separately from the target plan.

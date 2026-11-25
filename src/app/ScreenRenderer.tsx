@@ -11,6 +11,7 @@ import StudentDetail from '@/screens/coach/StudentDetail';
 import CoachProgramRoutine from '@/screens/coach/CoachProgramRoutine';
 import CoachExerciseLibrary from '@/screens/coach/CoachExerciseLibrary';
 import CoachProfile from '@/screens/coach/CoachProfile';
+import { hasRoleCapability } from '@/domain/authorization';
 
 interface ScreenRendererProps {
   navigation: AppNavigation;
@@ -23,7 +24,7 @@ export default function ScreenRenderer({ navigation, profile, onLogout }: Screen
 
   if (!role) return null;
 
-  if (role === 'student') {
+  if (role === 'student' && hasRoleCapability(profile.role, 'view_assigned_routines')) {
     switch (screen) {
       case 'home':
         return <StudentHome profile={profile} onNavigate={handleNavigate} />;

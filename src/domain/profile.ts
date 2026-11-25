@@ -1,8 +1,7 @@
 import type { Tenant } from '@/domain/tenant';
+import { getProductRole, isTenantProfileRole, type ProfileRole, type ProfileStatus, type ProductRole } from '@/domain/authorization';
 
-export type ProfileRole = 'super_admin' | 'coach_admin' | 'user_personalized' | 'user_general';
-export type ProfileStatus = 'ACTIVE' | 'INACTIVE';
-export type ProductRole = 'student' | 'coach';
+export type { ProfileRole, ProfileStatus, ProductRole } from '@/domain/authorization';
 
 export const COLOMBIA_PHONE_PREFIX = '57';
 
@@ -63,12 +62,13 @@ export function resolveProfileAccess(
     return { allowed: true, productRole: null };
   }
 
+  if (!isTenantProfileRole(profile.role)) return { allowed: false, reason: 'role-not-available' };
   if (!tenant) return { allowed: false, reason: 'tenant-required' };
   if (tenant.status !== 'ACTIVE' || profile.tenant_id !== tenant.id) {
     return { allowed: false, reason: 'wrong-tenant' };
   }
 
-  if (profile.role === 'coach_admin') return { allowed: true, productRole: 'coach' };
-  if (profile.role === 'user_personalized') return { allowed: true, productRole: 'student' };
-  return { allowed: false, reason: 'role-not-available' };
+  const productRole = getProductRole(profile.role);
+  if (!productRole) return { allowed: false, reason: 'role-not-available' };
+  return { allowed: true, productRole };
 }

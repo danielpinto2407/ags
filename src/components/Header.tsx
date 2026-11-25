@@ -3,6 +3,7 @@ import { useTenantContext } from '@/app/tenant/tenantContext';
 import ProfileMediaImage from '@/components/ProfileMediaImage';
 import StudentWhatsappContact from '@/components/StudentWhatsappContact';
 import { useAuth } from '@/app/session/authContext';
+import { hasRoleCapability } from '@/domain/authorization';
 
 interface HeaderProps {
   title: string;
@@ -16,7 +17,8 @@ export default function Header({ title, subtitle, showLogo = true, showBell = fa
   const { state: tenantState } = useTenantContext();
   const { state: authState } = useAuth();
   const tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
-  const isStudent = authState.status === 'authenticated' && authState.productRole === 'student';
+  const isStudent = authState.status === 'authenticated'
+    && hasRoleCapability(authState.profile.role, 'contact_assigned_coach');
 
   return (
     <div className={`mb-5 flex items-start justify-between gap-2 ${isStudent ? 'sticky top-0 z-30 pb-2' : ''}`} style={isStudent ? { backgroundColor: 'var(--tenant-background)' } : undefined}>

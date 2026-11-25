@@ -15,6 +15,16 @@ function sourceFiles(directory: string): string[] {
 }
 
 describe('shared UI contract', () => {
+  it('defines the centralized role capability and navigation policy', () => {
+    const authorization = readProjectFile('src/domain/authorization.ts');
+    const navigation = readProjectFile('src/app/useAppNavigation.ts');
+
+    expect(authorization).toContain('ROLE_CAPABILITIES');
+    expect(authorization).toContain('canRoleOpenScreen');
+    expect(authorization).toContain('getRoleScreens');
+    expect(navigation).toContain('canRoleOpenScreen');
+  });
+
   it('does not use native confirmation dialogs', () => {
     const violations = sourceFiles(resolve(process.cwd(), 'src'))
       .filter((path) => !path.includes('sharedUiContract.test.ts'))
@@ -51,7 +61,7 @@ describe('shared UI contract', () => {
     const contact = readProjectFile('src/components/StudentWhatsappContact.tsx');
     const shell = readProjectFile('src/app/AppShell.tsx');
 
-    expect(header).toContain("authState.productRole === 'student'");
+    expect(header).toContain("hasRoleCapability(authState.profile.role, 'contact_assigned_coach')");
     expect(header).toContain('<StudentWhatsappContact />');
     expect(training).toContain('<StudentWhatsappContact />');
     expect(shell).not.toContain('<StudentWhatsappContact');

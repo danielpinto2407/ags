@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { CoachMember } from '@/domain/coachMember';
+import { canRoleOpenScreen } from '@/domain/authorization';
 import type { Role, Screen, StudentRoutineTarget } from '@/types';
 
 export function useAppNavigation(role: Role | null) {
@@ -21,10 +22,12 @@ export function useAppNavigation(role: Role | null) {
   const selectedRoutine = stateMatchesRole ? navigationState.selectedRoutine : null;
 
   const handleNavigate = (nextScreen: Screen) => {
+    if (!role || !canRoleOpenScreen(role, nextScreen)) return;
     setNavigationState({ role, screen: nextScreen, returnScreen: nextScreen, selectedMember: null, selectedRoutine: null });
   };
 
   const handleOpenTraining = (target: StudentRoutineTarget) => {
+    if (role !== 'student') return;
     setNavigationState({ role, screen: 'training', returnScreen: 'routines', selectedMember: null, selectedRoutine: target });
   };
 
@@ -39,6 +42,7 @@ export function useAppNavigation(role: Role | null) {
   };
 
   const handleStudentSelect = (member: CoachMember) => {
+    if (role !== 'coach') return;
     const originScreen = stateMatchesRole ? navigationState.screen : 'home';
     const returnScreen = originScreen === 'studentDetail' ? navigationState.returnScreen : originScreen;
     setNavigationState({ role, screen: 'studentDetail', returnScreen, selectedMember: member, selectedRoutine: null });
