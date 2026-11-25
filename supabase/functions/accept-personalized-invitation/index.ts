@@ -70,12 +70,14 @@ Deno.serve(async (request) => {
 
   const body = payload as Record<string, unknown>;
   if (
-    Object.keys(body).some((key) => key !== 'invitation_id' && key !== 'full_name')
+    Object.keys(body).some((key) => key !== 'invitation_id' && key !== 'full_name' && key !== 'password')
     || typeof body.invitation_id !== 'string'
     || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.invitation_id)
     || typeof body.full_name !== 'string'
     || body.full_name.trim().length < 2
     || body.full_name.trim().length > 120
+    || typeof body.password !== 'string'
+    || body.password.length < 10
   ) {
     return jsonResponse(request, 400, { error: 'invalid_request' });
   }
@@ -108,6 +110,12 @@ Deno.serve(async (request) => {
     const mapped = acceptanceError(error.message);
     return jsonResponse(request, mapped.status, { error: mapped.code });
   }
+
+  // La contraseña va al final: un rechazo de la invitación no debe invalidar la sesión del enlace.
+  const { error: passwordError } = await adminClient.auth.admin.updateUserById(userData.user.id, {
+    password: body.password,
+  });
+  if (passwordError) return jsonResponse(request, 500, { error: 'password_update_failed' });
 
   return jsonResponse(request, 200, { status: 'accepted' });
 });

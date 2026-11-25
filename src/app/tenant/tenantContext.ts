@@ -11,6 +11,7 @@ export type TenantBootstrapState =
 export interface TenantContextValue {
   state: TenantBootstrapState;
   retry: () => void;
+  refresh: () => Promise<void>;
 }
 
 export const TenantContext = createContext<TenantContextValue | null>(null);

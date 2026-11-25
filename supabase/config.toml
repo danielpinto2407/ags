@@ -231,6 +231,9 @@ verify_jwt = true
 [functions.accept-personalized-invitation]
 verify_jwt = true
 
+[functions.accept-coach-invitation]
+verify_jwt = true
+
 [functions.set-personalized-member-status]
 verify_jwt = true
 

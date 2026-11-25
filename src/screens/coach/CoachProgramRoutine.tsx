@@ -6,7 +6,6 @@ import FeedbackMessage from '@/components/FeedbackMessage';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Dumbbell, LoaderCircle, Plus, Save, Send, Trash2 } from 'lucide-react';
 import Header from '@/components/Header';
 import LoadingState from '@/components/LoadingState';
-import DateField from '@/components/DateField';
 import SelectModalField from '@/components/SelectModalField';
 import { useCoachMembers } from '@/app/useCoachMembers';
 import { useCoachRoutineAssignments } from '@/app/useCoachRoutineAssignments';
@@ -15,6 +14,7 @@ import { formatMuscleName } from '@/domain/exerciseDefinition';
 import type { ExerciseDefinition } from '@/domain/exerciseDefinition';
 import type { Profile } from '@/domain/profile';
 import { formatLocalDate, localDateInputValue } from '@/domain/localDate';
+import RoutineProgramConfig from '@/screens/coach/routine/RoutineProgramConfig';
 import type {
   RoutineAssignmentDayInput,
   RoutineAssignment,
@@ -326,69 +326,35 @@ export default function CoachProgramRoutine({ profile }: CoachProgramRoutineProp
       {library.state.status === 'error' && <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{library.state.message}</p>}
       {assignmentsQuery.state.status === 'error' && <p className="rounded-xl border border-rose-900/60 bg-rose-950/20 p-3 text-xs text-rose-300" role="alert">{assignmentsQuery.state.message}</p>}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-          Alumna
-          <SelectModalField
-            ariaLabel="Alumna de la rutina"
-            className="mt-1.5"
-            disabled={membersQuery.state.status !== 'loaded' || activeMembers.length === 0}
-            modalTitle="Seleccionar alumna"
-            onChange={setSelectedStudentId}
-            options={activeMembers.map((member) => ({
-              value: member.id,
-              label: member.fullName,
-              description: member.email ?? undefined,
-            }))}
-            placeholder={membersQuery.state.status === 'loading' ? 'Cargando alumnas…' : 'No hay alumnas activas'}
-            value={selectedStudentId}
-          />
-        </label>
-        <fieldset className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-          <legend>Modo de programación</legend>
-          <div className="mt-1.5 grid grid-cols-2 rounded-xl border border-zinc-800 bg-zinc-950 p-1">
-            {(['SINGLE_DAY', 'CYCLE'] as const).map((mode) => (
-              <button
-                aria-pressed={programMode === mode}
-                className={`min-h-9 rounded-lg px-2 text-xs font-semibold normal-case ${programMode === mode ? 'bg-brand-600 text-white' : 'text-zinc-400 hover:bg-zinc-900'}`}
-                key={mode}
-                onClick={() => setProgramMode(mode)}
-                type="button"
-              >
-                {mode === 'SINGLE_DAY' ? 'Una fecha' : 'Ciclo'}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        {programMode === 'SINGLE_DAY' ? (
-          <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-            Fecha de programación
-            <DateField ariaLabel="Fecha de programación" onChange={setSelectedDate} value={selectedDate} />
-          </label>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-              Rutinas del ciclo
-              <input className={`${fieldClass} mt-1.5`} disabled={!editable} type="number" min="1" max="20" value={cycleDayCountDraft} onChange={(event) => {
-                const rawValue = event.target.value;
-                setCycleDayCountDraft(rawValue);
-                const nextCount = Number(rawValue);
-                if (rawValue !== '' && Number.isSafeInteger(nextCount) && nextCount >= 1 && nextCount <= 20) setCycleDayCount(nextCount);
-              }} onBlur={() => {
-                const nextCount = Number(cycleDayCountDraft);
-                if (!Number.isSafeInteger(nextCount) || nextCount < 1 || nextCount > 20) setCycleDayCountDraft(String(days.length));
-              }} />
-            </label>
-            <label className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-              Ciclos adicionales
-              <input className={`${fieldClass} mt-1.5`} disabled={!editable} type="number" min="0" max="20" value={additionalCycleRepeatsDraft} onChange={(event) => setAdditionalCycleRepeatsDraft(event.target.value)} onBlur={() => {
-                const repeats = Number(additionalCycleRepeatsDraft);
-                if (!Number.isSafeInteger(repeats) || repeats < 0 || repeats > 20) setAdditionalCycleRepeatsDraft('0');
-              }} />
-            </label>
-          </div>
-        )}
-      </div>
+      <RoutineProgramConfig
+        activeMembers={activeMembers}
+        additionalCycleRepeatsDraft={additionalCycleRepeatsDraft}
+        cycleDayCountDraft={cycleDayCountDraft}
+        daysLength={days.length}
+        editable={editable}
+        fieldClass={fieldClass}
+        membersLoading={membersQuery.state.status === 'loading'}
+        onCycleAdditionalChange={setAdditionalCycleRepeatsDraft}
+        onCycleAdditionalCommit={() => {
+          const repeats = Number(additionalCycleRepeatsDraft);
+          if (!Number.isSafeInteger(repeats) || repeats < 0 || repeats > 20) setAdditionalCycleRepeatsDraft('0');
+        }}
+        onCycleDayCountChange={(rawValue) => {
+          setCycleDayCountDraft(rawValue);
+          const nextCount = Number(rawValue);
+          if (rawValue !== '' && Number.isSafeInteger(nextCount) && nextCount >= 1 && nextCount <= 20) setCycleDayCount(nextCount);
+        }}
+        onCycleDayCountCommit={() => {
+          const nextCount = Number(cycleDayCountDraft);
+          if (!Number.isSafeInteger(nextCount) || nextCount < 1 || nextCount > 20) setCycleDayCountDraft(String(days.length));
+        }}
+        onDateChange={setSelectedDate}
+        onModeChange={setProgramMode}
+        onStudentChange={setSelectedStudentId}
+        programMode={programMode}
+        selectedDate={selectedDate}
+        selectedStudentId={selectedStudentId}
+      />
 
       {membersQuery.state.status === 'loaded' && activeMembers.length === 0 && (
         <EmptyState icon={Users} title="No hay alumnas activas disponibles" description="Invita o reactiva una alumna para continuar." compact />

@@ -1,17 +1,13 @@
 import { useEffect, useState } from 'react';
-import { LogOut, Heart, Users, Dumbbell } from 'lucide-react';
+import { LogOut, Heart, Users } from 'lucide-react';
 import Header from '@/components/Header';
-import ProfileImagePicker from '@/components/ProfileImagePicker';
 import { profileRepository } from '@/data/profileRepository';
 import { useTenantContext } from '@/app/tenant/tenantContext';
-import { getColombianMobileNumber, isColombianMobileNumber, toColombianWhatsappNumber, type Profile } from '@/domain/profile';
+import { getColombianMobileNumber, toColombianWhatsappNumber, type Profile } from '@/domain/profile';
 import { useCoachMembers } from '@/app/useCoachMembers';
-import AppTextarea from '@/components/AppTextarea';
-import AppSelect from '@/components/AppSelect';
-import AppInput from '@/components/AppInput';
-import AppButton from '@/components/AppButton';
-import FeedbackMessage from '@/components/FeedbackMessage';
-import ColombianPhoneField from '@/components/ColombianPhoneField';
+import CoachProfileIdentity from '@/screens/coach/profile/CoachProfileIdentity';
+import CoachWhatsappSettings from '@/screens/coach/profile/CoachWhatsappSettings';
+import CoachBrandingSettings, { type CoachBranding } from '@/screens/coach/profile/CoachBrandingSettings';
 
 interface CoachProfileProps {
   profile: Profile;
@@ -20,7 +16,7 @@ interface CoachProfileProps {
 
 export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
   const { state } = useCoachMembers(profile.id);
-  const { state: tenantState, retry: refreshTenant } = useTenantContext();
+  const { state: tenantState, refresh: refreshTenant } = useTenantContext();
   const tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
   const [logoUrl, setLogoUrl] = useState<string | null>(tenant?.theme.logoUrl ?? null);
   const [description, setDescription] = useState(tenant?.description ?? '');
@@ -36,7 +32,7 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
   const [avatarLoading, setAvatarLoading] = useState(true);
   const [avatarRemoving, setAvatarRemoving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-  const [branding, setBranding] = useState({
+  const [branding, setBranding] = useState<CoachBranding>({
     primaryColor: tenant?.theme.primaryColor ?? '#71717A',
     secondaryColor: tenant?.theme.secondaryColor ?? '#52525B',
     backgroundColor: tenant?.theme.backgroundColor ?? '#09090B',
@@ -111,7 +107,7 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
     if (!profile.tenant_id) throw new Error('No se encontró el gimnasio de esta cuenta.');
     const nextLogoUrl = await profileRepository.uploadGymLogo(file, profile.tenant_id, logoUrl);
     setLogoUrl(nextLogoUrl);
-    refreshTenant();
+    await refreshTenant();
     return nextLogoUrl;
   };
 
@@ -147,7 +143,6 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
     try {
       await profileRepository.setTenantBranding(branding);
       setBrandingFeedback({ type: 'success', message: 'Paleta guardada.' });
-      refreshTenant();
     } catch (error) {
       setBrandingFeedback({ type: 'error', message: error instanceof Error ? error.message : 'No se pudo guardar la paleta.' });
     } finally {
@@ -162,7 +157,6 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
       const savedDescription = await profileRepository.setTenantDescription(description);
       setDescription(savedDescription);
       setDescriptionFeedback({ type: 'success', message: 'Descripción guardada.' });
-      refreshTenant();
     } catch (error) {
       setDescriptionFeedback({
         type: 'error',
@@ -196,172 +190,48 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
 
       {/* Profile Card */}
       <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl p-5">
-        <div className="flex items-center gap-4 mb-4">
-          <ProfileImagePicker
-            alt={tenant?.name ?? 'Logo del gimnasio'}
-            fallback={<Dumbbell aria-hidden="true" size={27} />}
-            imageUrl={logoUrl}
-            label="Subir logo"
-            onUpload={uploadGymLogo}
-            shape="logo"
-          />
-          <div className="min-w-0">
-            <h2 className="truncate text-lg font-display font-bold text-white">{profile.full_name}</h2>
-            <p className="truncate text-xs text-zinc-500">{tenant?.name ?? 'Perfil del gimnasio'}</p>
-          </div>
-        </div>
+        <CoachProfileIdentity
+          gymName={tenant?.name ?? 'Perfil del gimnasio'}
+          logoUrl={logoUrl}
+          name={profile.full_name}
+          onUploadLogo={uploadGymLogo}
+        />
 
-        <div className="space-y-2 border-t border-zinc-800 pt-4">
-          <ColombianPhoneField disabled={loadingWhatsapp || savingWhatsapp} id="coach-whatsapp" onChange={(value) => { setWhatsappNumber(value); setWhatsappFeedback(null); }} value={whatsappNumber} />
-          {legacyWhatsappNumber && <FeedbackMessage kind="warning" message={`Tu número guardado (+${legacyWhatsappNumber}) se conserva. Para cambiarlo, ingresa un celular colombiano.`} />}
-          <div className="flex flex-wrap justify-end gap-2">
-            {legacyWhatsappNumber && <AppButton disabled={loadingWhatsapp || savingWhatsapp} onClick={() => void saveWhatsapp(true)} type="button" variant="secondary">Quitar número</AppButton>}
-            <AppButton disabled={loadingWhatsapp || savingWhatsapp || whatsappNumber === savedWhatsappNumber || (whatsappNumber !== '' && !isColombianMobileNumber(whatsappNumber))} onClick={() => void saveWhatsapp()} type="button">
-              {savingWhatsapp ? 'Guardando…' : 'Guardar número'}
-            </AppButton>
-          </div>
-          {whatsappFeedback && <FeedbackMessage kind={whatsappFeedback.type} message={whatsappFeedback.message} />}
-        </div>
+        <CoachWhatsappSettings
+          tenantId={profile.tenant_id ?? ''}
+          number={whatsappNumber}
+          savedNumber={savedWhatsappNumber}
+          legacyNumber={legacyWhatsappNumber}
+          loadingNumber={loadingWhatsapp}
+          savingNumber={savingWhatsapp}
+          numberFeedback={whatsappFeedback}
+          avatarPath={whatsappAvatarPath}
+          avatarLoading={avatarLoading}
+          avatarRemoving={avatarRemoving}
+          avatarError={avatarError}
+          onNumberChange={(value) => { setWhatsappNumber(value); setWhatsappFeedback(null); }}
+          onSaveNumber={(remove) => void saveWhatsapp(remove)}
+          onUploadAvatar={uploadWhatsappAvatar}
+          onRemoveAvatar={() => void removeWhatsappAvatar()}
+        />
 
-        <div className="space-y-3 border-t border-zinc-800 pt-4">
-          <div>
-            <p className="text-xs font-semibold text-zinc-300">Avatar de WhatsApp del gimnasio</p>
-            <p className="mt-1 text-[10px] text-zinc-500">PNG con fondo transparente, hasta 5 MB.</p>
-          </div>
-          {!avatarLoading && (
-            <ProfileImagePicker
-              alt="Avatar de contacto del gimnasio"
-              fallback={<Users aria-hidden="true" size={27} />}
-              imageUrl={profileRepository.getPublicMediaUrl(whatsappAvatarPath)}
-              label={whatsappAvatarPath ? 'Cambiar avatar' : 'Subir avatar'}
-              onUpload={uploadWhatsappAvatar}
-              pngOnly
-              shape="logo"
-            />
-          )}
-          {whatsappAvatarPath && <AppButton disabled={avatarRemoving} onClick={() => void removeWhatsappAvatar()} type="button" variant="secondary">{avatarRemoving ? 'Quitando…' : 'Quitar avatar'}</AppButton>}
-          {avatarError && <FeedbackMessage kind="error" message={avatarError} />}
-        </div>
-
-        <div className="space-y-2 border-t border-zinc-800 pt-4">
-          <label className="block text-xs font-semibold text-zinc-300" htmlFor="tenant-login-description">
-            Descripción del inicio de sesión
-          </label>
-          <AppTextarea
-            className="resize-y px-3 py-2.5"
-            id="tenant-login-description"
-            maxLength={280}
-            onChange={(event) => {
-              setDescription(event.target.value);
-              setDescriptionFeedback(null);
-            }}
-            placeholder="Cuéntales brevemente qué ofrece tu gimnasio"
-            rows={3}
-            value={description}
-          />
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-[10px] text-zinc-500">{description.length}/280 caracteres</p>
-            <button
-              className="min-h-10 rounded-lg bg-brand-500 px-4 text-xs font-bold text-white transition-colors hover:bg-brand-action-hover disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={savingDescription || description === (tenant?.description ?? '')}
-              onClick={() => void saveDescription()}
-              type="button"
-            >
-              {savingDescription ? 'Guardando…' : 'Guardar descripción'}
-            </button>
-          </div>
-          {descriptionFeedback && (
-            <p className={`text-xs ${descriptionFeedback.type === 'error' ? 'text-rose-300' : 'text-brand-300'}`} role={descriptionFeedback.type === 'error' ? 'alert' : 'status'}>
-              {descriptionFeedback.message}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-3 border-t border-zinc-800 pt-4">
-          <div>
-            <p className="text-xs font-semibold text-zinc-300">Paleta del gimnasio</p>
-            <p className="mt-1 text-[10px] text-zinc-500">Estos colores se aplican al entorno de tu gimnasio.</p>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            {([
-              ['primaryColor', 'Principal'],
-              ['secondaryColor', 'Secundario'],
-              ['backgroundColor', 'Fondo'],
-              ['accentColor', 'Acento'],
-              ['surfaceColor', 'Superficie'],
-              ['textColor', 'Texto'],
-              ['mutedColor', 'Texto tenue'],
-              ['borderColor', 'Bordes'],
-              ['warmAccentColor', 'Acento cálido'],
-              ['softAccentColor', 'Acento suave'],
-            ] as const).map(([key, label]) => (
-              <label className="grid min-w-0 gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-2 py-2 text-[11px] text-zinc-400 sm:px-3" key={key}>
-                <span className="flex min-w-0 items-center justify-between gap-1">
-                  <span className="min-w-0">{label}</span>
-                  <input
-                    aria-label={`Selector de ${label.toLowerCase()}`}
-                    className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border-0 bg-transparent"
-                    onChange={(event) => {
-                      setBranding((current) => ({ ...current, [key]: event.target.value.toUpperCase() }));
-                      setBrandingFeedback(null);
-                    }}
-                    type="color"
-                    value={/^#[0-9A-Fa-f]{6}$/.test(branding[key]) ? branding[key] : '#71717A'}
-                  />
-                </span>
-                <AppInput
-                  aria-label={`Hexadecimal de ${label.toLowerCase()}`}
-                  className="min-w-0 px-2 py-2 font-mono text-xs uppercase"
-                  maxLength={7}
-                  onChange={(event) => {
-                    const value = event.target.value.toUpperCase();
-                    setBranding((current) => ({ ...current, [key]: value.startsWith('#') ? value : `#${value}` }));
-                    setBrandingFeedback(null);
-                  }}
-                  spellCheck={false}
-                  value={branding[key]}
-                />
-              </label>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {([
-              ['bodyFont', 'Tipografía de cuerpo'],
-              ['displayFont', 'Tipografía de títulos'],
-            ] as const).map(([key, label]) => (
-              <label className="grid gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-[11px] text-zinc-400" key={key}>
-                <span>{label}</span>
-                <AppSelect
-                  className="min-h-10 px-2.5 text-xs"
-                  onChange={(event) => {
-                    setBranding((current) => ({ ...current, [key]: event.target.value }));
-                    setBrandingFeedback(null);
-                  }}
-                  value={branding[key]}
-                >
-                  {['DM Sans', 'Fraunces', 'Inter', 'Sora', 'Roboto', 'Montserrat', 'Poppins', 'Manrope', 'Lato', 'Nunito', 'Merriweather', 'Playfair Display', 'Source Serif 4', 'Raleway', 'Work Sans'].map((font) => (
-                    <option key={font} value={font}>{font}</option>
-                  ))}
-                </AppSelect>
-              </label>
-            ))}
-          </div>
-          <div className="flex justify-end">
-            <button
-              className="min-h-10 rounded-lg bg-brand-500 px-4 text-xs font-bold text-white transition-colors hover:bg-brand-action-hover disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={savingBranding || !brandingIsValid}
-              onClick={() => void saveBranding()}
-              type="button"
-            >
-              {savingBranding ? 'Guardando…' : 'Guardar paleta'}
-            </button>
-          </div>
-          {brandingFeedback && (
-            <p className={`text-xs ${brandingFeedback.type === 'error' ? 'text-rose-300' : 'text-brand-300'}`} role={brandingFeedback.type === 'error' ? 'alert' : 'status'}>
-              {brandingFeedback.message}
-            </p>
-          )}
-        </div>
+        <CoachBrandingSettings
+          description={description}
+          descriptionLength={description.length}
+          descriptionFeedback={descriptionFeedback}
+          savingDescription={savingDescription}
+          branding={branding}
+          brandingValid={brandingIsValid}
+          savingBranding={savingBranding}
+          brandingFeedback={brandingFeedback}
+          onDescriptionChange={(value) => { setDescription(value); setDescriptionFeedback(null); }}
+          onSaveDescription={() => void saveDescription()}
+          onBrandingChange={(key, value) => {
+            setBranding((current) => ({ ...current, [key]: key.endsWith('Font') ? value : value.startsWith('#') ? value : `#${value}` }));
+            setBrandingFeedback(null);
+          }}
+          onSaveBranding={() => void saveBranding()}
+        />
 
         <div className="flex items-center gap-3 border-t border-zinc-800 pt-4">
           <Users size={17} className="text-brand-400" />

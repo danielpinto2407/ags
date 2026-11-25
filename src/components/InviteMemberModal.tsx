@@ -36,8 +36,6 @@ export default function InviteMemberModal({ onClose }: InviteMemberModalProps) {
       subtitle="Entrenamiento personalizado"
       onClose={onClose}
       size="md"
-      form
-      onSubmit={handleSubmit}
     >
         {deliveryStatus ? (
           <div className="space-y-4" role="status">

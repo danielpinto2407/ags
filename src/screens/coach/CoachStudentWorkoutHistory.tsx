@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ChevronDown, ChevronRight, RefreshCw, Send } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import LoadingState from '@/components/LoadingState';
 import { routineAssignmentRepository } from '@/data/routineAssignmentRepository';
-import { formatLocalDate } from '@/domain/localDate';
 import type { CoachMember } from '@/domain/coachMember';
+import CoachWorkoutHistoryEntrySummary from '@/screens/coach/workout-history/CoachWorkoutHistoryEntrySummary';
+import CoachWorkoutHistoryComments from '@/screens/coach/workout-history/CoachWorkoutHistoryComments';
 import type {
   CoachRoutineExecutionReview,
   CoachRoutineExecutionSummary,
@@ -25,12 +26,6 @@ type ReviewState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'loaded'; review: CoachRoutineExecutionReview };
-
-const executionStatusLabels = {
-  IN_PROGRESS: 'En curso',
-  COMPLETED: 'Completado',
-  CLOSED_INCOMPLETE: 'Incompleto',
-} as const;
 
 export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }: CoachStudentWorkoutHistoryProps) {
   const [historyState, setHistoryState] = useState<HistoryState>({ status: 'loading', entries: [] });
@@ -160,47 +155,14 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
         <ol aria-label="Entrenamientos registrados" className="space-y-2">
           {historyState.entries.map((entry) => {
             const isSelected = selectedExecutionId === entry.id;
-            const title = entry.programMode === 'CYCLE' ? entry.cycleDayTitle ?? entry.title : entry.title;
             return (
               <li key={entry.id}>
                 <article className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
-                  <button
-                    aria-controls={`coach-workout-review-${entry.id}`}
-                    aria-expanded={isSelected}
-                    className={`flex min-h-16 w-full items-center gap-3 p-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-brand-400 ${isSelected ? 'border-l-4 border-brand-500 bg-zinc-900 text-white' : 'hover:bg-brand-950/30'}`}
-                    onClick={() => toggleExecution(entry.id)}
-                    type="button"
-                  >
-                    {isSelected
-                      ? <ChevronDown aria-hidden="true" className="shrink-0 text-brand-300" size={17} />
-                      : <ChevronRight aria-hidden="true" className="shrink-0 text-zinc-400" size={17} />}
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-white">{title}</span>
-                      <span className="mt-0.5 block text-xs text-zinc-400">
-                        {formatLocalDate(entry.executionDate)}
-                        {entry.slotAttempt !== null ? ` · Ciclo ${entry.slotAttempt}` : ''}
-                        {' · '}{executionStatusLabels[entry.status]}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-right">
-                      <span className="block text-sm font-bold text-brand-200">{Math.round(entry.progressPercent)}%</span>
-                      <span className="block text-[10px] text-zinc-300">
-                        {entry.progressUnit === 'sets'
-                          ? `${entry.completedUnits}/${entry.prescribedUnits} series`
-                          : `${entry.completedUnits}/${entry.prescribedUnits} ejercicios`}
-                      </span>
-                    </span>
-                  </button>
-                  <span
-                    aria-label={`${Math.round(entry.progressPercent)}% de ${entry.progressUnit === 'sets' ? 'series' : 'ejercicios'} completados`}
-                    aria-valuemax={100}
-                    aria-valuemin={0}
-                    aria-valuenow={Math.round(entry.progressPercent)}
-                    className={`block h-1 w-full ${isSelected ? 'bg-zinc-700' : 'bg-zinc-800'}`}
-                    role="progressbar"
-                  >
-                    <span className="block h-full bg-brand-500" style={{ width: `${entry.progressPercent}%` }} />
-                  </span>
+                  <CoachWorkoutHistoryEntrySummary
+                    entry={entry}
+                    isSelected={isSelected}
+                    onToggle={toggleExecution}
+                  />
 
                   <div className="border-t border-zinc-700 bg-zinc-800 p-3 text-zinc-100" hidden={!isSelected} id={`coach-workout-review-${entry.id}`}>
                     {isSelected && reviewState.status === 'loading' && (
@@ -260,48 +222,15 @@ export default function CoachStudentWorkoutHistory({ coachId, tenantId, member }
                             </div>
                           </article>
                         ))}
-                        <details className="group mt-4 overflow-hidden rounded-xl border border-brand-800/60 bg-brand-950/20" aria-label="Comentarios del entrenamiento">
-                          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 marker:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-brand-400">
-                            <span className="text-xs font-bold text-brand-200">Comentarios ({reviewState.review.comments.length})</span>
-                            <ChevronDown aria-hidden="true" className="shrink-0 text-brand-300 transition-transform group-open:rotate-180" size={16} />
-                          </summary>
-                          <div className="border-t border-brand-800/50 p-3">
-                            {reviewState.review.comments.length === 0 ? (
-                              <p className="text-xs text-zinc-400">Aún no hay comentarios sobre este entrenamiento.</p>
-                            ) : (
-                              <ol className="space-y-2">
-                                {reviewState.review.comments.map((comment) => (
-                                  <li className="rounded-lg border border-brand-800/50 bg-brand-950/40 p-3" key={comment.id}>
-                                    <p className="text-[10px] font-semibold text-brand-200">
-                                      {comment.authorName} · {formatLocalDate(comment.createdAt.slice(0, 10))}
-                                    </p>
-                                    <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed text-zinc-100">{comment.body}</p>
-                                  </li>
-                                ))}
-                              </ol>
-                            )}
-                            {commentError && <p className="mt-2 text-xs text-rose-300" role="alert">{commentError}</p>}
-                            <div className="mt-3 flex items-end gap-2">
-                              <textarea
-                                aria-label="Comentario para la alumna"
-                                className="min-h-20 flex-1 resize-none rounded-lg border border-brand-800/70 bg-zinc-950 px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:border-brand-500 focus:outline-none"
-                                maxLength={2000}
-                                onChange={(event) => setCommentDraft(event.target.value)}
-                                placeholder="Escribe una observación sobre este entrenamiento"
-                                value={commentDraft}
-                              />
-                              <button
-                                aria-label="Enviar comentario"
-                                className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-brand-500 text-white hover:bg-brand-action-hover disabled:cursor-not-allowed disabled:opacity-50"
-                                disabled={commentSending || !commentDraft.trim()}
-                                onClick={() => sendComment(reviewState.review.id)}
-                                type="button"
-                              >
-                                <Send aria-hidden="true" size={16} />
-                              </button>
-                            </div>
-                          </div>
-                        </details>
+                        <CoachWorkoutHistoryComments
+                          comments={reviewState.review.comments}
+                          draft={commentDraft}
+                          error={commentError}
+                          sending={commentSending}
+                          onDraftChange={setCommentDraft}
+                          onSend={() => sendComment(reviewState.review.id)}
+                        />
+
                       </div>
                     )}
                   </div>

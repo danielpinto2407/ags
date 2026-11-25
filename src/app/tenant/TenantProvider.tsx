@@ -54,8 +54,22 @@ export function TenantProvider({ children }: TenantProviderProps) {
     setAttempt((currentAttempt) => currentAttempt + 1);
   };
 
+  const refresh = async () => {
+    if (!subdomain) return;
+    try {
+      const tenant = await resolveTenantBySubdomain(subdomain);
+      setState((current) => tenant
+        ? { status: 'tenant', tenant }
+        : current.status === 'tenant'
+          ? current
+          : { status: 'not-found', subdomain });
+    } catch {
+      setState((current) => current.status === 'tenant' ? current : { status: 'error', message: 'No se pudo actualizar la configuración del gimnasio.' });
+    }
+  };
+
   return (
-    <TenantContext.Provider value={{ state, retry }}>
+    <TenantContext.Provider value={{ state, retry, refresh }}>
       {children}
     </TenantContext.Provider>
   );

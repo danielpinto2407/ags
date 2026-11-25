@@ -53,6 +53,8 @@ Deno.serve(async (request) => {
     || body.full_name.trim().length > 120
     || typeof body.whatsapp_number !== 'string'
     || !/^573[0-9]{9}$/.test(body.whatsapp_number.trim())
+    || typeof body.password !== 'string'
+    || body.password.length < 10
   ) {
     return jsonResponse(request, 400, { error: 'invalid_request' });
   }
@@ -86,6 +88,14 @@ Deno.serve(async (request) => {
       : 'invitation_acceptance_failed';
     const status = code === 'invitation_expired' ? 410 : code === 'invitation_not_pending' ? 409 : code === 'invite_email_mismatch' ? 403 : 400;
     return jsonResponse(request, status, { error: code });
+  }
+
+  // La contraseña va al final: un rechazo de la invitación no debe invalidar la sesión del enlace.
+  const { error: passwordError } = await adminClient.auth.admin.updateUserById(userData.user.id, {
+    password: body.password,
+  });
+  if (passwordError) {
+    return jsonResponse(request, 500, { error: 'password_update_failed' });
   }
 
   return jsonResponse(request, 200, { status: 'accepted', role: 'coach_admin' });

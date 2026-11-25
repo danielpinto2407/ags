@@ -25,6 +25,41 @@ describe('shared UI contract', () => {
     expect(navigation).toContain('canRoleOpenScreen');
   });
 
+  it('accepts invitation passwords only inside the trusted functions, after the invitation is accepted', () => {
+    const repository = readProjectFile('src/data/invitationRepository.ts');
+    expect(repository).not.toContain('updateUser');
+    expect(repository).toContain("body: { invitation_id: invitationId, full_name: fullName.trim(), whatsapp_number: whatsappNumber, password }");
+    expect(repository).toContain("body: { invitation_id: invitationId, full_name: fullName.trim(), password }");
+
+    for (const [name, rpc] of [['accept-coach-invitation', 'accept_coach_invitation'], ['accept-personalized-invitation', 'accept_personalized_invitation']]) {
+      const acceptFunction = readProjectFile(`supabase/functions/${name}/index.ts`);
+      expect(acceptFunction.indexOf(`rpc('${rpc}'`)).toBeGreaterThan(-1);
+      expect(acceptFunction.indexOf(`rpc('${rpc}'`)).toBeLessThan(acceptFunction.indexOf('auth.admin.updateUserById'));
+      expect(acceptFunction).toContain('password_update_failed');
+      expect(readProjectFile('supabase/config.toml')).toContain(`[functions.${name}]`);
+    }
+  });
+
+  it('uses silent tenant refresh after profile branding updates', () => {
+    const context = readProjectFile('src/app/tenant/tenantContext.ts');
+    const provider = readProjectFile('src/app/tenant/TenantProvider.tsx');
+    const profile = readProjectFile('src/screens/coach/CoachProfile.tsx');
+
+    expect(context).toContain('refresh: () => Promise<void>');
+    expect(provider).toContain('const refresh = async ()');
+    expect(provider).not.toMatch(/const refresh = async[\s\S]*setState\(\{ status: 'loading' \}\)/);
+    expect(profile).not.toMatch(/save(Branding|Description)[\s\S]*refreshTenant\(\)/);
+  });
+
+  it('does not nest a form inside a ModalShell that already renders one', () => {
+    const violations = sourceFiles(resolve(process.cwd(), 'src'))
+      .filter((path) => {
+        const source = readFileSync(path, 'utf8');
+        return /<ModalShell[\s\S]*?\n\s+form\n/.test(source) && /<form[\s>]/.test(source);
+      });
+    expect(violations).toEqual([]);
+  });
+
   it('does not use native confirmation dialogs', () => {
     const violations = sourceFiles(resolve(process.cwd(), 'src'))
       .filter((path) => !path.includes('sharedUiContract.test.ts'))
@@ -50,9 +85,44 @@ describe('shared UI contract', () => {
     expect(existsSync(resolve(process.cwd(), 'src/components/SelectModalField.tsx'))).toBe(true);
   });
 
+  it('splits routine writes and comments by responsibility', () => {
+    expect(existsSync(resolve(process.cwd(), 'src/data/routineAssignmentWriteService.ts'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/data/workoutCommentService.ts'))).toBe(true);
+    const repository = readProjectFile('src/data/routineAssignmentRepository.ts');
+    expect(repository).toContain('routineAssignmentWriteService');
+    expect(repository).toContain('workoutCommentService');
+  });
+
+  it('keeps coach profile settings split by responsibility', () => {
+    expect(existsSync(resolve(process.cwd(), 'src/screens/coach/profile/CoachProfileIdentity.tsx'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/screens/coach/profile/CoachWhatsappSettings.tsx'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/screens/coach/profile/CoachBrandingSettings.tsx'))).toBe(true);
+  });
+
   it('uses shared empty and loading state components', () => {
     expect(readProjectFile('src/components/EmptyState.tsx')).toContain('role="status"');
     expect(readProjectFile('src/components/LoadingState.tsx')).toContain('role="status"');
+  });
+
+  it('splits large coach screens into responsibility components', () => {
+    expect(existsSync(resolve(process.cwd(), 'src/screens/coach/profile/CoachProfileIdentity.tsx'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/screens/coach/profile/CoachWhatsappSettings.tsx'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/screens/coach/profile/CoachBrandingSettings.tsx'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/screens/coach/routine/RoutineProgramConfig.tsx'))).toBe(true);
+    const routineScreen = readProjectFile('src/screens/coach/CoachProgramRoutine.tsx');
+    expect(routineScreen).toContain('<RoutineProgramConfig');
+  });
+
+  it('splits large role screens into responsibility sections', () => {
+    expect(existsSync(resolve(process.cwd(), 'src/screens/coach/routine/RoutineProgramConfig.tsx'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/screens/platform/sections/PlatformTenantsSection.tsx'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/screens/student/training/TrainingSetFields.tsx'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/screens/coach/workout-history/CoachWorkoutHistoryEntrySummary.tsx'))).toBe(true);
+    expect(existsSync(resolve(process.cwd(), 'src/screens/coach/workout-history/CoachWorkoutHistoryComments.tsx'))).toBe(true);
+    expect(readProjectFile('src/screens/coach/CoachProfile.tsx').length).toBeLessThan(20000);
+    expect(readProjectFile('src/screens/coach/CoachProgramRoutine.tsx')).toContain('RoutineProgramConfig');
+    expect(readProjectFile('src/screens/platform/PlatformEquipmentAdmin.tsx')).toContain('PlatformTenantsSection');
+    expect(readProjectFile('src/screens/student/StudentTrainingScreen.tsx')).toContain('TrainingSetFields');
   });
 
   it('keeps the student WhatsApp action in the header', () => {

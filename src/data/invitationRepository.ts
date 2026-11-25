@@ -13,7 +13,7 @@ async function getFunctionErrorCode(error: { context?: unknown }): Promise<strin
   }
 }
 
-function invitationErrorMessage(code: string): string {
+function invitationErrorMessage(code: string, fallback = 'No se pudo enviar la invitación. Inténtalo nuevamente.'): string {
   const messages: Record<string, string> = {
     authentication_required: 'Inicia sesión nuevamente para enviar la invitación.',
     invalid_session: 'Tu sesión ya no es válida. Inicia sesión nuevamente.',
@@ -25,9 +25,24 @@ function invitationErrorMessage(code: string): string {
     invalid_email: 'Ingresa un correo electrónico válido.',
     invitation_email_failed: 'No se pudo enviar el correo. Inténtalo nuevamente.',
     invitation_link_failed: 'El correo se envió, pero no se pudo completar la invitación. Reintenta el envío.',
+    password_update_failed: 'Tu acceso quedó activado, pero no se pudo guardar la contraseña. Usa "Olvidé mi contraseña" para crearla.',
   };
 
-  return messages[code] ?? 'No se pudo enviar la invitación. Inténtalo nuevamente.';
+  return messages[code] ?? fallback;
+}
+
+const ACCEPTANCE_MESSAGES: Record<string, string> = {
+  authentication_required: 'El enlace de la invitación ya no es válido. Pide que te reenvíen la invitación.',
+  invalid_session: 'El enlace de la invitación ya no es válido. Pide que te reenvíen la invitación.',
+  invitation_expired: 'La invitación venció. Pide que te la reenvíen.',
+  invitation_not_pending: 'Esta invitación ya fue usada o cancelada.',
+  invitation_not_found: 'No encontramos esta invitación.',
+  invite_email_mismatch: 'Esta invitación pertenece a otro correo.',
+  account_not_eligible: 'Esta cuenta no puede aceptar la invitación.',
+};
+
+function acceptanceErrorMessage(code: string): string {
+  return ACCEPTANCE_MESSAGES[code] ?? invitationErrorMessage(code, 'No se pudo activar tu acceso. Inténtalo nuevamente.');
 }
 
 function requireSupabaseClient() {
@@ -56,17 +71,12 @@ export const invitationRepository = {
 
   async acceptCoachInvitation(invitationId: string, fullName: string, password: string, whatsappNumber: string): Promise<void> {
     const client = requireSupabaseClient();
-    const { error: passwordError } = await client.auth.updateUser({ password });
-    if (passwordError) {
-      throw new Error('No se pudo guardar tu contraseña. Revisa el enlace e inténtalo nuevamente.');
-    }
-
     const { error } = await client.functions.invoke('accept-coach-invitation', {
-      body: { invitation_id: invitationId, full_name: fullName.trim(), whatsapp_number: whatsappNumber },
+      body: { invitation_id: invitationId, full_name: fullName.trim(), whatsapp_number: whatsappNumber, password },
     });
     if (error) {
       const code = await getFunctionErrorCode(error);
-      throw new Error(invitationErrorMessage(code));
+      throw new Error(acceptanceErrorMessage(code));
     }
   },
 
@@ -76,18 +86,13 @@ export const invitationRepository = {
     password: string
   ): Promise<void> {
     const client = requireSupabaseClient();
-    const { error: passwordError } = await client.auth.updateUser({ password });
-    if (passwordError) {
-      throw new Error('No se pudo guardar tu contraseña. Revisa el enlace e inténtalo nuevamente.');
-    }
-
     const { error } = await client.functions.invoke('accept-personalized-invitation', {
-      body: { invitation_id: invitationId, full_name: fullName.trim() },
+      body: { invitation_id: invitationId, full_name: fullName.trim(), password },
     });
 
     if (error) {
       const code = await getFunctionErrorCode(error);
-      throw new Error(invitationErrorMessage(code));
+      throw new Error(acceptanceErrorMessage(code));
     }
   },
 };
