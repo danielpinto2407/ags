@@ -7,7 +7,7 @@ import { profileRepository } from '@/data/profileRepository';
 
 type Contact = Awaited<ReturnType<typeof profileRepository.getOwnCoachWhatsappContact>>;
 
-export default function StudentWhatsappContact({ training }: { training: boolean }) {
+export default function StudentWhatsappContact() {
   const [contact, setContact] = useState<Contact>(null);
   const [open, setOpen] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -54,10 +54,9 @@ export default function StudentWhatsappContact({ training }: { training: boolean
     <>
       <button
         aria-label="Contactar a mi coach por WhatsApp"
-        className="fixed right-5 z-40 flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-bold shadow-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="app-button app-button-secondary flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl px-2.5 text-xs font-semibold transition-colors"
         onClick={() => setOpen(true)}
         ref={triggerRef}
-        style={{ bottom: training ? 'calc(1rem + env(safe-area-inset-bottom))' : 'calc(6rem + env(safe-area-inset-bottom))', backgroundColor: '#25D366', borderColor: '#128C4A', color: '#102d1b', outlineColor: 'var(--tenant-primary)' }}
         type="button"
       >
         <MessageCircle aria-hidden="true" size={19} /> WhatsApp

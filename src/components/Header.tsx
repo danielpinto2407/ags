@@ -1,6 +1,8 @@
 import { Bell, Dumbbell } from 'lucide-react';
 import { useTenantContext } from '@/app/tenant/tenantContext';
 import ProfileMediaImage from '@/components/ProfileMediaImage';
+import StudentWhatsappContact from '@/components/StudentWhatsappContact';
+import { useAuth } from '@/app/session/authContext';
 
 interface HeaderProps {
   title: string;
@@ -12,11 +14,13 @@ interface HeaderProps {
 
 export default function Header({ title, subtitle, showLogo = true, showBell = false, onBellClick }: HeaderProps) {
   const { state: tenantState } = useTenantContext();
+  const { state: authState } = useAuth();
   const tenant = tenantState.status === 'tenant' ? tenantState.tenant : null;
+  const isStudent = authState.status === 'authenticated' && authState.productRole === 'student';
 
   return (
-    <div className="flex justify-between items-start mb-5">
-      <div>
+    <div className={`mb-5 flex items-start justify-between gap-2 ${isStudent ? 'sticky top-0 z-30 pb-2' : ''}`} style={isStudent ? { backgroundColor: 'var(--tenant-background)' } : undefined}>
+      <div className="min-w-0 flex-1">
         {showLogo && (
           <div className="mb-1 flex h-10 items-center gap-2.5">
             <ProfileMediaImage
@@ -34,6 +38,7 @@ export default function Header({ title, subtitle, showLogo = true, showBell = fa
         <h1 className="text-2xl font-display font-bold text-white leading-tight">{title}</h1>
         {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
       </div>
+      {isStudent && <StudentWhatsappContact />}
       {showBell && onBellClick && (
         <button
           aria-label="Notificaciones"

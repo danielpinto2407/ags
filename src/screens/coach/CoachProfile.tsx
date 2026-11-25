@@ -300,11 +300,11 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
               ['softAccentColor', 'Acento suave'],
             ] as const).map(([key, label]) => (
               <label className="grid min-w-0 gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950 px-2 py-2 text-[11px] text-zinc-400 sm:px-3" key={key}>
-                <span>{label}</span>
-                <span className="flex items-center gap-2">
+                <span className="flex min-w-0 items-center justify-between gap-1">
+                  <span className="min-w-0">{label}</span>
                   <input
                     aria-label={`Selector de ${label.toLowerCase()}`}
-                    className="h-9 w-8 shrink-0 cursor-pointer rounded-lg border-0 bg-transparent sm:w-12"
+                    className="h-9 w-9 shrink-0 cursor-pointer rounded-lg border-0 bg-transparent"
                     onChange={(event) => {
                       setBranding((current) => ({ ...current, [key]: event.target.value.toUpperCase() }));
                       setBrandingFeedback(null);
@@ -312,19 +312,19 @@ export default function CoachProfile({ profile, onLogout }: CoachProfileProps) {
                     type="color"
                     value={/^#[0-9A-Fa-f]{6}$/.test(branding[key]) ? branding[key] : '#71717A'}
                   />
-                  <input
-                    aria-label={`Hexadecimal de ${label.toLowerCase()}`}
-                    className="min-w-0 flex-1 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-2 font-mono text-xs uppercase text-zinc-200 outline-none focus:border-brand-500"
-                    maxLength={7}
-                    onChange={(event) => {
-                      const value = event.target.value.toUpperCase();
-                      setBranding((current) => ({ ...current, [key]: value.startsWith('#') ? value : `#${value}` }));
-                      setBrandingFeedback(null);
-                    }}
-                    spellCheck={false}
-                    value={branding[key]}
-                  />
                 </span>
+                <AppInput
+                  aria-label={`Hexadecimal de ${label.toLowerCase()}`}
+                  className="min-w-0 px-2 py-2 font-mono text-xs uppercase"
+                  maxLength={7}
+                  onChange={(event) => {
+                    const value = event.target.value.toUpperCase();
+                    setBranding((current) => ({ ...current, [key]: value.startsWith('#') ? value : `#${value}` }));
+                    setBrandingFeedback(null);
+                  }}
+                  spellCheck={false}
+                  value={branding[key]}
+                />
               </label>
             ))}
           </div>

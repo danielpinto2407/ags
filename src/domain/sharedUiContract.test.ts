@@ -45,6 +45,20 @@ describe('shared UI contract', () => {
     expect(readProjectFile('src/components/LoadingState.tsx')).toContain('role="status"');
   });
 
+  it('keeps the student WhatsApp action in the header', () => {
+    const header = readProjectFile('src/components/Header.tsx');
+    const training = readProjectFile('src/screens/student/StudentTrainingScreen.tsx');
+    const contact = readProjectFile('src/components/StudentWhatsappContact.tsx');
+    const shell = readProjectFile('src/app/AppShell.tsx');
+
+    expect(header).toContain("authState.productRole === 'student'");
+    expect(header).toContain('<StudentWhatsappContact />');
+    expect(training).toContain('<StudentWhatsappContact />');
+    expect(shell).not.toContain('<StudentWhatsappContact');
+    expect(contact).toContain('app-button-secondary');
+    expect(contact).not.toContain('fixed right-5');
+  });
+
   it('uses the shared modal shell for overlay dialogs', () => {
     const modalShell = readProjectFile('src/components/ModalShell.tsx');
     const statusToggle = readProjectFile('src/components/StatusToggle.tsx');

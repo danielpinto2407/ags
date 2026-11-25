@@ -4,6 +4,7 @@ import { useStudentRoutineAssignment } from '@/app/useStudentRoutineAssignment';
 import LoadingState from '@/components/LoadingState';
 import FeedbackMessage from '@/components/FeedbackMessage';
 import ExerciseVideoPreview from '@/components/ExerciseVideoPreview';
+import StudentWhatsappContact from '@/components/StudentWhatsappContact';
 import { formatEquipmentLabel, exerciseFocusLabels, exerciseMovementLabels } from '@/domain/exerciseDefinition';
 import { formatLocalDate, utcDateInputValue } from '@/domain/localDate';
 import {
@@ -120,16 +121,22 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
 
   if (state.status === 'loading' && !assignment) {
     return (
-      <LoadingState className="min-h-[55vh]" message="Cargando entrenamiento…" />
+      <>
+        <div className="sticky top-0 z-30 flex justify-end pb-2" style={{ backgroundColor: 'var(--tenant-background)' }}><StudentWhatsappContact /></div>
+        <LoadingState className="min-h-[55vh]" message="Cargando entrenamiento…" />
+      </>
     );
   }
 
   if (state.status === 'error' || !assignment || !day) {
     return (
       <div className="space-y-4">
-        <button className="flex min-h-11 items-center gap-2 text-sm font-semibold text-zinc-300" onClick={onBack} type="button">
-          <ArrowLeft aria-hidden="true" size={17} /> Entrenar
-        </button>
+        <div className="sticky top-0 z-30 flex items-center justify-between gap-2 pb-2" style={{ backgroundColor: 'var(--tenant-background)' }}>
+          <button className="flex min-h-11 items-center gap-2 text-sm font-semibold text-zinc-300" onClick={onBack} type="button">
+            <ArrowLeft aria-hidden="true" size={17} /> Entrenar
+          </button>
+          <StudentWhatsappContact />
+        </div>
         <FeedbackMessage
           kind="error"
           message={state.status === 'error' ? state.message : 'Este entrenamiento ya no está disponible.'}
@@ -154,14 +161,17 @@ export default function StudentTrainingScreen({ profile, target, onBack }: Stude
 
   return (
     <div className="space-y-4 pb-2">
-      <button
-        aria-label="Volver a entrenar"
-        className="flex min-h-11 items-center gap-2 text-sm font-semibold text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400"
-        onClick={onBack}
-        type="button"
-      >
-        <ArrowLeft aria-hidden="true" size={18} /> Entrenar
-      </button>
+      <div className="sticky top-0 z-30 flex items-center justify-between gap-2 pb-2" style={{ backgroundColor: 'var(--tenant-background)' }}>
+        <button
+          aria-label="Volver a entrenar"
+          className="flex min-h-11 items-center gap-2 text-sm font-semibold text-zinc-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-400"
+          onClick={onBack}
+          type="button"
+        >
+          <ArrowLeft aria-hidden="true" size={18} /> Entrenar
+        </button>
+        <StudentWhatsappContact />
+      </div>
 
       <header className="space-y-1 border-b border-zinc-800 pb-3">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-400">
